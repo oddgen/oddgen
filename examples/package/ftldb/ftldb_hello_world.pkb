@@ -36,7 +36,7 @@ $END
       l_args varchar2_nt;
    BEGIN
       l_args := NEW varchar2_nt(in_object_type, in_object_name);
-      l_result := ftldb_api.process_to_clob(in_templ_name => 'ftldb_hello_world%generate_ftl',
+      l_result := ftldb_api.process_to_clob(in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
                                             in_templ_args => l_args);
       RETURN l_result;
    END generate;

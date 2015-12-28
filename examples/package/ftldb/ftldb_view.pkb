@@ -293,7 +293,7 @@ $END
                                            get_view_name,
                                            get_iot_name,
                                            l_params(co_gen_iot));
-         l_result := ftldb_api.process_to_clob(in_templ_name => lower($$PLSQL_UNIT) || '%generate_ftl',
+         l_result := ftldb_api.process_to_clob(in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
                                                in_templ_args => l_args);
       ELSE
          raise_application_error(co_oddgen_error,

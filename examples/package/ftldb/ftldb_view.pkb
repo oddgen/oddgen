@@ -99,17 +99,11 @@ ${"/"}
 $END
 
    --
-   -- private types
-   --
-   SUBTYPE object_name_type IS VARCHAR2(30 CHAR);
-   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-
-   --
    -- private constants
    --
    c_new_line     CONSTANT string_type := chr(10);
-   c_max_obj_len  CONSTANT simple_integer := 30;
-   c_oddgen_error CONSTANT simple_integer := -20501;
+   co_max_obj_len  CONSTANT simple_integer := 30;
+   co_oddgen_error CONSTANT simple_integer := -20501;
 
    --
    -- get_name
@@ -130,16 +124,16 @@ $END
    --
    -- get_object_types
    --
-   FUNCTION get_object_types RETURN vc2_array IS
+   FUNCTION get_object_types RETURN t_string IS
    BEGIN
-      RETURN NEW vc2_array('TABLES');
+      RETURN NEW t_string('TABLES');
    END get_object_types;
 
    --
    -- get_object_names
    --
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN vc2_array IS
-      l_object_names vc2_array;
+   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string IS
+      l_object_names t_string;
    BEGIN
       SELECT object_name
         BULK COLLECT
@@ -154,48 +148,48 @@ $END
    --
    -- get_params
    --
-   FUNCTION get_params RETURN vc2_indexed_array IS
-      l_params vc2_indexed_array;
+   FUNCTION get_params RETURN t_param IS
+      l_params t_param;
    BEGIN
-      l_params(c_view_suffix) := '_V';
-      l_params(c_table_suffix) := '_T';
-      l_params(c_iot_suffix) := '_TRG';
-      l_params(c_gen_iot) := 'Yes';
+      l_params(co_view_suffix) := '_V';
+      l_params(co_table_suffix) := '_T';
+      l_params(co_iot_suffix) := '_TRG';
+      l_params(co_gen_iot) := 'Yes';
       RETURN l_params;
    END get_params;
 
    --
-   -- get_lovs
+   -- get_lov
    --
-   FUNCTION get_lovs RETURN vc2_array_indexed_array IS
-      l_params vc2_array_indexed_array;
+   FUNCTION get_lov RETURN t_lov IS
+      l_lov t_lov;
    BEGIN
-      l_params(c_gen_iot) := NEW vc2_array('Yes', 'No');
-      RETURN l_params;
-   END get_lovs;
+      l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
+      RETURN l_lov;
+   END get_lov;
 
    --
    -- generate (1)
    --
    FUNCTION generate(in_object_type IN VARCHAR2,
                      in_object_name IN VARCHAR2,
-                     in_params      IN vc2_indexed_array) RETURN CLOB IS
+                     in_params      IN t_param) RETURN CLOB IS
       l_args   varchar2_nt;
       l_result CLOB;
-      l_params vc2_indexed_array;
+      l_params t_param;
       --
       FUNCTION get_base_name RETURN VARCHAR2 IS
-         l_base_name object_name_type;
+         l_base_name string_type;
       BEGIN
-         IF l_params(c_table_suffix) IS NOT NULL AND
-            length(l_params(c_table_suffix)) > 0 AND
+         IF l_params(co_table_suffix) IS NOT NULL AND
+            length(l_params(co_table_suffix)) > 0 AND
             substr(in_object_name,
-                   length(in_object_name) - length(l_params(c_table_suffix))) =
-            l_params(c_table_suffix) THEN
+                   length(in_object_name) - length(l_params(co_table_suffix))) =
+            l_params(co_table_suffix) THEN
             l_base_name := substr(in_object_name,
                                   1,
                                   length(in_object_name) -
-                                  length(l_params(c_table_suffix)));
+                                  length(l_params(co_table_suffix)));
          ELSE
             l_base_name := in_object_name;
          END IF;
@@ -203,11 +197,11 @@ $END
       END get_base_name;
       --
       FUNCTION get_name(suffix_in IN VARCHAR2) RETURN VARCHAR2 IS
-         l_name object_name_type;
+         l_name string_type;
       BEGIN
          l_name := get_base_name;
-         IF length(l_name) + length(suffix_in) > c_max_obj_len THEN
-            l_name := substr(l_name, 1, c_max_obj_len - length(suffix_in));
+         IF length(l_name) + length(suffix_in) > co_max_obj_len THEN
+            l_name := substr(l_name, 1, co_max_obj_len - length(suffix_in));
          END IF;
          l_name := l_name || suffix_in;
          RETURN l_name;
@@ -215,12 +209,12 @@ $END
       --
       FUNCTION get_view_name RETURN VARCHAR2 IS
       BEGIN
-         RETURN get_name(l_params(c_view_suffix));
+         RETURN get_name(l_params(co_view_suffix));
       END get_view_name;
       --
       FUNCTION get_iot_name RETURN VARCHAR2 IS
       BEGIN
-         RETURN get_name(l_params(c_iot_suffix));
+         RETURN get_name(l_params(co_iot_suffix));
       END get_iot_name;
       --
       PROCEDURE check_params IS
@@ -232,27 +226,27 @@ $END
           WHERE table_name = in_object_name
             AND owner = USER;
          IF l_found = 0 THEN
-            raise_application_error(c_oddgen_error,
+            raise_application_error(co_oddgen_error,
                                     'Table ' || in_object_name ||
                                     ' not found.');
          END IF;
          IF get_view_name = in_object_name THEN
-            raise_application_error(c_oddgen_error,
-                                    'Change <' || c_view_suffix ||
+            raise_application_error(co_oddgen_error,
+                                    'Change <' || co_view_suffix ||
                                     '>. The target view must be named differently than its base table.');
          END IF;
-         IF l_params(c_gen_iot) NOT IN ('Yes', 'No') THEN
-            raise_application_error(c_oddgen_error,
+         IF l_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
+            raise_application_error(co_oddgen_error,
                                     'Invalid value <' ||
-                                    l_params(c_gen_iot) ||
-                                    '> for parameter <' || c_gen_iot ||
+                                    l_params(co_gen_iot) ||
+                                    '> for parameter <' || co_gen_iot ||
                                     '>. Valid are Yes and No.');
          END IF;
-         IF l_params(c_gen_iot) = 'Yes' THEN
+         IF l_params(co_gen_iot) = 'Yes' THEN
             IF get_iot_name = get_view_name OR
                get_iot_name = in_object_name THEN
-               raise_application_error(c_oddgen_error,
-                                       'Change <' || c_iot_suffix ||
+               raise_application_error(co_oddgen_error,
+                                       'Change <' || co_iot_suffix ||
                                        '>. The target instead-of-trigger must be named differently than its base view and base table.');
             END IF;
             SELECT COUNT(*)
@@ -262,7 +256,7 @@ $END
                    AND table_name = in_object_name
                    AND owner = USER;
             IF l_found = 0 THEN
-               raise_application_error(c_oddgen_error,
+               raise_application_error(co_oddgen_error,
                                        'No primary key found in table ' ||
                                        in_object_name ||
                                        '. Cannot generate instead-of-trigger.');
@@ -283,7 +277,7 @@ $END
                   l_params(i) := in_params(i);
                   i := in_params.next(i);
                ELSE
-                  raise_application_error(c_oddgen_error,
+                  raise_application_error(co_oddgen_error,
                                           'Parameter <' || i ||
                                           '> is not known.');
                END IF;
@@ -298,11 +292,11 @@ $END
                                            in_object_name,
                                            get_view_name,
                                            get_iot_name,
-                                           l_params(c_gen_iot));
+                                           l_params(co_gen_iot));
          l_result := ftldb_api.process_to_clob(in_templ_name => lower($$PLSQL_UNIT) || '%generate_ftl',
                                                in_templ_args => l_args);
       ELSE
-         raise_application_error(c_oddgen_error,
+         raise_application_error(co_oddgen_error,
                                  '<' || in_object_type ||
                                  '> is not a supported object type. Please use TABLE.');
       END IF;
@@ -314,7 +308,7 @@ $END
    --
    FUNCTION generate(in_object_type IN VARCHAR2,
                      in_object_name IN VARCHAR2) RETURN CLOB IS
-      l_params vc2_indexed_array;
+      l_params t_param;
    BEGIN
       RETURN generate(in_object_type => in_object_type,
                       in_object_name => in_object_name,

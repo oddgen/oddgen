@@ -25,18 +25,19 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    --
    -- oddgen PL/SQL data types
    --
-   TYPE vc2_array IS TABLE OF VARCHAR2(1000 CHAR);
-   TYPE vc2_indexed_array IS TABLE OF VARCHAR2(1000 CHAR) INDEX BY VARCHAR2(30 CHAR);
-   TYPE vc2_array_indexed_array IS TABLE OF vc2_array INDEX BY VARCHAR2(30 CHAR);
+   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
    SUBTYPE param_type IS VARCHAR2(30 CHAR);
+   TYPE t_string IS TABLE OF string_type;
+   TYPE t_param IS TABLE OF string_type INDEX BY param_type;
+   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
 
    --
    -- parameter names used also as labels in the GUI
    --
-   c_view_suffix  CONSTANT param_type := 'View suffix';
-   c_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
-   c_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
-   c_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger';
+   co_view_suffix  CONSTANT param_type := 'View suffix';
+   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
+   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
+   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
 
    /**
    * Get name of the generator, used in tree view
@@ -60,7 +61,7 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    *
    * @returns a list of supported object types
    */
-   FUNCTION get_object_types RETURN vc2_array;
+   FUNCTION get_object_types RETURN t_string;
 
    /**
    * Get a list of objects for a object type.
@@ -70,7 +71,7 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    * @param in_object_type object type to filter objects
    * @returns a list of objects
    */
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN vc2_array;
+   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
 
    /**
    * Get all parameters supported by the generator including default values.
@@ -78,7 +79,7 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    *
    * @returns parameters supported by the generator
    */
-   FUNCTION get_params RETURN vc2_indexed_array;
+   FUNCTION get_params RETURN t_param;
 
    /**
    * Get a list of values per parameter, if such a LOV is applicable.
@@ -86,7 +87,7 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    *
    * @returns parameters with their list-of-values
    */
-   FUNCTION get_lovs RETURN vc2_array_indexed_array;
+   FUNCTION get_lov RETURN t_lov;
 
    /**
    * Updates the list of values per parameter.
@@ -98,8 +99,8 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their list-of-values
    */
-   --FUNCTION refresh_lovs(in_params IN vc2_indexed_array)
-   --   RETURN vc2_array_indexed_array;
+   --FUNCTION refresh_lov(in_params IN t_param)
+   --   RETURN t_lov;
 
    /**
    * Generates the result.
@@ -113,7 +114,7 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    */
    FUNCTION generate(in_object_type IN VARCHAR2,
                      in_object_name IN VARCHAR2,
-                     in_params      IN vc2_indexed_array) RETURN CLOB;
+                     in_params      IN t_param) RETURN CLOB;
 
    /**
    * Alternative, simplified version of the generator, which is applicable in SQL.

@@ -1,0 +1,16 @@
+<extension id="trivadis.oddgen.sqldev" version="1.x.x"
+	esdk-version="2.0" rsbundle-class="trivadis.oddgen.sqldev.resources"
+	xmlns="http://jcp.org/jsr/198/extension-manifest">
+	<name>oddgen for SQL Developer</name>
+	<owner>Philipp Salvisberg&#44; Trivadis</owner>
+	<trigger-hooks xmlns="http://xmlns.oracle.com/ide/extension">
+		<triggers>
+			<settings-ui-hook>
+				<page id="oddgen.Preferences" parent-idref="/preferences">
+					<label>oddgen</label>
+					<traversable-class>trivadis.oddgen.sqldev.ui.PreferencePanel</traversable-class>
+				</page>
+			</settings-ui-hook>
+		</triggers>
+	</trigger-hooks>
+</extension>

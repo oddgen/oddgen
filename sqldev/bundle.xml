@@ -3,7 +3,7 @@
 	<u:update id="trivadis.oddgen.sqldev">
 		<u:name>oddgen for SQL Developer</u:name>
 		<u:version>1.x.x</u:version>
-		<u:author>Philipp Salvisberg&#44; Trivadis</u:author>
+		<u:author>Philipp Salvisberg - Trivadis</u:author>
 		<u:author-url>http://www.trivadis.com</u:author-url>
 		<u:description><![CDATA[oddgen for SQL Developer provides tooling for dictionary driven code generators.]]></u:description>
 	</u:update>

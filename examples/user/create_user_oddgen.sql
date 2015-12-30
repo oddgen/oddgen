@@ -20,8 +20,7 @@ SET ECHO OFF
 SPOOL create_user_oddgen.log
 
 PROMPT ====================================================================
-PROMPT This script installs creates the user ODDGEN with all required
-PROMPT privileges. 
+PROMPT This script creates the user ODDGEN with all required privileges. 
 PROMPT Run this script as SYS.
 PROMPT Please change default tablespace and password.
 PROMPT Please change schema name for FTLDB and tePLSQL as well.

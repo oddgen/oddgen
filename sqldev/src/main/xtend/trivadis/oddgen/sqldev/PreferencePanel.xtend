@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package trivadis.oddgen.sqldev.ui
+package trivadis.oddgen.sqldev
 
-import java.util.logging.Logger
+import com.jcabi.aspects.Loggable
 import javax.swing.JCheckBox
 import oracle.ide.panels.DefaultTraversablePanel
 import oracle.ide.panels.TraversableContext
@@ -24,15 +24,14 @@ import oracle.javatools.ui.layout.FieldLayoutBuilder
 import trivadis.oddgen.sqldev.model.PreferenceModel
 
 class PreferencePanel extends DefaultTraversablePanel {
-	static final Logger logger = Logger.getLogger(PreferencePanel.getName())
 	final JCheckBox discoverPlsqlGeneratorsCheckBox = new JCheckBox()
 
 	new() {
 		layoutControls()
 	}
 
+	@Loggable(prepend=true)
 	def private void layoutControls() {
-		logger.fine("start layoutControls")
 		val FieldLayoutBuilder b = new FieldLayoutBuilder(this)
 		b.setAlignLabelsLeft(true)
 		b.add(
@@ -41,29 +40,25 @@ class PreferencePanel extends DefaultTraversablePanel {
 					"If checked, PL/SQL generators are discovered within the current database instance when opening the oddgen folder."
 				))
 		b.addVerticalSpring
-		logger.fine("end layoutControls")
 	}
 
+	@Loggable(prepend=true)
 	override void onEntry(TraversableContext traversableContext) {
-		logger.fine("start onEntry")
 		var PreferenceModel info = getUserInformation(traversableContext)
 		discoverPlsqlGeneratorsCheckBox.setSelected(info.isDiscoverPlsqlGenerators())
 		super.onEntry(traversableContext)
-		logger.fine("end onEntry")
 	}
 
+	@Loggable(prepend=true)
 	override void onExit(TraversableContext traversableContext) throws TraversalException {
-		logger.fine("start onExit")
 		var PreferenceModel info = getUserInformation(traversableContext)
-		info.setDiscoverPlsqlGenerators(discoverPlsqlGeneratorsCheckBox.isSelected())
+		info.setDiscoverPlsqlGenerators(discoverPlsqlGeneratorsCheckBox.selected)
 		super.onExit(traversableContext)
-		logger.fine("end onExit")
 	}
 
+	@Loggable(prepend=true)
 	def private static PreferenceModel getUserInformation(TraversableContext tc) {
-		logger.fine("start/end getUserInformation")
-		return PreferenceModel.getInstance(tc.getPropertyStorage())
+		return PreferenceModel.getInstance(tc.propertyStorage)
 	}
-
 }
 		

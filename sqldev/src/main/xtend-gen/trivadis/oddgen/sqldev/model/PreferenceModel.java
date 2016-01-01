@@ -15,9 +15,11 @@
  */
 package trivadis.oddgen.sqldev.model;
 
+import com.jcabi.aspects.Loggable;
 import oracle.javatools.data.HashStructure;
 import oracle.javatools.data.HashStructureAdapter;
 import oracle.javatools.data.PropertyStorage;
+import trivadis.oddgen.sqldev.Loggable2;
 
 @SuppressWarnings("all")
 public class PreferenceModel extends HashStructureAdapter {
@@ -27,6 +29,7 @@ public class PreferenceModel extends HashStructureAdapter {
     super(hash);
   }
   
+  @Loggable(value = Loggable2.DEBUG, prepend = true)
   public static PreferenceModel getInstance(final PropertyStorage prefs) {
     HashStructure _findOrCreate = HashStructureAdapter.findOrCreate(prefs, PreferenceModel.DATA_KEY);
     return new PreferenceModel(_findOrCreate);
@@ -37,11 +40,13 @@ public class PreferenceModel extends HashStructureAdapter {
    */
   private final static String KEY_DISCOVER_PLSQL_GENERATORS = "discoverPlsqlGenerators";
   
+  @Loggable(value = Loggable2.DEBUG, prepend = true)
   public boolean isDiscoverPlsqlGenerators() {
     HashStructure _hashStructure = this.getHashStructure();
     return _hashStructure.getBoolean(PreferenceModel.KEY_DISCOVER_PLSQL_GENERATORS, true);
   }
   
+  @Loggable(value = Loggable2.DEBUG, prepend = true)
   public void setDiscoverPlsqlGenerators(final boolean discoverPlsqlGenerators) {
     HashStructure _hashStructure = this.getHashStructure();
     _hashStructure.putBoolean(PreferenceModel.KEY_DISCOVER_PLSQL_GENERATORS, discoverPlsqlGenerators);

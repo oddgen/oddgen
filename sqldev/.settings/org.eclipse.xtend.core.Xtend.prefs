@@ -1,0 +1,9 @@
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/main/xtend-gen.directory=src/main/xtext-gen
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/test/xtend-gen.directory=src/test/xtext-gen
+BuilderConfiguration.is_project_specific=true
+eclipse.preferences.version=1
+org.eclipse.xtend.core.Xtend.useProjectSettings=true
+outlet.DEFAULT_OUTPUT.directory=src/main/xtend-gen
+outlet.DEFAULT_OUTPUT.hideLocalSyntheticVariables=true
+outlet.DEFAULT_OUTPUT.installDslAsPrimarySource=false
+outlet.DEFAULT_OUTPUT.userOutputPerSourceFolder=true

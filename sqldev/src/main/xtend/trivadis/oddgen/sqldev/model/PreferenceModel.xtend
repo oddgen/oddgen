@@ -15,9 +15,11 @@
  */
 package trivadis.oddgen.sqldev.model
 
+import com.jcabi.aspects.Loggable
 import oracle.javatools.data.HashStructure
 import oracle.javatools.data.HashStructureAdapter
 import oracle.javatools.data.PropertyStorage
+import trivadis.oddgen.sqldev.Loggable2
 
 class PreferenceModel extends HashStructureAdapter {
 	static final String DATA_KEY = "oddgen"
@@ -26,6 +28,7 @@ class PreferenceModel extends HashStructureAdapter {
 		super(hash)
 	}
 
+	@Loggable(value=Loggable2.DEBUG, prepend=true)
 	def static PreferenceModel getInstance(PropertyStorage prefs) {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
@@ -35,10 +38,12 @@ class PreferenceModel extends HashStructureAdapter {
 	 */
 	static final String KEY_DISCOVER_PLSQL_GENERATORS = "discoverPlsqlGenerators"
 
+	@Loggable(value=Loggable2.DEBUG, prepend=true)
 	def boolean isDiscoverPlsqlGenerators() {
 		return getHashStructure.getBoolean(KEY_DISCOVER_PLSQL_GENERATORS, true)
 	}
 
+	@Loggable(value=Loggable2.DEBUG, prepend=true)
 	def void setDiscoverPlsqlGenerators(boolean discoverPlsqlGenerators) {
 		getHashStructure.putBoolean(KEY_DISCOVER_PLSQL_GENERATORS, discoverPlsqlGenerators)
 	}

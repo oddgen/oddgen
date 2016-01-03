@@ -2,7 +2,11 @@ package trivadis.oddgen.sqldev;
 
 import com.jcabi.aspects.Loggable;
 import oracle.dbtools.raptor.view.AbstractDockableFactory;
+import oracle.ide.IdeConstants;
+import oracle.ide.docking.DockStation;
+import oracle.ide.docking.Dockable;
 import oracle.ide.docking.DockableView;
+import oracle.ide.docking.DockingParam;
 import oracle.ide.layout.ViewId;
 import trivadis.oddgen.sqldev.OddgenNavigatorManager;
 
@@ -20,5 +24,16 @@ public class OddgenDockableFactory extends AbstractDockableFactory {
   protected ViewId getDefaultViewId() {
     OddgenNavigatorManager _instance = OddgenNavigatorManager.getInstance();
     return _instance.getDefaultViewId();
+  }
+  
+  @Loggable(prepend = true)
+  @Override
+  protected DockingParam createDockingParam() {
+    final DockingParam param = new DockingParam();
+    final ViewId referenceView = new ViewId("DatabaseNavigatorWindow", "Default");
+    DockStation _dockStation = DockStation.getDockStation();
+    final Dockable referenceDockable = _dockStation.findDockable(referenceView);
+    param.setPosition(referenceDockable, IdeConstants.SOUTH, IdeConstants.WEST);
+    return param;
   }
 }

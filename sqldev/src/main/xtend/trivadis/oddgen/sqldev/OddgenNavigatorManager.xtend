@@ -3,7 +3,9 @@ package trivadis.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import oracle.dbtools.raptor.RaptorExtensionConstants
 import oracle.ide.Context
+import oracle.ide.IdeConstants
 import oracle.ide.controller.IdeAction
+import oracle.ide.docking.DockStation
 import oracle.ide.docking.DockingParam
 import oracle.ide.help.HelpInfo
 import oracle.ide.layout.ViewId
@@ -40,11 +42,6 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	@Loggable(prepend=true)
-	override protected createToggleToolbarAction() {
-		return IdeAction.find(OddgenNavigatorViewController::SHOW_ODDGEN_NAVIGATOR_CMD_ID)
-	}
-
-	@Loggable(prepend=true)
 	override protected createNavigatorWindow() {
 		return createNavigatorWindow(RootNode.getInstance(), true, if (RaptorExtensionConstants.isStandAlone()) {
 			1
@@ -56,13 +53,12 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	@Loggable(prepend=true)
 	override protected DefaultNavigatorWindow createNavigatorWindow(Context context, ViewId viewId) {
 		val window = new OddgenNavigatorWindow(context, viewId.id)
-		window.gui
 		return window;
 	}
 
 	@Loggable(prepend=true)
 	override protected getDefaultName() {
-		return NAVIGATOR_WINDOW_ID
+		return "Default"
 	}
 
 	@Loggable(prepend=true)
@@ -77,8 +73,11 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 
 	@Loggable(prepend=true)
 	override protected createNavigatorDockingParam() {
-		val dockingParam = new DockingParam();
-		return dockingParam;
+		val param = new DockingParam();
+		val referenceView = new ViewId("DatabaseNavigatorWindow", "Default")
+		val referenceDockable = DockStation.dockStation.findDockable(referenceView)
+		param.setPosition(referenceDockable, IdeConstants.SOUTH, IdeConstants.WEST)
+		return param
 	}
 
 	@Loggable(prepend=true)

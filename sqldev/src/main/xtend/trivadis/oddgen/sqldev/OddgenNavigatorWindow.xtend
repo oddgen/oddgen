@@ -2,6 +2,7 @@ package trivadis.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
 import java.awt.Component
+import java.awt.Dimension
 import oracle.ide.Context
 import oracle.ide.controls.Toolbar
 import oracle.ideri.navigator.DefaultNavigatorWindow
@@ -17,30 +18,54 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	private ToolbarButton refreshButton;
 	private ToolbarButton collapseallButton;
 	private OddgenConnectionPanel connectionPanel;
+	private final String NAVIGATOR_TITLE = OddgenResources.getString("NAVIGATOR_TITLE")
 
 	new(Context context, String string) {
 		super(context, string)
 	}
 
 	@Loggable(prepend=true)
-	def Component getGui() {
+	override Component getGUI() {
 		if (gui == null) {
 			gui = super.getGUI()
-			this.title = OddgenResources.getString("NAVIGATOR_TITLE")
-			toolbarVisible = true
-			tb = toolbar
-			connectionPanel = new OddgenConnectionPanel()
-			connectionPanel.connectionPrompt = null
-			connectionPanel.connectionLabel = null
-			connectionPanel.addButtons = false
-			tb.add(connectionPanel)
-			refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
-			tb.add(refreshButton)
-			collapseallButton = new ToolbarButton(OddgenResources.getIcon("COLLAPSEALL_ICON"))
-			tb.add(collapseallButton)
-			tb.validate
+			title = NAVIGATOR_TITLE
 			logger.info("OddgenNavigatorWindow initialized")
 		}
 		return gui;
 	}
+	
+	@Loggable(prepend=true)
+	def override getTitleName() {
+		return NAVIGATOR_TITLE
+	}
+
+	@Loggable(prepend=true)
+	def protected createToolbar() {
+		if (tb != null) {
+			tb.dispose
+		} else {
+			connectionPanel = new OddgenConnectionPanel()
+			connectionPanel.connectionPrompt = null
+			connectionPanel.connectionLabel = null
+			connectionPanel.addButtons = false
+			connectionPanel.maximumSize = new Dimension(300,50)
+			connectionPanel.minimumSize = new Dimension(100,0)
+			refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
+			collapseallButton = new ToolbarButton(OddgenResources.getIcon("COLLAPSEALL_ICON"))
+		}
+		toolbarVisible = true
+		tb = toolbar
+		tb.add(connectionPanel)
+		tb.add(refreshButton)
+		tb.add(collapseallButton)
+	}
+
+	@Loggable(prepend=true)
+	override show() {
+		createToolbar
+		super.show()
+		logger.info("OddgenNavigatorWindow initialized")
+	}
+	
+
 }

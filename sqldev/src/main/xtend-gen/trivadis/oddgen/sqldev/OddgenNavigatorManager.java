@@ -4,7 +4,10 @@ import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
 import oracle.dbtools.raptor.RaptorExtensionConstants;
 import oracle.ide.Context;
+import oracle.ide.IdeConstants;
 import oracle.ide.controller.IdeAction;
+import oracle.ide.docking.DockStation;
+import oracle.ide.docking.Dockable;
 import oracle.ide.docking.DockableFactory;
 import oracle.ide.docking.DockingParam;
 import oracle.ide.help.HelpInfo;
@@ -48,12 +51,6 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   
   @Loggable(prepend = true)
   @Override
-  protected IdeAction createToggleToolbarAction() {
-    return IdeAction.find(OddgenNavigatorViewController.SHOW_ODDGEN_NAVIGATOR_CMD_ID);
-  }
-  
-  @Loggable(prepend = true)
-  @Override
   protected NavigatorWindow createNavigatorWindow() {
     RootNode _instance = RootNode.getInstance();
     int _xifexpression = (int) 0;
@@ -71,14 +68,13 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   protected DefaultNavigatorWindow createNavigatorWindow(final Context context, final ViewId viewId) {
     String _id = viewId.getId();
     final OddgenNavigatorWindow window = new OddgenNavigatorWindow(context, _id);
-    window.getGui();
     return window;
   }
   
   @Loggable(prepend = true)
   @Override
   protected String getDefaultName() {
-    return OddgenNavigatorManager.NAVIGATOR_WINDOW_ID;
+    return "Default";
   }
   
   @Loggable(prepend = true)
@@ -96,8 +92,12 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   @Loggable(prepend = true)
   @Override
   protected DockingParam createNavigatorDockingParam() {
-    final DockingParam dockingParam = new DockingParam();
-    return dockingParam;
+    final DockingParam param = new DockingParam();
+    final ViewId referenceView = new ViewId("DatabaseNavigatorWindow", "Default");
+    DockStation _dockStation = DockStation.getDockStation();
+    final Dockable referenceDockable = _dockStation.findDockable(referenceView);
+    param.setPosition(referenceDockable, IdeConstants.SOUTH, IdeConstants.WEST);
+    return param;
   }
   
   @Loggable(prepend = true)

@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import javax.swing.Icon;
 import oracle.ide.Context;
 import oracle.ide.controls.Toolbar;
+import oracle.ide.util.PropertyAccess;
 import oracle.ideri.navigator.DefaultNavigatorWindow;
 import oracle.javatools.ui.table.ToolbarButton;
 import org.slf4j.Logger;
@@ -100,5 +101,17 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
     this.createToolbar();
     super.show();
     OddgenNavigatorWindow.logger.info("OddgenNavigatorWindow initialized");
+  }
+  
+  @Loggable(prepend = true)
+  @Override
+  public void saveLayout(final PropertyAccess p) {
+    super.saveLayout(p);
+  }
+  
+  @Loggable(prepend = true)
+  @Override
+  public void loadLayout(final PropertyAccess p) {
+    super.loadLayout(p);
   }
 }

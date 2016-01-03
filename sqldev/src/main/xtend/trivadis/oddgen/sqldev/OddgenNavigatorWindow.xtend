@@ -10,6 +10,10 @@ import oracle.javatools.ui.table.ToolbarButton
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import trivadis.oddgen.sqldev.resources.OddgenResources
+import oracle.ide.util.PropertyAccess
+import oracle.ide.Ide
+import oracle.ide.util.Assert
+import oracle.ide.explorer.TreeExplorer
 
 class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	static final Logger logger = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
@@ -31,7 +35,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		}
 		return gui;
 	}
-	
+
 	@Loggable(prepend=true)
 	def override getTitleName() {
 		return OddgenResources.getString("NAVIGATOR_TITLE")
@@ -47,8 +51,8 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 			connectionPanel.connectionPrompt = null
 			connectionPanel.connectionLabel = null
 			connectionPanel.addButtons = false
-			connectionPanel.maximumSize = new Dimension(300,50)
-			connectionPanel.minimumSize = new Dimension(100,0)
+			connectionPanel.maximumSize = new Dimension(300, 50)
+			connectionPanel.minimumSize = new Dimension(100, 0)
 			refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
 			collapseallButton = new ToolbarButton(OddgenResources.getIcon("COLLAPSEALL_ICON"))
 		}
@@ -65,6 +69,15 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		super.show()
 		logger.info("OddgenNavigatorWindow initialized")
 	}
-	
+
+	@Loggable(prepend=true)
+	override saveLayout(PropertyAccess p) {
+		super.saveLayout(p)
+	}
+
+	@Loggable(prepend=true)
+	override loadLayout(PropertyAccess p) {
+		super.loadLayout(p)
+	}
 
 }

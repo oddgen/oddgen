@@ -4,6 +4,7 @@ import com.jcabi.aspects.Loggable
 import oracle.ide.model.DefaultContainer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import trivadis.oddgen.sqldev.resources.OddgenResources
 
 class RootNode extends DefaultContainer {
 	static final Logger logger = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
@@ -19,10 +20,14 @@ class RootNode extends DefaultContainer {
 	}
 
 	override def getShortLabel() {
-		return "oddgen"
+		return OddgenResources.getString("ROOT_NODE_SHORT_LABEL")
 	}
 
 	override def getLongLabel() {
-		return "All Generators"
+		return OddgenResources.getString("ROOT_NODE_LONG_LABEL")
+	}
+	
+	override def getIcon() {
+		return OddgenResources.getIcon("ODDGEN_FOLDER_ICON")
 	}
 }

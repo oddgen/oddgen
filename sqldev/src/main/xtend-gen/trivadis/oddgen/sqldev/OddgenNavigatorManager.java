@@ -24,8 +24,6 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   
   private final static String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
   
-  private final static String DEFAULT_NAME = "oddgen";
-  
   private static OddgenNavigatorManager instance = null;
   
   public OddgenNavigatorManager() {
@@ -50,6 +48,12 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   
   @Loggable(prepend = true)
   @Override
+  protected IdeAction createToggleToolbarAction() {
+    return IdeAction.find(OddgenNavigatorViewController.SHOW_ODDGEN_NAVIGATOR_CMD_ID);
+  }
+  
+  @Loggable(prepend = true)
+  @Override
   protected NavigatorWindow createNavigatorWindow() {
     RootNode _instance = RootNode.getInstance();
     int _xifexpression = (int) 0;
@@ -66,13 +70,15 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
   @Override
   protected DefaultNavigatorWindow createNavigatorWindow(final Context context, final ViewId viewId) {
     String _id = viewId.getId();
-    return new OddgenNavigatorWindow(context, _id);
+    final OddgenNavigatorWindow window = new OddgenNavigatorWindow(context, _id);
+    window.getGui();
+    return window;
   }
   
   @Loggable(prepend = true)
   @Override
   protected String getDefaultName() {
-    return OddgenNavigatorManager.DEFAULT_NAME;
+    return OddgenNavigatorManager.NAVIGATOR_WINDOW_ID;
   }
   
   @Loggable(prepend = true)

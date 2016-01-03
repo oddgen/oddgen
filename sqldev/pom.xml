@@ -5,15 +5,16 @@
 	<!-- The Basics -->
 	<groupId>trivadis.oddgen</groupId>
 	<artifactId>sqldev</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.7</jdk.version>
-		<bundle.version>0.1.0</bundle.version>
 		<sqldev.basedir>/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper</sqldev.basedir>
+		<final.name>oddgen_for_SQLDev_${project.version}</final.name>
 	</properties>
 	<dependencies>
+		<!-- SQL Developer specific dependencies -->
 		<dependency>
 			<groupId>oracle</groupId>
 			<artifactId>idert</artifactId>
@@ -71,11 +72,33 @@
 			<systemPath>${sqldev.basedir}/ide/extensions/oracle.ide.navigator.jar</systemPath>
 		</dependency>
 		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>javax-ide</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/ide/lib/javax-ide.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>oracle.dbtools-common</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/sqldeveloper/lib/oracle.dbtools-common.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
+			<artifactId>oracle.sqldeveloper</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/sqldeveloper/extensions/oracle.sqldeveloper.jar</systemPath>
+		</dependency>
+		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>5.0.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- other dependencies -->
 		<dependency>
 			<!-- Xtend comes with some runtime dependencies... -->
 			<!-- using older version just because upgrade to 2.9.1 failed in Eclipse -->
@@ -231,6 +254,39 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.0.0</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>read-project-properties</goal>
+						</goals>
+						<configuration>
+							<urls>
+								<url>
+									file:///${project.basedir}/src/main/resources/trivadis/oddgen/sqldev/resources/OddgenResources.properties
+								</url>
+							</urls>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>1.10</version>
+				<executions>
+					<execution>
+						<id>parse-version</id>
+						<goals>
+							<goal>parse-version</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>com.google.code.maven-replacer-plugin</groupId>
 				<artifactId>replacer</artifactId>
 				<version>1.5.3</version>
@@ -250,8 +306,20 @@
 					</includes>
 					<replacements>
 						<replacement>
-							<token>1.x.x</token>
-							<value>${bundle.version}.${buildNumber}</value>
+							<token>#EXTENSION_VERSION#</token>
+							<value>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.${buildNumber}</value>
+						</replacement>
+						<replacement>
+							<token>#EXTENSION_DEPLOYABLE#</token>
+							<value>${final.name}.zip</value>
+						</replacement>
+						<replacement>
+							<token>#EXTENSION_NAME#</token>
+							<value>${EXTENSION_NAME}</value>
+						</replacement>
+						<replacement>
+							<token>#EXTENSION_OWNER#</token>
+							<value>${EXTENSION_OWNER}</value>
 						</replacement>
 					</replacements>
 				</configuration>
@@ -269,6 +337,7 @@
 					</archive>
 					<instructions>
 						<Bundle-SymbolicName>${project.name}</Bundle-SymbolicName>
+						<Bundle-Version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</Bundle-Version>
 						<Bundle-Build>${buildNumber}</Bundle-Build>
 						<Export-Package>
 							trivadis.oddgen.sqldev,
@@ -332,7 +401,7 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.6</version>
 				<configuration>
-					<finalName>oddgen_for_SQLDev_${project.version}</finalName>
+					<finalName>${final.name}</finalName>
 					<appendAssemblyId>false</appendAssemblyId>
 					<descriptors>
 						<descriptor>sqldev_assembly.xml</descriptor>
@@ -370,6 +439,25 @@
 									</pluginExecutionFilter>
 									<action>
 										<ignore />
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.codehaus.mojo
+										</groupId>
+										<artifactId>
+											build-helper-maven-plugin
+										</artifactId>
+										<versionRange>
+											[1.8,)
+										</versionRange>
+										<goals>
+											<goal>parse-version</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
 									</action>
 								</pluginExecution>
 							</pluginExecutions>

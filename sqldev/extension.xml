@@ -1,20 +1,18 @@
-<extension id="trivadis.oddgen.sqldev" version="1.x.x"
-	esdk-version="2.0" xmlns="http://jcp.org/jsr/198/extension-manifest">
-	<name>oddgen for SQL Developer</name>
-	<owner>Philipp Salvisberg - Trivadis</owner>
+<extension id="trivadis.oddgen.sqldev" version="#EXTENSION_VERSION#"
+	esdk-version="2.0" xmlns="http://jcp.org/jsr/198/extension-manifest"
+	rsbundle-class="trivadis.oddgen.sqldev.resources.OddgenResources">
+	<name rskey="EXTENSION_NAME" />
+	<owner rskey="EXTENSION_OWNER" />
 	<trigger-hooks xmlns="http://xmlns.oracle.com/ide/extension">
 		<triggers>
 			<dockable-factory-hook xmlns="http://xmlns.oracle.com/ide/extension">
-				<factory id="oddgen.NAVIGATOR_WINDOW_VIEW"
-					class="trivadis.oddgen.sqldev.OddgenDockableFactory" />
+				<factory id="oddgen.NAVIGATOR_WINDOW" class="trivadis.oddgen.sqldev.OddgenDockableFactory" />
 			</dockable-factory-hook>
 			<actions xmlns="http://xmlns.oracle.com/jdeveloper/1013/extension">
 				<action id="oddgen.SHOW_NAVIGATOR">
 					<properties>
-						<property name="Name">oddgen</property>
-						<property name="SmallIcon">res:/trivadis/oddgen/sqldev/resources/images/oddgen.png
-						</property>
-						<property name="LongDescription">Dictionary driven Generators</property>
+						<property name="Name">${VIEW_MENU_LABEL}</property>
+						<property name="SmallIcon">res:${ODDGEN_ICON}</property>
 						<property name="Category">View</property>
 					</properties>
 				</action>
@@ -24,7 +22,7 @@
 					<update-rules>
 						<update-rule rule="always-enabled">
 							<action id="oddgen.SHOW_NAVIGATOR">
-								<label>oddgen</label>
+								<label>${VIEW_MENU_LABEL}</label>
 							</action>
 						</update-rule>
 					</update-rules>
@@ -35,7 +33,7 @@
 					<menubar id="javax.ide.view.MAIN_WINDOW_MENUBAR_ID">
 						<menu id="javax.ide.VIEW_MENU_ID">
 							<section id="oddgen.NEW_MENU_SECTION_ID">
-								<item action-ref="oddgen.SHOW_NAVIGATOR" weight="1000.0" />
+								<item action-ref="oddgen.SHOW_NAVIGATOR" weight="10.0" />
 							</section>
 						</menu>
 					</menubar>
@@ -43,7 +41,7 @@
 			</menu-hook>
 			<settings-ui-hook>
 				<page id="oddgen.PREFERENCES_PAGE" parent-idref="/preferences">
-					<label>oddgen</label>
+					<label>${EXTENSION_NAME}</label>
 					<traversable-class>trivadis.oddgen.sqldev.PreferencePanel
 					</traversable-class>
 				</page>
@@ -52,7 +50,7 @@
 	</trigger-hooks>
 	<hooks>
 		<dockable-hook xmlns="http://xmlns.oracle.com/ide/extension">
-			<dockable id="oddgen.NAVIGATOR_WINDOW_VIEW" />
+			<dockable id="oddgen.NAVIGATOR_WINDOW" />
 		</dockable-hook>
 	</hooks>
 </extension>

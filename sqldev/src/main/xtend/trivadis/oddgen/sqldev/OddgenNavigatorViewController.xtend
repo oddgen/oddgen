@@ -33,22 +33,22 @@ class OddgenNavigatorViewController extends ShowNavigatorController {
 		}
 		if (action == null || action.commandId == SHOW_ODDGEN_NAVIGATOR_CMD_ID && !initialized) {
 			initialized = true;
-			//OddgenDockableFactory.showOddgenNavigatorWindow
-			logger.debug("window factory called")
-			val navigatorManager = OddgenNavigatorManager.instance;
+			val navigatorManager = OddgenNavigatorManager.instance
 			logger.debug("navigator manager: " + navigatorManager)
 			val show = navigatorManager.getShowAction();
 			logger.debug("showAction: " + show)
 			show.actionPerformed(context.event as ActionEvent);
 			return true;
+		} else if (action != null) {
+			logger.debug("else showAction: " + action)
+			return true;
+			
 		}
 		return false;
 	}
-
+	
 	@Loggable(prepend=true)
 	override protected getNavigatorManager() {
 		return OddgenNavigatorManager.getInstance();
 	}
-
-
 }

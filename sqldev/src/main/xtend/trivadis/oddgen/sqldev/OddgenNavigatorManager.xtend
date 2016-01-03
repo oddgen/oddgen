@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 class OddgenNavigatorManager extends DefaultNavigatorManager {
 	static final Logger logger = LoggerFactory.getLogger(OddgenNavigatorManager.name)
 	private static final String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
-	private static final String DEFAULT_NAME = "oddgen";
 
 	static private OddgenNavigatorManager instance = null
 
@@ -41,6 +40,11 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	@Loggable(prepend=true)
+	override protected createToggleToolbarAction() {
+		return IdeAction.find(OddgenNavigatorViewController::SHOW_ODDGEN_NAVIGATOR_CMD_ID)
+	}
+
+	@Loggable(prepend=true)
 	override protected createNavigatorWindow() {
 		return createNavigatorWindow(RootNode.getInstance(), true, if (RaptorExtensionConstants.isStandAlone()) {
 			1
@@ -51,12 +55,14 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 
 	@Loggable(prepend=true)
 	override protected DefaultNavigatorWindow createNavigatorWindow(Context context, ViewId viewId) {
-		return new OddgenNavigatorWindow(context, viewId.id);
+		val window = new OddgenNavigatorWindow(context, viewId.id)
+		window.gui
+		return window;
 	}
 
 	@Loggable(prepend=true)
 	override protected getDefaultName() {
-		return DEFAULT_NAME
+		return NAVIGATOR_WINDOW_ID
 	}
 
 	@Loggable(prepend=true)

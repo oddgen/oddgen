@@ -3,11 +3,11 @@
   xmlns="http://xmlns.oracle.com/jdeveloper/updatecenter"
   xmlns:u="http://xmlns.oracle.com/jdeveloper/update">
     <u:update id="com.trivadis.unwrapper.sqldev">
-        <u:name>oddgen for SQL Developer</u:name>
-        <u:version>1.x.x</u:version>
-        <u:author>Philipp Salvisberg - Trivadis</u:author>
+        <u:name>#EXTENSION_NAME#</u:name>
+        <u:version>#EXTENSION_VERSION#</u:version>
+        <u:author>#EXTENSION_OWNER#</u:author>
         <u:author-url>http://www.trivadis.com</u:author-url>
 		<u:description><![CDATA[oddgen for SQL Developer provides tooling for dictionary driven code generators.]]></u:description>
-        <u:bundle-url>http://www.salvis.com/update/oddgen_for_SQLDev_1.x.x.zip</u:bundle-url>
+        <u:bundle-url>http://www.salvis.com/update/oddgen/#EXTENSION_DEPLOYABLE#</u:bundle-url>
     </u:update>
 </updates>

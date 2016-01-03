@@ -2,10 +2,12 @@ package trivadis.oddgen.sqldev;
 
 import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
+import javax.swing.Icon;
 import oracle.ide.model.DefaultContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import trivadis.oddgen.sqldev.OddgenNavigatorWindow;
+import trivadis.oddgen.sqldev.resources.OddgenResources;
 
 @SuppressWarnings("all")
 public class RootNode extends DefaultContainer {
@@ -26,11 +28,16 @@ public class RootNode extends DefaultContainer {
   
   @Override
   public String getShortLabel() {
-    return "oddgen";
+    return OddgenResources.getString("ROOT_NODE_SHORT_LABEL");
   }
   
   @Override
   public String getLongLabel() {
-    return "All Generators";
+    return OddgenResources.getString("ROOT_NODE_LONG_LABEL");
+  }
+  
+  @Override
+  public Icon getIcon() {
+    return OddgenResources.getIcon("ODDGEN_FOLDER_ICON");
   }
 }

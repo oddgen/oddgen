@@ -60,7 +60,6 @@ public class OddgenNavigatorViewController extends ShowNavigatorController {
     }
     if (_or) {
       this.initialized = true;
-      OddgenNavigatorViewController.logger.debug("window factory called");
       final OddgenNavigatorManager navigatorManager = OddgenNavigatorManager.getInstance();
       OddgenNavigatorViewController.logger.debug(("navigator manager: " + navigatorManager));
       final IdeAction show = navigatorManager.getShowAction();
@@ -68,6 +67,12 @@ public class OddgenNavigatorViewController extends ShowNavigatorController {
       EventObject _event = context.getEvent();
       show.actionPerformed(((ActionEvent) _event));
       return true;
+    } else {
+      boolean _notEquals_1 = (!Objects.equal(action, null));
+      if (_notEquals_1) {
+        OddgenNavigatorViewController.logger.debug(("else showAction: " + action));
+        return true;
+      }
     }
     return false;
   }

@@ -28,8 +28,6 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
   
   private OddgenConnectionPanel connectionPanel;
   
-  private final String NAVIGATOR_TITLE = OddgenResources.getString("NAVIGATOR_TITLE");
-  
   public OddgenNavigatorWindow(final Context context, final String string) {
     super(context, string);
   }
@@ -41,7 +39,6 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
     if (_equals) {
       Component _gUI = super.getGUI();
       this.gui = _gUI;
-      this.setTitle(this.NAVIGATOR_TITLE);
       OddgenNavigatorWindow.logger.info("OddgenNavigatorWindow initialized");
     }
     return this.gui;
@@ -50,7 +47,7 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
   @Loggable(prepend = true)
   @Override
   public String getTitleName() {
-    return this.NAVIGATOR_TITLE;
+    return OddgenResources.getString("NAVIGATOR_TITLE");
   }
   
   @Loggable(prepend = true)
@@ -60,7 +57,9 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
       boolean _notEquals = (!Objects.equal(this.tb, null));
       if (_notEquals) {
         this.tb.dispose();
-      } else {
+      }
+      boolean _equals = Objects.equal(this.connectionPanel, null);
+      if (_equals) {
         OddgenConnectionPanel _oddgenConnectionPanel = new OddgenConnectionPanel();
         this.connectionPanel = _oddgenConnectionPanel;
         this.connectionPanel.setConnectionPrompt(null);
@@ -80,9 +79,17 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
       this.setToolbarVisible(true);
       Toolbar _toolbar = this.getToolbar();
       this.tb = _toolbar;
-      this.tb.add(this.connectionPanel);
-      this.tb.add(this.refreshButton);
-      _xblockexpression = this.tb.add(this.collapseallButton);
+      if (this.tb!=null) {
+        this.tb.add(this.connectionPanel);
+      }
+      if (this.tb!=null) {
+        this.tb.add(this.refreshButton);
+      }
+      Component _add = null;
+      if (this.tb!=null) {
+        _add=this.tb.add(this.collapseallButton);
+      }
+      _xblockexpression = _add;
     }
     return _xblockexpression;
   }

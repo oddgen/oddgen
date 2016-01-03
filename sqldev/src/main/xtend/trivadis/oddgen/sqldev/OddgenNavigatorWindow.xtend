@@ -18,7 +18,6 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	private ToolbarButton refreshButton;
 	private ToolbarButton collapseallButton;
 	private OddgenConnectionPanel connectionPanel;
-	private final String NAVIGATOR_TITLE = OddgenResources.getString("NAVIGATOR_TITLE")
 
 	new(Context context, String string) {
 		super(context, string)
@@ -28,7 +27,6 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	override Component getGUI() {
 		if (gui == null) {
 			gui = super.getGUI()
-			title = NAVIGATOR_TITLE
 			logger.info("OddgenNavigatorWindow initialized")
 		}
 		return gui;
@@ -36,14 +34,15 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	
 	@Loggable(prepend=true)
 	def override getTitleName() {
-		return NAVIGATOR_TITLE
+		return OddgenResources.getString("NAVIGATOR_TITLE")
 	}
 
 	@Loggable(prepend=true)
 	def protected createToolbar() {
 		if (tb != null) {
 			tb.dispose
-		} else {
+		}
+		if (connectionPanel == null) {
 			connectionPanel = new OddgenConnectionPanel()
 			connectionPanel.connectionPrompt = null
 			connectionPanel.connectionLabel = null
@@ -55,9 +54,9 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		}
 		toolbarVisible = true
 		tb = toolbar
-		tb.add(connectionPanel)
-		tb.add(refreshButton)
-		tb.add(collapseallButton)
+		tb?.add(connectionPanel)
+		tb?.add(refreshButton)
+		tb?.add(collapseallButton)
 	}
 
 	@Loggable(prepend=true)

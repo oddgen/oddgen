@@ -14,7 +14,7 @@
 		<final.name>oddgen_for_SQLDev_${project.version}</final.name>
 	</properties>
 	<dependencies>
-		<!-- SQL Developer specific dependencies -->
+		<!-- SQL Developer specific dependencies part 1 (not available in public maven repositories) -->
 		<dependency>
 			<groupId>oracle</groupId>
 			<artifactId>idert</artifactId>
@@ -92,11 +92,44 @@
 			<scope>system</scope>
 			<systemPath>${sqldev.basedir}/sqldeveloper/extensions/oracle.sqldeveloper.jar</systemPath>
 		</dependency>
+		<!-- SQL Developer specific dependencies part 2 (available in public maven repositories) -->
 		<dependency>
+			<!-- SQL Developer is using this older version -->
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>5.0.0</version>
 			<scope>provided</scope>
+		</dependency>
+		<!-- logging dependencies -->
+		<dependency>
+			<!-- configure annotated logging via class com.jcabi, see https://github.com/jcabi/jcabi-aspects/issues/156 -->
+			<groupId>com.jcabi</groupId>
+			<artifactId>jcabi-aspects</artifactId>
+			<version>0.22.2</version>
+		</dependency>
+		<dependency>
+			<!-- override dependency from jcabi-aspects -->
+			<groupId>com.jcabi</groupId>
+			<artifactId>jcabi-log</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<!-- override dependency from jcabi-aspects -->
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjrt</artifactId>
+			<version>1.8.7</version>
+		</dependency>
+		<dependency>
+			<!-- required for jcabi-aspects when weaving Java 1.8 classes -->
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjtools</artifactId>
+			<version>1.8.7</version>
+		</dependency>
+		<dependency>
+			<!-- binds slf4j to java.util.logging (used by SQL Developer), see  -->
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<version>1.7.13</version>
 		</dependency>
 		<!-- other dependencies -->
 		<dependency>
@@ -105,22 +138,6 @@
 			<groupId>org.eclipse.xtend</groupId>
 			<artifactId>org.eclipse.xtend.lib</artifactId>
 			<version>2.8.4</version>
-		</dependency>
-		<dependency>
-			<!-- configure annotated logging via class com.jcabi, see https://github.com/jcabi/jcabi-aspects/issues/156 -->
-			<groupId>com.jcabi</groupId>
-			<artifactId>jcabi-aspects</artifactId>
-			<version>0.22.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.aspectj</groupId>
-			<artifactId>aspectjrt</artifactId>
-			<version>1.8.7</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<version>1.7.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -529,7 +546,7 @@
 	</scm>
 	<prerequisites>
 		<!-- SQL Developer 4.1.3 installation for Oracle dependencies, see sqldev.basedir -->
-		<!-- JDK 1.7 -->
+		<!-- JDK 1.7 to ensure compatiblity to SQL Developer 4.0.x, using JDK 1.8 with target 1.7 should be OK -->
 		<maven>3.1.1</maven>
 	</prerequisites>
 </project>

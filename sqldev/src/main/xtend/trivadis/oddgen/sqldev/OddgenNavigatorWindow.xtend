@@ -29,6 +29,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		Logger.info(this, "OddgenNavigatorWindow initialized")
 	}
 
+	@Loggable(value=LoggableConstants.DEBUG, prepend=true)
 	def protected createToolbar() {
 		if (tb != null) {
 			tb.dispose
@@ -58,7 +59,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		return gui;
 	}
 
-	def override getTitleName() {
+	override getTitleName() {
 		return OddgenResources.getString("NAVIGATOR_TITLE")
 	}
 

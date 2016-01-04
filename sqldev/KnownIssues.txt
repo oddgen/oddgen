@@ -4,4 +4,3 @@ Issues during development, to be fixed later.
 Not worth handled via GitHub (yet).
 
 - oddgen Navigator window is not restored after SQL Developer restart
-- class com.jcabi.log.Logger is logged instead of trivadis.oddgen.sqldev

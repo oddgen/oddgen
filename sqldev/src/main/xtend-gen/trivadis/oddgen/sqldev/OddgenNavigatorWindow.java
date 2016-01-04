@@ -11,6 +11,7 @@ import oracle.ide.controls.Toolbar;
 import oracle.ide.util.PropertyAccess;
 import oracle.ideri.navigator.DefaultNavigatorWindow;
 import oracle.javatools.ui.table.ToolbarButton;
+import trivadis.oddgen.sqldev.LoggableConstants;
 import trivadis.oddgen.sqldev.OddgenConnectionPanel;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
@@ -36,6 +37,7 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
     Logger.info(this, "OddgenNavigatorWindow initialized");
   }
   
+  @Loggable(value = LoggableConstants.DEBUG, prepend = true)
   protected Component createToolbar() {
     Component _xblockexpression = null;
     {

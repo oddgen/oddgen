@@ -7,15 +7,24 @@ import java.io.IOException;
 import java.net.URL;
 import javax.swing.Icon;
 import oracle.ide.model.DefaultContainer;
+import oracle.ide.model.Subject;
+import oracle.ide.model.UpdateMessage;
 import oracle.ide.net.URLFactory;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import trivadis.oddgen.sqldev.FolderNode;
+import trivadis.oddgen.sqldev.LoggableConstants;
 import trivadis.oddgen.sqldev.model.Folder;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
-@Loggable(prepend = true)
+@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @SuppressWarnings("all")
 public class RootNode extends DefaultContainer {
+  private static String ROOT_NODE_NAME = OddgenResources.getString("ROOT_NODE_LONG_LABEL");
+  
+  private static String CLIENT_GEN_NAME = OddgenResources.getString("CLIENT_GEN_NODE_LONG_LABEL");
+  
+  private static String DBSERVER_GEN_NAME = OddgenResources.getString("DBSERVER_GEN_NODE_LONG_LABEL");
+  
   private static RootNode INSTANCE;
   
   private boolean initialized = false;
@@ -35,9 +44,12 @@ public class RootNode extends DefaultContainer {
   }
   
   private RootNode() {
-    String _get = OddgenResources.get("ROOT_NODE_SHORT_LABEL");
-    URL _newURL = URLFactory.newURL("oddgen.generators", _get);
-    this.setURL(_newURL);
+    final URL url = URLFactory.newURL("oddgen.generators", RootNode.ROOT_NODE_NAME);
+    boolean _equals = Objects.equal(url, null);
+    if (_equals) {
+      Logger.error(this, "root node URL is null");
+    }
+    this.setURL(url);
   }
   
   public FolderNode getClientGenerators() {
@@ -72,17 +84,17 @@ public class RootNode extends DefaultContainer {
   
   @Override
   public String getShortLabel() {
-    return OddgenResources.get("ROOT_NODE_SHORT_LABEL");
+    return RootNode.ROOT_NODE_NAME;
   }
   
   @Override
   public String getLongLabel() {
-    return OddgenResources.getString("ROOT_NODE_LONG_LABEL");
+    return RootNode.ROOT_NODE_NAME;
   }
   
   @Override
   public String getToolTipText() {
-    return this.getLongLabel();
+    return RootNode.ROOT_NODE_NAME;
   }
   
   @Override
@@ -104,22 +116,28 @@ public class RootNode extends DefaultContainer {
     thread.start();
   }
   
-  protected boolean initialize() {
+  protected void addFolder(final String name) {
+    final Folder folder = new Folder();
+    folder.setName(name);
+    folder.setDescription(name);
+    URL _uRL = this.getURL();
+    final URL folderUrl = URLFactory.newURL(_uRL, name);
+    final FolderNode folderNode = new FolderNode(folderUrl, folder);
+    this._children.add(folderNode);
+    UpdateMessage.fireChildAdded(((Subject) this), folderNode);
+  }
+  
+  public boolean initialize() {
     boolean _xifexpression = false;
     if ((!this.initialized)) {
       boolean _xblockexpression = false;
       {
-        this.initialized = true;
-        final Folder clientFolder = new Folder();
-        String _string = OddgenResources.getString("CLIENT_GEN_NODE_SHORT_LABEL");
-        clientFolder.setName(_string);
-        String _string_1 = OddgenResources.getString("CLIENT_GEN_NODE_LONG_LABEL");
-        clientFolder.setDescription(_string_1);
-        URL _uRL = this.getURL();
-        String _description = clientFolder.getDescription();
-        final URL url = URLFactory.newURL(_uRL, _description);
-        final FolderNode clientFolderNode = new FolderNode(url, clientFolder);
-        _xblockexpression = this._children.add(clientFolderNode);
+        this.addFolder(RootNode.CLIENT_GEN_NAME);
+        this.addFolder(RootNode.DBSERVER_GEN_NAME);
+        UpdateMessage.fireStructureChanged(((Subject) this));
+        this.markDirty(false);
+        Logger.info(this, "RootNode initialized");
+        _xblockexpression = this.initialized = true;
       }
       _xifexpression = _xblockexpression;
     }

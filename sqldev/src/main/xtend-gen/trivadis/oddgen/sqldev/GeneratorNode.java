@@ -4,10 +4,11 @@ import com.jcabi.aspects.Loggable;
 import java.net.URL;
 import javax.swing.Icon;
 import oracle.ide.model.DefaultContainer;
+import trivadis.oddgen.sqldev.LoggableConstants;
 import trivadis.oddgen.sqldev.model.Generator;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
-@Loggable(prepend = true)
+@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @SuppressWarnings("all")
 public class GeneratorNode extends DefaultContainer {
   private Generator generator;

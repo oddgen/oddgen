@@ -49,6 +49,13 @@
 		</triggers>
 	</trigger-hooks>
 	<hooks>
+		<urlfilesystem-hook
+			xmlns="http://xmlns.oracle.com/jdeveloper/hooks/urlfilesystem">
+			<streamfactory protocol="oddgen.generators"
+				class="trivadis.oddgen.sqldev.net.OddgenUrlStreamHandlerFactory" />
+			<fshelper protocol="oddgen.generators"
+				class="trivadis.oddgen.sqldev.net.OddgenURLFileSystemHelper" />
+		</urlfilesystem-hook>
 		<dockable-hook xmlns="http://xmlns.oracle.com/ide/extension">
 			<dockable id="oddgen.NAVIGATOR_WINDOW" />
 		</dockable-hook>

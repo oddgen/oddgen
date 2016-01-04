@@ -6,7 +6,7 @@ import oracle.ide.model.DefaultContainer
 import trivadis.oddgen.sqldev.model.Generator
 import trivadis.oddgen.sqldev.resources.OddgenResources
 
-@Loggable(prepend=true)
+@Loggable(value=LoggableConstants.DEBUG, prepend=true)
 class GeneratorNode extends DefaultContainer {
 	private Generator generator
 

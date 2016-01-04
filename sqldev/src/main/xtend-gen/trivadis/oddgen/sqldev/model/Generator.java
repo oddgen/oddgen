@@ -4,8 +4,9 @@ import com.jcabi.aspects.Loggable;
 import oracle.ide.model.DefaultContainer;
 import org.eclipse.xtend.lib.annotations.Accessors;
 import org.eclipse.xtext.xbase.lib.Pure;
+import trivadis.oddgen.sqldev.LoggableConstants;
 
-@Loggable(prepend = true)
+@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @Accessors
 @SuppressWarnings("all")
 public class Generator extends DefaultContainer {

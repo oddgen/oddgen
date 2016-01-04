@@ -1,10 +1,12 @@
 package trivadis.oddgen.sqldev.model;
 
+import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
 import org.eclipse.xtend.lib.annotations.Accessors;
 import org.eclipse.xtext.xbase.lib.Pure;
+import trivadis.oddgen.sqldev.LoggableConstants;
 
-@Loggable(prepend = true)
+@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @Accessors
 @SuppressWarnings("all")
 public class Folder {
@@ -13,6 +15,17 @@ public class Folder {
   private String description;
   
   private String tooltip;
+  
+  public String getTooltip() {
+    String _xifexpression = null;
+    boolean _equals = Objects.equal(this.tooltip, null);
+    if (_equals) {
+      _xifexpression = this.description;
+    } else {
+      _xifexpression = this.tooltip;
+    }
+    return _xifexpression;
+  }
   
   @Pure
   public String getName() {
@@ -30,11 +43,6 @@ public class Folder {
   
   public void setDescription(final String description) {
     this.description = description;
-  }
-  
-  @Pure
-  public String getTooltip() {
-    return this.tooltip;
   }
   
   public void setTooltip(final String tooltip) {

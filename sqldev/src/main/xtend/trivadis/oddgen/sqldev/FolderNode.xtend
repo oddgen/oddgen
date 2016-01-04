@@ -6,7 +6,7 @@ import oracle.ide.model.DefaultContainer
 import trivadis.oddgen.sqldev.model.Folder
 import trivadis.oddgen.sqldev.resources.OddgenResources
 
-@Loggable(prepend=true)
+@Loggable(value=LoggableConstants.DEBUG, prepend=true)
 class FolderNode extends DefaultContainer {
 	Folder folder;
 

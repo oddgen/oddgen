@@ -126,7 +126,7 @@
 			<version>1.8.7</version>
 		</dependency>
 		<dependency>
-			<!-- binds slf4j to java.util.logging (used by SQL Developer), see  -->
+			<!-- binds slf4j to java.util.logging (used by SQL Developer), see implementations on http://www.slf4j.org/ -->
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>1.7.13</version>

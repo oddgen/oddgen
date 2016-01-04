@@ -14,11 +14,12 @@ import oracle.ideri.navigator.DefaultNavigatorWindow
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+@Loggable(prepend=true)
 class OddgenNavigatorManager extends DefaultNavigatorManager {
-	static final Logger logger = LoggerFactory.getLogger(OddgenNavigatorManager.name)
+	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorManager.name)
 	private static final String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
 
-	static private OddgenNavigatorManager instance = null
+	static private OddgenNavigatorManager INSTANCE = null
 
 	new() {
 		// TODO: define and include accelerators
@@ -27,21 +28,18 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 		// "/trivadis/oddgen/sqldev/resources/accelerators.xml");
 	}
 
-	@Loggable(prepend=true)
 	def static OddgenNavigatorManager getInstance() {
-		if (instance == null) {
-			instance = new OddgenNavigatorManager
-			logger.info("OddgenNavigatorManager initialized")
+		if (INSTANCE == null) {
+			INSTANCE = new OddgenNavigatorManager
+			LOGGER.info("OddgenNavigatorManager initialized")
 		}
-		return instance
+		return INSTANCE
 	}
 
-	@Loggable(prepend=true)
 	override protected createShowNavigatorAction() {
 		return IdeAction.find(OddgenNavigatorViewController::SHOW_ODDGEN_NAVIGATOR_CMD_ID)
 	}
 
-	@Loggable(prepend=true)
 	override protected createNavigatorWindow() {
 		return createNavigatorWindow(RootNode.getInstance(), true, if (RaptorExtensionConstants.isStandAlone()) {
 			1
@@ -50,28 +48,23 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 		});
 	}
 
-	@Loggable(prepend=true)
 	override protected DefaultNavigatorWindow createNavigatorWindow(Context context, ViewId viewId) {
 		val window = new OddgenNavigatorWindow(context, viewId.id)
 		return window;
 	}
 
-	@Loggable(prepend=true)
 	override protected getDefaultName() {
 		return "Default"
 	}
 
-	@Loggable(prepend=true)
 	override protected getViewCategory() {
 		return NAVIGATOR_WINDOW_ID
 	}
 
-	@Loggable(prepend=true)
 	override protected createDockableFactory() {
 		return null
 	}
 
-	@Loggable(prepend=true)
 	override protected createNavigatorDockingParam() {
 		val param = new DockingParam();
 		val referenceView = new ViewId("DatabaseNavigatorWindow", "Default")
@@ -80,7 +73,6 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 		return param
 	}
 
-	@Loggable(prepend=true)
 	override HelpInfo getHelpInfo() {
 		// TODO: provide some help
 		return super.helpInfo

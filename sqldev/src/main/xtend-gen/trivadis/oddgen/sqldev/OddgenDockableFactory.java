@@ -10,23 +10,21 @@ import oracle.ide.docking.DockingParam;
 import oracle.ide.layout.ViewId;
 import trivadis.oddgen.sqldev.OddgenNavigatorManager;
 
+@Loggable(prepend = true)
 @SuppressWarnings("all")
 public class OddgenDockableFactory extends AbstractDockableFactory {
-  @Loggable(prepend = true)
   @Override
   protected DockableView getDockableImpl() {
     OddgenNavigatorManager _instance = OddgenNavigatorManager.getInstance();
     return _instance.getNavigatorWindow();
   }
   
-  @Loggable(prepend = true)
   @Override
   protected ViewId getDefaultViewId() {
     OddgenNavigatorManager _instance = OddgenNavigatorManager.getInstance();
     return _instance.getDefaultViewId();
   }
   
-  @Loggable(prepend = true)
   @Override
   protected DockingParam createDockingParam() {
     final DockingParam param = new DockingParam();

@@ -23,6 +23,7 @@ import oracle.ide.panels.TraversalException
 import oracle.javatools.ui.layout.FieldLayoutBuilder
 import trivadis.oddgen.sqldev.model.PreferenceModel
 
+@Loggable(prepend=true)
 class PreferencePanel extends DefaultTraversablePanel {
 	final JCheckBox discoverPlsqlGeneratorsCheckBox = new JCheckBox()
 
@@ -30,7 +31,6 @@ class PreferencePanel extends DefaultTraversablePanel {
 		layoutControls()
 	}
 
-	@Loggable(prepend=true)
 	def private void layoutControls() {
 		val FieldLayoutBuilder b = new FieldLayoutBuilder(this)
 		b.setAlignLabelsLeft(true)
@@ -42,23 +42,19 @@ class PreferencePanel extends DefaultTraversablePanel {
 		b.addVerticalSpring
 	}
 
-	@Loggable(prepend=true)
 	override void onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = getUserInformation(traversableContext)
 		discoverPlsqlGeneratorsCheckBox.setSelected(info.isDiscoverPlsqlGenerators())
 		super.onEntry(traversableContext)
 	}
 
-	@Loggable(prepend=true)
 	override void onExit(TraversableContext traversableContext) throws TraversalException {
 		var PreferenceModel info = getUserInformation(traversableContext)
 		info.setDiscoverPlsqlGenerators(discoverPlsqlGeneratorsCheckBox.selected)
 		super.onExit(traversableContext)
 	}
 
-	@Loggable(prepend=true)
 	def private static PreferenceModel getUserInformation(TraversableContext tc) {
 		return PreferenceModel.getInstance(tc.propertyStorage)
 	}
 }
-		

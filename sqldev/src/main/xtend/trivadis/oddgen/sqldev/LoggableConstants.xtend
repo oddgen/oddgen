@@ -1,6 +1,6 @@
 package trivadis.oddgen.sqldev
 
-class Loggable2 {
+class LoggableConstants {
 	/* copied from com.jcabi.aspects.Loggable workaround for Xtend 2.8.4 detecting the right values */
 	public static final int TRACE = 0;
 	public static final int DEBUG = 1;

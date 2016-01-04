@@ -15,9 +15,10 @@ import org.slf4j.LoggerFactory;
 import trivadis.oddgen.sqldev.OddgenConnectionPanel;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
+@Loggable(prepend = true)
 @SuppressWarnings("all")
 public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
-  private final static Logger logger = LoggerFactory.getLogger(OddgenNavigatorWindow.class.getName());
+  private final static Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.class.getName());
   
   private Component gui;
   
@@ -33,25 +34,11 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
     super(context, string);
   }
   
-  @Loggable(prepend = true)
-  @Override
-  public Component getGUI() {
-    boolean _equals = Objects.equal(this.gui, null);
-    if (_equals) {
-      Component _gUI = super.getGUI();
-      this.gui = _gUI;
-      OddgenNavigatorWindow.logger.info("OddgenNavigatorWindow initialized");
-    }
-    return this.gui;
+  protected void initialize() {
+    this.createToolbar();
+    OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow initialized");
   }
   
-  @Loggable(prepend = true)
-  @Override
-  public String getTitleName() {
-    return OddgenResources.getString("NAVIGATOR_TITLE");
-  }
-  
-  @Loggable(prepend = true)
   protected Component createToolbar() {
     Component _xblockexpression = null;
     {
@@ -95,21 +82,34 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
     return _xblockexpression;
   }
   
-  @Loggable(prepend = true)
+  @Override
+  public Component getGUI() {
+    boolean _equals = Objects.equal(this.gui, null);
+    if (_equals) {
+      Component _gUI = super.getGUI();
+      this.gui = _gUI;
+      this.initialize();
+    }
+    return this.gui;
+  }
+  
+  @Override
+  public String getTitleName() {
+    return OddgenResources.getString("NAVIGATOR_TITLE");
+  }
+  
   @Override
   public void show() {
     this.createToolbar();
     super.show();
-    OddgenNavigatorWindow.logger.info("OddgenNavigatorWindow initialized");
+    OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow shown");
   }
   
-  @Loggable(prepend = true)
   @Override
   public void saveLayout(final PropertyAccess p) {
     super.saveLayout(p);
   }
   
-  @Loggable(prepend = true)
   @Override
   public void loadLayout(final PropertyAccess p) {
     super.loadLayout(p);

@@ -21,35 +21,33 @@ import trivadis.oddgen.sqldev.OddgenNavigatorViewController;
 import trivadis.oddgen.sqldev.OddgenNavigatorWindow;
 import trivadis.oddgen.sqldev.RootNode;
 
+@Loggable(prepend = true)
 @SuppressWarnings("all")
 public class OddgenNavigatorManager extends DefaultNavigatorManager {
-  private final static Logger logger = LoggerFactory.getLogger(OddgenNavigatorManager.class.getName());
+  private final static Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorManager.class.getName());
   
   private final static String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
   
-  private static OddgenNavigatorManager instance = null;
+  private static OddgenNavigatorManager INSTANCE = null;
   
   public OddgenNavigatorManager() {
   }
   
-  @Loggable(prepend = true)
   public static OddgenNavigatorManager getInstance() {
-    boolean _equals = Objects.equal(OddgenNavigatorManager.instance, null);
+    boolean _equals = Objects.equal(OddgenNavigatorManager.INSTANCE, null);
     if (_equals) {
       OddgenNavigatorManager _oddgenNavigatorManager = new OddgenNavigatorManager();
-      OddgenNavigatorManager.instance = _oddgenNavigatorManager;
-      OddgenNavigatorManager.logger.info("OddgenNavigatorManager initialized");
+      OddgenNavigatorManager.INSTANCE = _oddgenNavigatorManager;
+      OddgenNavigatorManager.LOGGER.info("OddgenNavigatorManager initialized");
     }
-    return OddgenNavigatorManager.instance;
+    return OddgenNavigatorManager.INSTANCE;
   }
   
-  @Loggable(prepend = true)
   @Override
   protected IdeAction createShowNavigatorAction() {
     return IdeAction.find(OddgenNavigatorViewController.SHOW_ODDGEN_NAVIGATOR_CMD_ID);
   }
   
-  @Loggable(prepend = true)
   @Override
   protected NavigatorWindow createNavigatorWindow() {
     RootNode _instance = RootNode.getInstance();
@@ -63,7 +61,6 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
     return this.createNavigatorWindow(_instance, true, _xifexpression);
   }
   
-  @Loggable(prepend = true)
   @Override
   protected DefaultNavigatorWindow createNavigatorWindow(final Context context, final ViewId viewId) {
     String _id = viewId.getId();
@@ -71,25 +68,21 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
     return window;
   }
   
-  @Loggable(prepend = true)
   @Override
   protected String getDefaultName() {
     return "Default";
   }
   
-  @Loggable(prepend = true)
   @Override
   protected String getViewCategory() {
     return OddgenNavigatorManager.NAVIGATOR_WINDOW_ID;
   }
   
-  @Loggable(prepend = true)
   @Override
   protected DockableFactory createDockableFactory() {
     return null;
   }
   
-  @Loggable(prepend = true)
   @Override
   protected DockingParam createNavigatorDockingParam() {
     final DockingParam param = new DockingParam();
@@ -100,7 +93,6 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
     return param;
   }
   
-  @Loggable(prepend = true)
   @Override
   public HelpInfo getHelpInfo() {
     return super.getHelpInfo();

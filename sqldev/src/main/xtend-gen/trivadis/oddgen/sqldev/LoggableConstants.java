@@ -1,7 +1,7 @@
 package trivadis.oddgen.sqldev;
 
 @SuppressWarnings("all")
-public class Loggable2 {
+public class LoggableConstants {
   /**
    * copied from com.jcabi.aspects.Loggable workaround for Xtend 2.8.4 detecting the right values
    */

@@ -24,6 +24,7 @@ import oracle.javatools.data.PropertyStorage;
 import oracle.javatools.ui.layout.FieldLayoutBuilder;
 import trivadis.oddgen.sqldev.model.PreferenceModel;
 
+@Loggable(prepend = true)
 @SuppressWarnings("all")
 public class PreferencePanel extends DefaultTraversablePanel {
   private final JCheckBox discoverPlsqlGeneratorsCheckBox = new JCheckBox();
@@ -32,7 +33,6 @@ public class PreferencePanel extends DefaultTraversablePanel {
     this.layoutControls();
   }
   
-  @Loggable(prepend = true)
   private void layoutControls() {
     final FieldLayoutBuilder b = new FieldLayoutBuilder(this);
     b.setAlignLabelsLeft(true);
@@ -46,7 +46,6 @@ public class PreferencePanel extends DefaultTraversablePanel {
     b.addVerticalSpring();
   }
   
-  @Loggable(prepend = true)
   @Override
   public void onEntry(final TraversableContext traversableContext) {
     PreferenceModel info = PreferencePanel.getUserInformation(traversableContext);
@@ -55,7 +54,6 @@ public class PreferencePanel extends DefaultTraversablePanel {
     super.onEntry(traversableContext);
   }
   
-  @Loggable(prepend = true)
   @Override
   public void onExit(final TraversableContext traversableContext) throws TraversalException {
     PreferenceModel info = PreferencePanel.getUserInformation(traversableContext);
@@ -64,7 +62,6 @@ public class PreferencePanel extends DefaultTraversablePanel {
     super.onExit(traversableContext);
   }
   
-  @Loggable(prepend = true)
   private static PreferenceModel getUserInformation(final TraversableContext tc) {
     PropertyStorage _propertyStorage = tc.getPropertyStorage();
     return PreferenceModel.getInstance(_propertyStorage);

@@ -5,8 +5,8 @@ import java.awt.GridBagConstraints
 import javax.swing.JPanel
 import oracle.dbtools.raptor.controls.ConnectionPanelUI
 
+@Loggable(prepend=true)
 class OddgenConnectionPanel extends ConnectionPanelUI {
-
 	private boolean addButtons
 
 	new() {
@@ -14,14 +14,12 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		super(#["oraJDBC"], false, false)
 	}
 
-	@Loggable(prepend=true)
 	override protected void addButtons(JPanel panel, GridBagConstraints constraints) {
 		if (addButtons) {
 			super.addButtons(panel, constraints)
 		}
 	}
-	
-	@Loggable(prepend=true)
+
 	def setAddButtons(boolean addButtons) {
 		this.addButtons = addButtons
 	}

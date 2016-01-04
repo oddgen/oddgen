@@ -5,18 +5,16 @@ import java.awt.Component
 import java.awt.Dimension
 import oracle.ide.Context
 import oracle.ide.controls.Toolbar
+import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import trivadis.oddgen.sqldev.resources.OddgenResources
-import oracle.ide.util.PropertyAccess
-import oracle.ide.Ide
-import oracle.ide.util.Assert
-import oracle.ide.explorer.TreeExplorer
 
+@Loggable(prepend=true)
 class OddgenNavigatorWindow extends DefaultNavigatorWindow {
-	static final Logger logger = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
+	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
 	private Component gui
 	private Toolbar tb;
 	private ToolbarButton refreshButton;
@@ -27,21 +25,12 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		super(context, string)
 	}
 
-	@Loggable(prepend=true)
-	override Component getGUI() {
-		if (gui == null) {
-			gui = super.getGUI()
-			logger.info("OddgenNavigatorWindow initialized")
-		}
-		return gui;
+	def protected initialize() {
+		// TODO: add ContextMenu, TreeExplorer
+		createToolbar
+		OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow initialized")
 	}
 
-	@Loggable(prepend=true)
-	def override getTitleName() {
-		return OddgenResources.getString("NAVIGATOR_TITLE")
-	}
-
-	@Loggable(prepend=true)
 	def protected createToolbar() {
 		if (tb != null) {
 			tb.dispose
@@ -63,21 +52,29 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		tb?.add(collapseallButton)
 	}
 
-	@Loggable(prepend=true)
+	override Component getGUI() {
+		if (gui == null) {
+			gui = super.getGUI()
+			initialize()
+		}
+		return gui;
+	}
+
+	def override getTitleName() {
+		return OddgenResources.getString("NAVIGATOR_TITLE")
+	}
+
 	override show() {
 		createToolbar
 		super.show()
-		logger.info("OddgenNavigatorWindow initialized")
+		OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow shown")
 	}
 
-	@Loggable(prepend=true)
 	override saveLayout(PropertyAccess p) {
 		super.saveLayout(p)
 	}
 
-	@Loggable(prepend=true)
 	override loadLayout(PropertyAccess p) {
 		super.loadLayout(p)
 	}
-
 }

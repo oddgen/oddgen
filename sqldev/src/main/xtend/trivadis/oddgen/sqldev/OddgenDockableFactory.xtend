@@ -8,18 +8,16 @@ import oracle.ide.docking.DockableView
 import oracle.ide.docking.DockingParam
 import oracle.ide.layout.ViewId
 
+@Loggable(prepend=true)
 class OddgenDockableFactory extends AbstractDockableFactory {
-	@Loggable(prepend=true)
 	override protected DockableView getDockableImpl() {
 		return OddgenNavigatorManager.instance.navigatorWindow
 	}
 
-	@Loggable(prepend=true)
 	override protected ViewId getDefaultViewId() {
 		return OddgenNavigatorManager.instance.defaultViewId
 	}
 
-	@Loggable(prepend=true)
 	override protected DockingParam createDockingParam() {
 		val param = new DockingParam();
 		val referenceView = new ViewId("DatabaseNavigatorWindow", "Default")

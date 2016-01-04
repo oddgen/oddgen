@@ -1,6 +1,7 @@
 package trivadis.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import oracle.dbtools.raptor.RaptorExtensionConstants
 import oracle.ide.Context
 import oracle.ide.IdeConstants
@@ -11,12 +12,9 @@ import oracle.ide.help.HelpInfo
 import oracle.ide.layout.ViewId
 import oracle.ideri.navigator.DefaultNavigatorManager
 import oracle.ideri.navigator.DefaultNavigatorWindow
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 @Loggable(prepend=true)
 class OddgenNavigatorManager extends DefaultNavigatorManager {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorManager.name)
 	private static final String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
 
 	static private OddgenNavigatorManager INSTANCE = null
@@ -31,7 +29,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	def static OddgenNavigatorManager getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new OddgenNavigatorManager
-			LOGGER.info("OddgenNavigatorManager initialized")
+			Logger.info(DefaultNavigatorManager, "OddgenNavigatorManager initialized")
 		}
 		return INSTANCE
 	}

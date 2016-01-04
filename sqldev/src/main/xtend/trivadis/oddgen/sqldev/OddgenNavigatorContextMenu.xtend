@@ -1,6 +1,7 @@
 package trivadis.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.awt.Component
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
@@ -15,21 +16,16 @@ import oracle.ide.controller.IdeAction
 import oracle.ide.model.Node
 import oracle.ideimpl.explorer.CustomTree
 import oracle.ideimpl.explorer.ExplorerNode
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-import static trivadis.oddgen.sqldev.OddgenNavigatorContextMenuController.*
 
 @Loggable(prepend=true)
-class OddgenNavigatorContextMenuController implements ContextMenuListener, Controller {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
+class OddgenNavigatorContextMenu implements ContextMenuListener, Controller {
 	private static final int OPEN_CMD_ID = Ide.findOrCreateCmdID("oddgen.OPEN");
 	private static final int REFRESH_CMD_ID = Ide.findOrCreateCmdID("oddgen.REFRESH");
 	private static final int COLLAPSEALL_CMD_ID = Ide.findOrCreateCmdID("oddgen.COLLAPSEALL");
 	private static final IdeAction OPEN_ACTION = getAction(OPEN_CMD_ID)
 	private static final IdeAction REFRESH_ACTION = getAction(REFRESH_CMD_ID)
 	private static final IdeAction COLLAPSEALL_ACTION = getAction(COLLAPSEALL_CMD_ID)
-	private static OddgenNavigatorContextMenuController INSTANCE
+	private static OddgenNavigatorContextMenu INSTANCE
 
 	def private static IdeAction getAction(int actionId) {
 		val action = IdeAction.get(actionId);
@@ -39,7 +35,7 @@ class OddgenNavigatorContextMenuController implements ContextMenuListener, Contr
 
 	def static synchronized getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new OddgenNavigatorContextMenuController();
+			INSTANCE = new OddgenNavigatorContextMenu();
 		}
 		return INSTANCE;
 	}
@@ -59,7 +55,7 @@ class OddgenNavigatorContextMenuController implements ContextMenuListener, Contr
 							val Node node = explorerNode.getUserObject() as Node
 							if ((node instanceof GeneratorNode)) {
 								// TODO: 
-								LOGGER.debug("on node " + node)
+								Logger.debug(this, "on node " + node)
 							}
 						}
 					}

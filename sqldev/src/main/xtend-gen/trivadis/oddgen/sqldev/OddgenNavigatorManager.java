@@ -2,6 +2,7 @@ package trivadis.oddgen.sqldev;
 
 import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
+import com.jcabi.log.Logger;
 import oracle.dbtools.raptor.RaptorExtensionConstants;
 import oracle.ide.Context;
 import oracle.ide.IdeConstants;
@@ -15,8 +16,6 @@ import oracle.ide.layout.ViewId;
 import oracle.ide.navigator.NavigatorWindow;
 import oracle.ideri.navigator.DefaultNavigatorManager;
 import oracle.ideri.navigator.DefaultNavigatorWindow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import trivadis.oddgen.sqldev.OddgenNavigatorViewController;
 import trivadis.oddgen.sqldev.OddgenNavigatorWindow;
 import trivadis.oddgen.sqldev.RootNode;
@@ -24,8 +23,6 @@ import trivadis.oddgen.sqldev.RootNode;
 @Loggable(prepend = true)
 @SuppressWarnings("all")
 public class OddgenNavigatorManager extends DefaultNavigatorManager {
-  private final static Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorManager.class.getName());
-  
   private final static String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
   
   private static OddgenNavigatorManager INSTANCE = null;
@@ -38,7 +35,7 @@ public class OddgenNavigatorManager extends DefaultNavigatorManager {
     if (_equals) {
       OddgenNavigatorManager _oddgenNavigatorManager = new OddgenNavigatorManager();
       OddgenNavigatorManager.INSTANCE = _oddgenNavigatorManager;
-      OddgenNavigatorManager.LOGGER.info("OddgenNavigatorManager initialized");
+      Logger.info(DefaultNavigatorManager.class, "OddgenNavigatorManager initialized");
     }
     return OddgenNavigatorManager.INSTANCE;
   }

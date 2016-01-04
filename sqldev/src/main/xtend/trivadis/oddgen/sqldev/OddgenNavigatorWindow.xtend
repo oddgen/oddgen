@@ -1,6 +1,7 @@
 package trivadis.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.awt.Component
 import java.awt.Dimension
 import oracle.ide.Context
@@ -8,13 +9,10 @@ import oracle.ide.controls.Toolbar
 import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import trivadis.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(prepend=true)
 class OddgenNavigatorWindow extends DefaultNavigatorWindow {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
 	private Component gui
 	private Toolbar tb;
 	private ToolbarButton refreshButton;
@@ -28,7 +26,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	def protected initialize() {
 		// TODO: add ContextMenu, TreeExplorer
 		createToolbar
-		OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow initialized")
+		Logger.info(this, "OddgenNavigatorWindow initialized")
 	}
 
 	def protected createToolbar() {
@@ -67,7 +65,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	override show() {
 		createToolbar
 		super.show()
-		OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow shown")
+		Logger.info(this, "OddgenNavigatorWindow shown")
 	}
 
 	override saveLayout(PropertyAccess p) {

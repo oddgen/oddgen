@@ -2,6 +2,7 @@ package trivadis.oddgen.sqldev;
 
 import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
+import com.jcabi.log.Logger;
 import java.awt.Component;
 import java.awt.Dimension;
 import javax.swing.Icon;
@@ -10,16 +11,12 @@ import oracle.ide.controls.Toolbar;
 import oracle.ide.util.PropertyAccess;
 import oracle.ideri.navigator.DefaultNavigatorWindow;
 import oracle.javatools.ui.table.ToolbarButton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import trivadis.oddgen.sqldev.OddgenConnectionPanel;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
 @Loggable(prepend = true)
 @SuppressWarnings("all")
 public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
-  private final static Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.class.getName());
-  
   private Component gui;
   
   private Toolbar tb;
@@ -36,7 +33,7 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
   
   protected void initialize() {
     this.createToolbar();
-    OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow initialized");
+    Logger.info(this, "OddgenNavigatorWindow initialized");
   }
   
   protected Component createToolbar() {
@@ -102,7 +99,7 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
   public void show() {
     this.createToolbar();
     super.show();
-    OddgenNavigatorWindow.LOGGER.info("OddgenNavigatorWindow shown");
+    Logger.info(this, "OddgenNavigatorWindow shown");
   }
   
   @Override

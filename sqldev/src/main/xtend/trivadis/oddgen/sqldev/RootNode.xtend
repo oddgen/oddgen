@@ -1,17 +1,15 @@
 package trivadis.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.io.IOException
 import oracle.ide.model.DefaultContainer
 import oracle.ide.net.URLFactory
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import trivadis.oddgen.sqldev.model.Folder
 import trivadis.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(prepend=true)
 class RootNode extends DefaultContainer {
-	private static final Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.name)
 	private static RootNode INSTANCE;
 	private boolean initialized = false;
 	private FolderNode clientGenerators;
@@ -21,7 +19,7 @@ class RootNode extends DefaultContainer {
 
 		if (INSTANCE == null) {
 			INSTANCE = new RootNode
-			LOGGER.info("RootNode initialized")
+			Logger.info(RootNode, "RootNode initialized")
 		}
 		return INSTANCE
 	}
@@ -34,7 +32,7 @@ class RootNode extends DefaultContainer {
 		try {
 			open()
 		} catch (IOException e) {
-			LOGGER.error(e.message)
+			Logger.error(this, e.message)
 		}
 		return clientGenerators
 	}
@@ -43,7 +41,7 @@ class RootNode extends DefaultContainer {
 		try {
 			open()
 		} catch (IOException e) {
-			LOGGER.error(e.message)
+			Logger.error(this, e.message)
 		}
 		return dbServerGenerators
 	}

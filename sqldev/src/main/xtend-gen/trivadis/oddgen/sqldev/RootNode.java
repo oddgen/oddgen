@@ -2,24 +2,20 @@ package trivadis.oddgen.sqldev;
 
 import com.google.common.base.Objects;
 import com.jcabi.aspects.Loggable;
+import com.jcabi.log.Logger;
 import java.io.IOException;
 import java.net.URL;
 import javax.swing.Icon;
 import oracle.ide.model.DefaultContainer;
 import oracle.ide.net.URLFactory;
 import org.eclipse.xtext.xbase.lib.Exceptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import trivadis.oddgen.sqldev.FolderNode;
-import trivadis.oddgen.sqldev.OddgenNavigatorWindow;
 import trivadis.oddgen.sqldev.model.Folder;
 import trivadis.oddgen.sqldev.resources.OddgenResources;
 
 @Loggable(prepend = true)
 @SuppressWarnings("all")
 public class RootNode extends DefaultContainer {
-  private final static Logger LOGGER = LoggerFactory.getLogger(OddgenNavigatorWindow.class.getName());
-  
   private static RootNode INSTANCE;
   
   private boolean initialized = false;
@@ -33,7 +29,7 @@ public class RootNode extends DefaultContainer {
     if (_equals) {
       RootNode _rootNode = new RootNode();
       RootNode.INSTANCE = _rootNode;
-      RootNode.LOGGER.info("RootNode initialized");
+      Logger.info(RootNode.class, "RootNode initialized");
     }
     return RootNode.INSTANCE;
   }
@@ -51,7 +47,7 @@ public class RootNode extends DefaultContainer {
       if (_t instanceof IOException) {
         final IOException e = (IOException)_t;
         String _message = e.getMessage();
-        RootNode.LOGGER.error(_message);
+        Logger.error(this, _message);
       } else {
         throw Exceptions.sneakyThrow(_t);
       }
@@ -66,7 +62,7 @@ public class RootNode extends DefaultContainer {
       if (_t instanceof IOException) {
         final IOException e = (IOException)_t;
         String _message = e.getMessage();
-        RootNode.LOGGER.error(_message);
+        Logger.error(this, _message);
       } else {
         throw Exceptions.sneakyThrow(_t);
       }

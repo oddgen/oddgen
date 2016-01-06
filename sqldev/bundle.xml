@@ -1,10 +1,10 @@
 <update-bundle version="1.0"
 	xmlns="http://xmlns.oracle.com/jdeveloper/updatebundle" xmlns:u="http://xmlns.oracle.com/jdeveloper/update">
-	<u:update id="trivadis.oddgen.sqldev">
+	<u:update id="org.oddgen.sqldev">
 		<u:name>#EXTENSION_NAME#</u:name>
 		<u:version>#EXTENSION_VERSION#</u:version>
 		<u:author>#EXTENSION_OWNER#</u:author>
-		<u:author-url>http://www.trivadis.com</u:author-url>
-		<u:description><![CDATA[oddgen for SQL Developer provides tooling for dictionary driven code generators.]]></u:description>
+		<u:author-url>https://www.oddgen.org/</u:author-url>
+		<u:description><![CDATA[SQL Developer extension to invoke dictionary driven code generators.]]></u:description>
 	</u:update>
 </update-bundle>

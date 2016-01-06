@@ -6,8 +6,8 @@
         <u:name>#EXTENSION_NAME#</u:name>
         <u:version>#EXTENSION_VERSION#</u:version>
         <u:author>#EXTENSION_OWNER#</u:author>
-        <u:author-url>http://www.trivadis.com</u:author-url>
-		<u:description><![CDATA[oddgen for SQL Developer provides tooling for dictionary driven code generators.]]></u:description>
-        <u:bundle-url>http://www.salvis.com/update/oddgen/#EXTENSION_DEPLOYABLE#</u:bundle-url>
+        <u:author-url>https://www.oddgen.org/</u:author-url>
+		<u:description><![CDATA[SQL Developer extension to invoke dictionary driven code generators.]]></u:description>
+        <u:bundle-url>https://www.oddgen.org/download/#EXTENSION_DEPLOYABLE#</u:bundle-url>
     </u:update>
 </updates>

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<!-- The Basics -->
-	<groupId>trivadis.oddgen</groupId>
+	<groupId>org.oddgen</groupId>
 	<artifactId>sqldev</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 	<packaging>bundle</packaging>
@@ -284,7 +284,7 @@
 						<configuration>
 							<urls>
 								<url>
-									file:///${project.basedir}/src/main/resources/trivadis/oddgen/sqldev/resources/OddgenResources.properties
+									file:///${project.basedir}/src/main/resources/org/oddgen/sqldev/resources/OddgenResources.properties
 								</url>
 							</urls>
 						</configuration>
@@ -358,9 +358,9 @@
 						<Bundle-Version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</Bundle-Version>
 						<Bundle-Build>${buildNumber}</Bundle-Build>
 						<Export-Package>
-							trivadis.oddgen.sqldev,
-							trivadis.oddgen.sqldev.model,
-							trivadis.oddgen.sqldev.resources,
+							org.oddgen.sqldev,
+							org.oddgen.sqldev.model,
+							org.oddgen.sqldev.resources,
 						</Export-Package>
 						<!-- TODO: remove unnecessary bundles, missing bundles might lead to 
 							strange runtime behavior, therefore the list is extensive -->
@@ -509,9 +509,9 @@
 	</build>
 
 	<!-- More Project Information -->
-	<name>trivadis.oddgen.sqldev</name>
+	<name>org.oddgen.sqldev</name>
 	<description>oddgen for SQL Developer provides tooling for dictionary driven code generators.</description>
-	<url>https://github.com/PhilippSalvisberg/oddgen</url>
+	<url>https://github.com/PhilippSalvisberg/oddgen/</url>
 	<inceptionYear>2015</inceptionYear>
 	<licenses>
 		<license>
@@ -524,7 +524,7 @@
 		<developer>
 			<email>philipp.salvisberg@trivadis.com</email>
 			<name>Philipp Salvisberg</name>
-			<url>https://github.com/PhilippSalvisberg</url>
+			<url>https://github.com/PhilippSalvisberg/</url>
 			<id>PhilippSalvisberg</id>
 			<roles>
 				<role>lead</role>
@@ -535,14 +535,14 @@
 
 	<!-- Environment Settings -->
 	<issueManagement>
-		<url>https://github.com/PhilippSalvisberg/oddgen/issues</url>
+		<url>https://github.com/PhilippSalvisberg/oddgen/issues/</url>
 		<system>GitHub Issues</system>
 	</issueManagement>
 	<scm>
 		<connection>scm:git:git://github.com/PhilippSalvisberg/oddgen.git</connection>
 		<developerConnection>scm:git:git@github.com:PhilippSalvisberg/oddgen.git</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/PhilippSalvisberg/oddgen</url>
+		<url>https://github.com/PhilippSalvisberg/oddgen/</url>
 	</scm>
 	<prerequisites>
 		<!-- SQL Developer 4.1.3 installation for Oracle dependencies, see sqldev.basedir -->

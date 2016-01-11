@@ -1,14 +1,11 @@
 package org.oddgen.sqldev;
 
-import com.jcabi.aspects.Loggable;
 import java.net.URL;
 import javax.swing.Icon;
 import oracle.ide.model.DefaultContainer;
-import org.oddgen.sqldev.LoggableConstants;
 import org.oddgen.sqldev.model.Folder;
 import org.oddgen.sqldev.resources.OddgenResources;
 
-@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @SuppressWarnings("all")
 public class FolderNode extends DefaultContainer {
   private Folder folder;

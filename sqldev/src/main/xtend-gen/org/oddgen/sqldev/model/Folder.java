@@ -1,15 +1,13 @@
 package org.oddgen.sqldev.model;
 
 import com.google.common.base.Objects;
-import com.jcabi.aspects.Loggable;
 import org.eclipse.xtend.lib.annotations.Accessors;
 import org.eclipse.xtext.xbase.lib.Pure;
-import org.oddgen.sqldev.LoggableConstants;
+import org.oddgen.sqldev.model.AbstractModel;
 
-@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @Accessors
 @SuppressWarnings("all")
-public class Folder {
+public class Folder extends AbstractModel {
   private String name;
   
   private String description;

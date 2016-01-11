@@ -51,7 +51,6 @@ public class OddgenNavigatorWindow extends DefaultNavigatorWindow {
         this.connectionPanel = _oddgenConnectionPanel;
         this.connectionPanel.setConnectionPrompt(null);
         this.connectionPanel.setConnectionLabel(null);
-        this.connectionPanel.setAddButtons(false);
         Dimension _dimension = new Dimension(300, 50);
         this.connectionPanel.setMaximumSize(_dimension);
         Dimension _dimension_1 = new Dimension(100, 0);

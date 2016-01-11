@@ -1,7 +1,6 @@
 package org.oddgen.sqldev;
 
 import com.google.common.base.Objects;
-import com.jcabi.aspects.Loggable;
 import com.jcabi.log.Logger;
 import java.io.IOException;
 import java.net.URL;
@@ -12,11 +11,9 @@ import oracle.ide.model.UpdateMessage;
 import oracle.ide.net.URLFactory;
 import org.eclipse.xtext.xbase.lib.Exceptions;
 import org.oddgen.sqldev.FolderNode;
-import org.oddgen.sqldev.LoggableConstants;
 import org.oddgen.sqldev.model.Folder;
 import org.oddgen.sqldev.resources.OddgenResources;
 
-@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @SuppressWarnings("all")
 public class RootNode extends DefaultContainer {
   private static String ROOT_NODE_NAME = OddgenResources.getString("ROOT_NODE_LONG_LABEL");

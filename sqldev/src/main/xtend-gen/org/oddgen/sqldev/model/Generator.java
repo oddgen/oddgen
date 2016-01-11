@@ -1,15 +1,12 @@
 package org.oddgen.sqldev.model;
 
-import com.jcabi.aspects.Loggable;
-import oracle.ide.model.DefaultContainer;
 import org.eclipse.xtend.lib.annotations.Accessors;
 import org.eclipse.xtext.xbase.lib.Pure;
-import org.oddgen.sqldev.LoggableConstants;
+import org.oddgen.sqldev.model.AbstractModel;
 
-@Loggable(value = LoggableConstants.DEBUG, prepend = true)
 @Accessors
 @SuppressWarnings("all")
-public class Generator extends DefaultContainer {
+public class Generator extends AbstractModel {
   private String name;
   
   private String description;

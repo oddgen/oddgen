@@ -15,13 +15,11 @@
  */
 package org.oddgen.sqldev.model
 
-import com.jcabi.aspects.Loggable
 import oracle.javatools.data.HashStructure
 import oracle.javatools.data.HashStructureAdapter
 import oracle.javatools.data.PropertyStorage
-import org.oddgen.sqldev.LoggableConstants
+import org.eclipse.xtext.xbase.lib.util.ToStringBuilder
 
-@Loggable(value=LoggableConstants.DEBUG, prepend=true)
 class PreferenceModel extends HashStructureAdapter {
 	static final String DATA_KEY = "oddgen"
 
@@ -44,6 +42,10 @@ class PreferenceModel extends HashStructureAdapter {
 
 	def void setDiscoverPlsqlGenerators(boolean discoverPlsqlGenerators) {
 		getHashStructure.putBoolean(KEY_DISCOVER_PLSQL_GENERATORS, discoverPlsqlGenerators)
+	}
+
+	override toString() {
+		new ToStringBuilder(this).addAllFields.toString
 	}
 
 }

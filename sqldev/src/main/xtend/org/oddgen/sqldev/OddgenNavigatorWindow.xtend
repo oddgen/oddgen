@@ -38,7 +38,6 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 			connectionPanel = new OddgenConnectionPanel()
 			connectionPanel.connectionPrompt = null
 			connectionPanel.connectionLabel = null
-			connectionPanel.addButtons = false
 			connectionPanel.maximumSize = new Dimension(300, 50)
 			connectionPanel.minimumSize = new Dimension(100, 0)
 			refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))

@@ -155,8 +155,8 @@
 
 	<!-- Build Settings -->
 	<build>
-		<sourceDirectory>${project.basedir}/src/main/xtend-gen</sourceDirectory>
-		<testSourceDirectory>${project.basedir}/src/test/xtend-gen</testSourceDirectory>
+		<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+		<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -184,7 +184,7 @@
 						</goals>
 						<configuration>
 							<javaSourceVersion>${jdk.version}</javaSourceVersion>
-							<outputDirectory>${project.basedir}/src/main/xtext-gen</outputDirectory>
+							<outputDirectory>${project.basedir}/src/main/xtend-gen</outputDirectory>
 						</configuration>
 					</execution>
 					<execution>
@@ -194,7 +194,7 @@
 						</goals>
 						<configuration>
 							<javaSourceVersion>${jdk.version}</javaSourceVersion>
-							<testOutputDirectory>${project.basedir}/src/test/xtext-gen</testOutputDirectory>
+							<testOutputDirectory>${project.basedir}/src/test/xtend-gen</testOutputDirectory>
 						</configuration>
 					</execution>
 				</executions>

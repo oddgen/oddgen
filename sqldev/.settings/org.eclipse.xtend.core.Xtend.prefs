@@ -1,9 +1,13 @@
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/main/java.directory=src/main/xtend-gen
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/main/xtend-gen.directory=src/main/xtend-gen
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/main/xtend-gen.ignore=false
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/main/xtend.directory=src/main/xtend-gen
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/main/xtext-gen.ignore=true
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/test/java.directory=src/test/xtend-gen
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/test/xtend-gen.directory=src/test/xtend-gen
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/test/xtend-gen.ignore=false
 //outlet.DEFAULT_OUTPUT.sourceFolder.src/test/xtend.directory=src/test/xtend-gen
+//outlet.DEFAULT_OUTPUT.sourceFolder.src/test/xtext-gen.ignore=true
 BuilderConfiguration.is_project_specific=true
 eclipse.preferences.version=1
 outlet.DEFAULT_OUTPUT.directory=src/main/xtend-gen

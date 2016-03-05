@@ -4,15 +4,17 @@ import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.event.ActionListener
 import oracle.ide.Context
 import oracle.ide.controls.Toolbar
 import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
 import org.oddgen.sqldev.resources.OddgenResources
+import java.awt.event.ActionEvent
 
 @Loggable(prepend=true)
-class OddgenNavigatorWindow extends DefaultNavigatorWindow {
+class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener {
 	private Component gui
 	private Toolbar tb;
 	private ToolbarButton refreshButton;
@@ -48,6 +50,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 		tb?.add(connectionPanel)
 		tb?.add(refreshButton)
 		tb?.add(collapseallButton)
+		refreshButton.addActionListener(this)
 	}
 
 	override Component getGUI() {
@@ -75,4 +78,11 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow {
 	override loadLayout(PropertyAccess p) {
 		super.loadLayout(p)
 	}
+	
+	override actionPerformed(ActionEvent e) {
+		if (e.source == refreshButton) {
+			connectionPanel.refresh
+		}
+	}
+	
 }

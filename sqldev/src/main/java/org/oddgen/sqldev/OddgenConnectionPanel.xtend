@@ -38,6 +38,7 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		val connComboBox = getComboBoxList(this).get(0) // alternative deprecated this.connCombo
 		// ensure arrow keys do not throw ItemChangedState events
 		connComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+		connComboBox.selectedIndex = 0
 	}
 
 	@Loggable(value=LoggableConstants.DEBUG, prepend=true)
@@ -61,10 +62,10 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 				Logger.debug(this, "connection resolver class %1$s for connection name %2$s of type %3$s",
 					s_conns.class, connectionName, s_conns.getConnectionType(connectionName))
 				val conn = s_conns.getConnection(connectionName)
-				Logger.debug(this, "connected to %s", conn)
+				Logger.debug(this, "connected to %s", connectionName)
 				if (conn != null) {
 					if (conn.closed) {
-						// TODO:
+						Logger.debug(this, "connection %s has been closed.", connectionName)
 					}
 				}
 			}
@@ -76,13 +77,17 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		}
 	}
 
+	def refresh() {
+		val Runnable runnable = [|openConnection]
+		val thread = new Thread(runnable)
+		thread.name = "oddgen Connection Opener"
+		thread.start
+	}
+
 	override itemStateChanged(ItemEvent event) {
+		checkConnection();
 		if (event.stateChange == ItemEvent.SELECTED) {
-			checkConnection();
-			val Runnable runnable = [|openConnection]
-			val thread = new Thread(runnable)
-			thread.name = "oddgen Connection Opener"
-			thread.start
+			refresh()
 		}
 	}
 }

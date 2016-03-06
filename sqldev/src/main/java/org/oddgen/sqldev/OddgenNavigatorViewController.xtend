@@ -10,7 +10,7 @@ import oracle.ideri.navigator.ShowNavigatorController
 
 @Loggable(prepend=true)
 class OddgenNavigatorViewController extends ShowNavigatorController {
-	public static final int SHOW_ODDGEN_NAVIGATOR_CMD_ID = Ide.findOrCreateCmdID("oddgen.SHOW_NAVIGATOR");
+	public static final int SHOW_ODDGEN_NAVIGATOR_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_SHOW_NAVIGATOR");
 	private boolean initialized = false
 
 	override boolean update(IdeAction action, Context context) {

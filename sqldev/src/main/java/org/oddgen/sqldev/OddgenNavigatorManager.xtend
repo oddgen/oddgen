@@ -15,7 +15,7 @@ import oracle.ideri.navigator.DefaultNavigatorWindow
 
 @Loggable(prepend=true)
 class OddgenNavigatorManager extends DefaultNavigatorManager {
-	private static final String NAVIGATOR_WINDOW_ID = "oddgen.NAVIGATOR_WINDOW";
+	public static final String NAVIGATOR_WINDOW_ID = "ODDGEN_NAVIGATOR_WINDOW";
 
 	static private OddgenNavigatorManager INSTANCE = null
 
@@ -65,7 +65,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 
 	override protected createNavigatorDockingParam() {
 		val param = new DockingParam();
-		val referenceView = new ViewId("DatabaseNavigatorWindow", "Default")
+		val referenceView = new ViewId(NAVIGATOR_WINDOW_ID, "Default")
 		val referenceDockable = DockStation.dockStation.findDockable(referenceView)
 		param.setPosition(referenceDockable, IdeConstants.SOUTH, IdeConstants.WEST)
 		return param

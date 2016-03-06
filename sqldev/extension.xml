@@ -6,10 +6,10 @@
 	<trigger-hooks xmlns="http://xmlns.oracle.com/ide/extension">
 		<triggers>
 			<dockable-factory-hook xmlns="http://xmlns.oracle.com/ide/extension">
-				<factory id="oddgen.NAVIGATOR_WINDOW" class="org.oddgen.sqldev.OddgenDockableFactory" />
+				<factory id="ODDGEN_NAVIGATOR_WINDOW" class="org.oddgen.sqldev.OddgenDockableFactory" />
 			</dockable-factory-hook>
 			<actions xmlns="http://xmlns.oracle.com/jdeveloper/1013/extension">
-				<action id="oddgen.SHOW_NAVIGATOR">
+				<action id="ODDGEN_SHOW_NAVIGATOR">
 					<properties>
 						<property name="Name">${VIEW_MENU_LABEL}</property>
 						<property name="SmallIcon">res:${ODDGEN_ICON}</property>
@@ -21,7 +21,7 @@
 				<controller class="org.oddgen.sqldev.OddgenNavigatorViewController">
 					<update-rules>
 						<update-rule rule="always-enabled">
-							<action id="oddgen.SHOW_NAVIGATOR">
+							<action id="ODDGEN_SHOW_NAVIGATOR">
 								<label>${VIEW_MENU_LABEL}</label>
 							</action>
 						</update-rule>
@@ -32,8 +32,8 @@
 				<menus>
 					<menubar id="javax.ide.view.MAIN_WINDOW_MENUBAR_ID">
 						<menu id="javax.ide.VIEW_MENU_ID">
-							<section id="oddgen.NEW_MENU_SECTION_ID">
-								<item action-ref="oddgen.SHOW_NAVIGATOR" weight="10.0" />
+							<section id="ODDGEN_NEW_MENU_SECTION_ID">
+								<item action-ref="ODDGEN_SHOW_NAVIGATOR" weight="10.0" />
 							</section>
 						</menu>
 					</menubar>
@@ -57,7 +57,7 @@
 				class="org.oddgen.sqldev.net.OddgenURLFileSystemHelper" />
 		</urlfilesystem-hook>
 		<dockable-hook xmlns="http://xmlns.oracle.com/ide/extension">
-			<dockable id="oddgen.NAVIGATOR_WINDOW" />
+			<dockable id="ODDGEN_NAVIGATOR_WINDOW" />
 		</dockable-hook>
 	</hooks>
 </extension>

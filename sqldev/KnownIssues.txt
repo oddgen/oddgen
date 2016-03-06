@@ -2,5 +2,4 @@ Personal Issue List
 -------------------
 Issues during development, to be fixed later.
 
-- oddgen Navigator window is not restored after SQL Developer restart
-- Connection state is not refreshed, when connection has been closed (requires mouse-over event)
+- Connection state is not refreshed, when connection has been closed (requires some events on dockable windows)

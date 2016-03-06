@@ -11,12 +11,15 @@ import java.util.List
 import javax.swing.JComboBox
 import javax.swing.JPanel
 import oracle.dbtools.raptor.controls.ConnectionPanelUI
+import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.dal.model.DatabaseGenerator
 
 import static java.sql.DriverManager.*
 
 @Loggable(prepend=true)
 class OddgenConnectionPanel extends ConnectionPanelUI {
 	private static boolean ADD_BUTTONS = false
+	private List<DatabaseGenerator> dbgens
 
 	def static protected List<JComboBox<?>> getComboBoxList(Container container) {
 		val list = new ArrayList<JComboBox<?>>()
@@ -66,6 +69,10 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 				if (conn != null) {
 					if (conn.closed) {
 						Logger.debug(this, "connection %s has been closed.", connectionName)
+					} else {
+						val dao = new DatabaseGeneratorDao(conn)
+						dbgens = dao.findAll
+						Logger.debug(this, "discovered %d database generators using connection %s.", dbgens.size, connectionName)
 					}
 				}
 			}
@@ -82,6 +89,10 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		val thread = new Thread(runnable)
 		thread.name = "oddgen Connection Opener"
 		thread.start
+	}
+	
+	def getDatabaseGenerators() {
+		return dbgens
 	}
 
 	override itemStateChanged(ItemEvent event) {

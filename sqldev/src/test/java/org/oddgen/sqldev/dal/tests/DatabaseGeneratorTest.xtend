@@ -30,6 +30,10 @@ class DatabaseGeneratorTest {
 		Assert.assertTrue(plsqlView.description == "Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.")
 		Assert.assertTrue(plsqlView.objectTypes.size == 1)
 		Assert.assertTrue(plsqlView.objectTypes.get(0) == "TABLES")
+		Assert.assertTrue(plsqlView.params.get("View suffix") == "_V")
+		Assert.assertTrue(plsqlView.params.get("Table suffix to be replaced") == "_T")
+		Assert.assertTrue(plsqlView.params.get("Instead-of-trigger suffix") == "_TRG")
+		Assert.assertTrue(plsqlView.params.get("Generate instead-of-trigger?") == "Yes")
 		Assert.assertFalse(plsqlView.isRefreshable)
 	}
 }

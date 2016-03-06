@@ -2,6 +2,7 @@ package org.oddgen.sqldev.dal
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
+import java.io.StringReader
 import java.sql.CallableStatement
 import java.sql.Clob
 import java.sql.Connection
@@ -9,7 +10,11 @@ import java.sql.SQLException
 import java.sql.Types
 import java.util.ArrayList
 import java.util.Arrays
+import java.util.HashMap
 import java.util.List
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
 import org.oddgen.sqldev.dal.model.DatabaseGenerator
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.BadSqlGrammarException
@@ -17,6 +22,9 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
+import org.w3c.dom.Element
+import org.w3c.dom.NodeList
+import org.xml.sax.InputSource
 
 @Loggable(prepend=true)
 class DatabaseGeneratorDao {
@@ -81,7 +89,7 @@ class DatabaseGeneratorDao {
 	}
 
 	def private setObjectTypes(DatabaseGenerator dbgen) {
-		// avoid handling PL/SQL types in Java
+		// convert PL/SQL nested table to comma separated list
 		val plsql = '''
 			DECLARE
 			   l_result «dbgen.owner».«dbgen.objectName».t_string;
@@ -124,11 +132,64 @@ class DatabaseGeneratorDao {
 			Logger.error(this, e.message)			
 		}
 	}
+
+	def private setParams(DatabaseGenerator dbgen) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   l_params oddgen.plsql_view.t_param;
+			   l_key    oddgen.plsql_view.param_type;
+			   l_clob   CLOB;
+			BEGIN
+			   l_params := oddgen.plsql_view.get_params();
+			   l_key    := l_params.first;
+			   l_clob   := '<params>';
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      l_clob := l_clob || '<param><key>' || l_key || '</key><value>' || l_params(l_key) || '</value></param>';
+			      l_params.delete(l_key);
+			      l_key := l_params.first;
+			   END LOOP;
+			   l_clob := l_clob || '</params>';
+			   ? := l_clob;
+			END;
+		'''
+		dbgen.params = new HashMap<String, String>()
+		try {
+			val paramsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
+					cs.registerOutParameter(1, Types.CLOB);
+					cs.execute
+					return cs.getClob(1);
+				}
+			})
+			val paramsString = paramsClob.getSubString(1, paramsClob.length as int)
+			val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+			val doc = builder.parse(new InputSource(new StringReader(paramsString)))
+			val xpath = XPathFactory.newInstance().newXPath();
+			val nodes = xpath.evaluate("/params/param", doc, XPathConstants.NODESET) as NodeList;
+			for (var i = 0; i < nodes.length; i++) {
+				val param = nodes.item(i) as Element
+				val key = param.getElementsByTagName("key").item(0).textContent
+				val value = param.getElementsByTagName("value").item(0).textContent
+				dbgen.params.put(key, value)
+			}
+			
+		} catch (BadSqlGrammarException e) {
+			if (e.cause.message.contains("PLS-00302")) {
+				// catch component must be declared error
+			} else {
+				Logger.error(this, e.cause.message)
+			}
+		} catch (Exception e) {
+			Logger.error(this, e.message)			
+		}
+	}
 	
 	def private setRefreshable(DatabaseGenerator dbgen) {
 		val sql = '''
 			SELECT COUNT(*)
-			  FROM (SELECT position
+			  FROM (SELECT *
 			          FROM all_arguments
 			         WHERE owner = '«dbgen.owner»'
 			               AND package_name = '«dbgen.objectName»'
@@ -140,7 +201,7 @@ class DatabaseGeneratorDao {
 			               AND type_name = '«dbgen.objectName»'
 			               AND type_subname = 'T_LOV'
 			        UNION ALL
-			        SELECT position
+			        SELECT *
 			          FROM all_arguments
 			         WHERE owner = '«dbgen.owner»'
 			               AND package_name = '«dbgen.objectName»'
@@ -216,6 +277,7 @@ class DatabaseGeneratorDao {
 			dbgen.setDescription
 			dbgen.setObjectTypes
 			dbgen.setRefreshable
+			dbgen.setParams
 		}
 		return dbgens
 	}

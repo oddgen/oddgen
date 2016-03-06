@@ -8,7 +8,6 @@ import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Types
 import java.util.ArrayList
-import java.util.Arrays
 import java.util.HashMap
 import java.util.List
 import javax.xml.parsers.DocumentBuilderFactory
@@ -19,6 +18,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 
@@ -84,48 +84,61 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setObjectTypes(DatabaseGenerator dbgen) {
-		// convert PL/SQL nested table to comma separated list
-		val plsql = '''
-			DECLARE
-			   l_result «dbgen.generatorOwner».«dbgen.generatorName».t_string;
-			   l_clob   CLOB;
-			BEGIN
-			   l_result := «dbgen.generatorOwner».«dbgen.generatorName».get_object_types();
-			   FOR i IN 1 .. l_result.count
-			   LOOP
-			      IF l_clob IS NOT NULL THEN
-			         l_clob := l_clob || ',';
-			      END IF;
-			      l_clob := l_clob || l_result(i);
-			   END LOOP;
-			   ? := l_clob;
-			END;
-		'''
-		dbgen.objectTypes = new ArrayList<String>()
+	def private getDoc(String plsql) {
+		var Document doc = null
 		try {
-			val typesClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+			val paramsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
 				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.CLOB);
 					cs.execute
 					return cs.getClob(1);
 				}
 			})
-			val typesString = typesClob.getSubString(1, typesClob.length as int)
-			val types = Arrays.asList(typesString.split("\\s*,\\s*"));
-			for (type : types) {
-				dbgen.objectTypes.add(type)
-			}
+			val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+			doc = docBuilder.parse(new InputSource(paramsClob.characterStream))
 		} catch (BadSqlGrammarException e) {
 			if (e.cause.message.contains("PLS-00302")) {
 				// catch component must be declared error
-				dbgen.objectTypes.add("TABLE")
-				dbgen.objectTypes.add("VIEW")
 			} else {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
 			Logger.error(this, e.message)
+		}
+		return doc
+		
+	}
+
+	def private setObjectTypes(DatabaseGenerator dbgen) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   l_types «dbgen.generatorOwner».«dbgen.generatorName».t_string;
+			   l_clob   CLOB;
+			BEGIN
+			   l_types := «dbgen.generatorOwner».«dbgen.generatorName».get_object_types();
+			   l_clob := '<values>';
+			   FOR i IN 1 .. l_types.count
+			   LOOP
+			      l_clob := l_clob || '<value>' || l_types(i) || '</value>';
+			   END LOOP;
+			   l_clob := l_clob || '</values>';
+			   ? := l_clob;
+			END;
+		'''
+		dbgen.objectTypes = new ArrayList<String>()
+		val doc = getDoc(plsql)
+		if (doc == null) {
+			dbgen.objectTypes.add("TABLE")
+			dbgen.objectTypes.add("VIEW")
+		}
+		else {
+			val values = doc.getElementsByTagName("value")
+			for (var i = 0; i < values.length; i++) {
+				val value = values.item(i) as Element
+				val type = value.textContent
+				dbgen.objectTypes.add(type)
+			}
 		}
 	}
 
@@ -151,16 +164,8 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.params = new HashMap<String, String>()
-		try {
-			val paramsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
-				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.CLOB);
-					cs.execute
-					return cs.getClob(1);
-				}
-			})
-			val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-			val doc = docBuilder.parse(new InputSource(paramsClob.characterStream))
+		val doc = getDoc(plsql)
+		if (doc != null) {
 			val params = doc.getElementsByTagName("param")
 			for (var i = 0; i < params.length; i++) {
 				val param = params.item(i) as Element
@@ -168,35 +173,27 @@ class DatabaseGeneratorDao {
 				val value = param.getElementsByTagName("value").item(0).textContent
 				dbgen.params.put(key, value)
 			}
-
-		} catch (BadSqlGrammarException e) {
-			if (e.cause.message.contains("PLS-00302")) {
-				// catch component must be declared error
-			} else {
-				Logger.error(this, e.cause.message)
-			}
-		} catch (Exception e) {
-			Logger.error(this, e.message)
 		}
 	}
 
-	def private setLovs(DatabaseGenerator dbgen, Clob lovsClob) {
+	def private setLovs(DatabaseGenerator dbgen, Document doc) {
 		dbgen.lovs.clear
-		val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-		val doc = docBuilder.parse(new InputSource(lovsClob.characterStream))
-		val lovs = doc.getElementsByTagName("lov")
-		if (lovs.length > 0) {
-			for (var i = 0; i < lovs.length; i++) {
-				val lov = lovs.item(i) as Element
-				val key = lov.getElementsByTagName("key").item(0).textContent
-				val values = lov.getElementsByTagName("value")
-				val value = new ArrayList<String>()
-				for (var j = 0; j < values.length; j++) {
-					val valueElement = values.item(j) as Element
-					value.add(valueElement.textContent)
+		if (doc != null) {
+			val lovs = doc.getElementsByTagName("lov")
+			if (lovs.length > 0) {
+				for (var i = 0; i < lovs.length; i++) {
+					val lov = lovs.item(i) as Element
+					val key = lov.getElementsByTagName("key").item(0).textContent
+					val values = lov.getElementsByTagName("value")
+					val value = new ArrayList<String>()
+					for (var j = 0; j < values.length; j++) {
+						val valueElement = values.item(j) as Element
+						value.add(valueElement.textContent)
+					}
+					dbgen.lovs.put(key, value)
 				}
-				dbgen.lovs.put(key, value)
 			}
+
 		}
 	}
 
@@ -228,24 +225,8 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.lovs = new HashMap<String, List<String>>()
-		try {
-			val lovsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
-				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.CLOB);
-					cs.execute
-					return cs.getClob(1);
-				}
-			})
-			setLovs(dbgen, lovsClob)
-		} catch (BadSqlGrammarException e) {
-			if (e.cause.message.contains("PLS-00302")) {
-				// catch component must be declared error
-			} else {
-				Logger.error(this, e.cause.message)
-			}
-		} catch (Exception e) {
-			Logger.error(this, e.message)
-		}
+		val doc = getDoc(plsql)
+		setLovs(dbgen, doc)
 	}
 
 	def private setRefreshable(DatabaseGenerator dbgen) {
@@ -378,24 +359,8 @@ class DatabaseGeneratorDao {
 				   ? := l_clob;
 				END;
 			'''
-			try {
-				val lovsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
-					override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-						cs.registerOutParameter(1, Types.CLOB);
-						cs.execute
-						return cs.getClob(1);
-					}
-				})
-				setLovs(dbgen, lovsClob)
-			} catch (BadSqlGrammarException e) {
-				if (e.cause.message.contains("PLS-00302")) {
-					// catch component must be declared error
-				} else {
-					Logger.error(this, e.cause.message)
-				}
-			} catch (Exception e) {
-				Logger.error(this, e.message)
-			}
+			val doc = getDoc(plsql)
+			setLovs(dbgen, doc)
 		}
 	}
 

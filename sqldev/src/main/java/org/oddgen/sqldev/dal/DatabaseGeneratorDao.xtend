@@ -2,7 +2,6 @@ package org.oddgen.sqldev.dal
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
-import java.io.StringReader
 import java.sql.CallableStatement
 import java.sql.Clob
 import java.sql.Connection
@@ -13,8 +12,6 @@ import java.util.Arrays
 import java.util.HashMap
 import java.util.List
 import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.xpath.XPathConstants
-import javax.xml.xpath.XPathFactory
 import org.oddgen.sqldev.dal.model.DatabaseGenerator
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.BadSqlGrammarException
@@ -23,7 +20,6 @@ import org.springframework.jdbc.core.CallableStatementCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Element
-import org.w3c.dom.NodeList
 import org.xml.sax.InputSource
 
 @Loggable(prepend=true)
@@ -58,7 +54,7 @@ class DatabaseGeneratorDao {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)			
+			Logger.error(this, e.message)
 		}
 	}
 
@@ -84,7 +80,7 @@ class DatabaseGeneratorDao {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)			
+			Logger.error(this, e.message)
 		}
 	}
 
@@ -116,7 +112,7 @@ class DatabaseGeneratorDao {
 				}
 			})
 			val typesString = typesClob.getSubString(1, typesClob.length as int)
-			val List<String> types = Arrays.asList(typesString.split("\\s*,\\s*"));
+			val types = Arrays.asList(typesString.split("\\s*,\\s*"));
 			for (type : types) {
 				dbgen.objectTypes.add(type)
 			}
@@ -129,7 +125,7 @@ class DatabaseGeneratorDao {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)			
+			Logger.error(this, e.message)
 		}
 	}
 
@@ -137,11 +133,11 @@ class DatabaseGeneratorDao {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params oddgen.plsql_view.t_param;
-			   l_key    oddgen.plsql_view.param_type;
+			   l_params «dbgen.owner».«dbgen.objectName».t_param;
+			   l_key    «dbgen.owner».«dbgen.objectName».param_type;
 			   l_clob   CLOB;
 			BEGIN
-			   l_params := oddgen.plsql_view.get_params();
+			   l_params := «dbgen.owner».«dbgen.objectName».get_params();
 			   l_key    := l_params.first;
 			   l_clob   := '<params>';
 			   WHILE l_key IS NOT NULL
@@ -163,18 +159,16 @@ class DatabaseGeneratorDao {
 					return cs.getClob(1);
 				}
 			})
-			val paramsString = paramsClob.getSubString(1, paramsClob.length as int)
-			val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-			val doc = builder.parse(new InputSource(new StringReader(paramsString)))
-			val xpath = XPathFactory.newInstance().newXPath();
-			val nodes = xpath.evaluate("/params/param", doc, XPathConstants.NODESET) as NodeList;
-			for (var i = 0; i < nodes.length; i++) {
-				val param = nodes.item(i) as Element
+			val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+			val doc = docBuilder.parse(new InputSource(paramsClob.characterStream))
+			val params = doc.getElementsByTagName("param")
+			for (var i = 0; i < params.length; i++) {
+				val param = params.item(i) as Element
 				val key = param.getElementsByTagName("key").item(0).textContent
 				val value = param.getElementsByTagName("value").item(0).textContent
 				dbgen.params.put(key, value)
 			}
-			
+
 		} catch (BadSqlGrammarException e) {
 			if (e.cause.message.contains("PLS-00302")) {
 				// catch component must be declared error
@@ -182,10 +176,78 @@ class DatabaseGeneratorDao {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)			
+			Logger.error(this, e.message)
 		}
 	}
-	
+
+	def private setLovs(DatabaseGenerator dbgen, Clob lovsClob) {
+		dbgen.lovs.clear
+		val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+		val doc = docBuilder.parse(new InputSource(lovsClob.characterStream))
+		val lovs = doc.getElementsByTagName("lov")
+		if (lovs.length > 0) {
+			for (var i = 0; i < lovs.length; i++) {
+				val lov = lovs.item(i) as Element
+				val key = lov.getElementsByTagName("key").item(0).textContent
+				val values = lov.getElementsByTagName("value")
+				val value = new ArrayList<String>()
+				for (var j = 0; j < values.length; j++) {
+					val valueElement = values.item(j) as Element
+					value.add(valueElement.textContent)
+				}
+				dbgen.lovs.put(key, value)
+			}
+		}
+	}
+
+	def private setLovs(DatabaseGenerator dbgen) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   l_lovs «dbgen.owner».«dbgen.objectName».t_lov;
+			   l_key  «dbgen.owner».«dbgen.objectName».param_type;
+			   l_lov  «dbgen.owner».«dbgen.objectName».t_string;
+			   l_clob CLOB;
+			BEGIN
+			   l_lovs := «dbgen.owner».«dbgen.objectName».get_lov();
+			   l_key  := l_lovs.first;
+			   l_clob := '<lovs>';
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      l_clob := l_clob || '<lov><key>' || l_key || '</key><values>';
+			      FOR i IN 1 .. l_lovs(l_key).count
+			      LOOP
+			         l_clob := l_clob || '<value>' || l_lovs(l_key) (i) || '</value>';
+			      END LOOP;
+			      l_clob := l_clob || '</values></lov>';
+			      l_lovs.delete(l_key);
+			      l_key := l_lovs.first;
+			   END LOOP;
+			   l_clob := l_clob || '</lovs>';
+			   ? := l_clob;
+			END;
+		'''
+		dbgen.lovs = new HashMap<String, List<String>>()
+		try {
+			val lovsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
+					cs.registerOutParameter(1, Types.CLOB);
+					cs.execute
+					return cs.getClob(1);
+				}
+			})
+			setLovs(dbgen, lovsClob)
+		} catch (BadSqlGrammarException e) {
+			if (e.cause.message.contains("PLS-00302")) {
+				// catch component must be declared error
+			} else {
+				Logger.error(this, e.cause.message)
+			}
+		} catch (Exception e) {
+			Logger.error(this, e.message)
+		}
+	}
+
 	def private setRefreshable(DatabaseGenerator dbgen) {
 		val sql = '''
 			SELECT COUNT(*)
@@ -278,7 +340,62 @@ class DatabaseGeneratorDao {
 			dbgen.setObjectTypes
 			dbgen.setRefreshable
 			dbgen.setParams
+			dbgen.setLovs
 		}
 		return dbgens
+	}
+
+	def refresh(DatabaseGenerator dbgen) {
+		if (dbgen.isRefreshable) {
+			// convert PL/SQL associative array to XML
+			// pass current parameter values as PL/SQL code
+			val plsql = '''
+				DECLARE
+				   l_params «dbgen.owner».«dbgen.objectName».t_param;
+				   l_lovs   «dbgen.owner».«dbgen.objectName».t_lov;
+				   l_key    «dbgen.owner».«dbgen.objectName».param_type;
+				   l_lov    «dbgen.owner».«dbgen.objectName».t_string;
+				   l_clob   CLOB;
+				BEGIN
+				   «FOR key : dbgen.params.keySet»
+				   	l_params('«key»') := '«dbgen.params.get(key)»';
+				   «ENDFOR»
+				   l_lovs := «dbgen.owner».«dbgen.objectName».refresh_lov(in_params => l_params);
+				   l_key  := l_lovs.first;
+				   l_clob := '<lovs>';
+				   WHILE l_key IS NOT NULL
+				   LOOP
+				      l_clob := l_clob || '<lov><key>' || l_key || '</key><values>';
+				      FOR i IN 1 .. l_lovs(l_key).count
+				      LOOP
+				         l_clob := l_clob || '<value>' || l_lovs(l_key) (i) || '</value>';
+				      END LOOP;
+				      l_clob := l_clob || '</values></lov>';
+				      l_lovs.delete(l_key);
+				      l_key := l_lovs.first;
+				   END LOOP;
+				   l_clob := l_clob || '</lovs>';
+				   ? := l_clob;
+				END;
+			'''
+			try {
+				val lovsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+					override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
+						cs.registerOutParameter(1, Types.CLOB);
+						cs.execute
+						return cs.getClob(1);
+					}
+				})
+				setLovs(dbgen, lovsClob)
+			} catch (BadSqlGrammarException e) {
+				if (e.cause.message.contains("PLS-00302")) {
+					// catch component must be declared error
+				} else {
+					Logger.error(this, e.cause.message)
+				}
+			} catch (Exception e) {
+				Logger.error(this, e.message)
+			}
+		}
 	}
 }

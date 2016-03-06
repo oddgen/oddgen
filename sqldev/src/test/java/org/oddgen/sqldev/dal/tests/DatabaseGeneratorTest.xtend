@@ -78,6 +78,35 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
+	@Test
+	def generateErrorTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD']
+		dbgen.generatorName = 'NON_EXISTING_PACKAGE'
+		dbgen.objectType = 'TYPE'
+		dbgen.objectName = 'NAME'
+		val expected = '''
+			Failed to generate code via «dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE. Got the following error: CallableStatementCallback; bad SQL grammar [DECLARE
+			   l_clob   CLOB;
+			BEGIN
+			   l_clob := ODDGEN.NON_EXISTING_PACKAGE.generate(
+			                  in_object_type => 'TYPE'
+			                , in_object_name => 'NAME'
+			             );
+			   ? := l_clob;
+			END;
+			]; nested exception is java.sql.SQLException: ORA-06550: line 4, column 14:
+			PLS-00201: identifier 'ODDGEN.NON_EXISTING_PACKAGE' must be declared
+			ORA-06550: line 4, column 4:
+			PL/SQL: Statement ignored
+			.
+		'''
+		val generated = dao.generate(dbgen)
+		Assert.assertEquals(expected.trim, generated.trim)
+	}
+
+
+
 	@BeforeClass
 	def static setup() {
 		dataSource = new SingleConnectionDataSource()

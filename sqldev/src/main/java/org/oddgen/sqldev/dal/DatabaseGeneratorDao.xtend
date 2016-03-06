@@ -403,7 +403,7 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF dbgen.hasParams»
-			   	   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			      l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
@@ -431,13 +431,12 @@ class DatabaseGeneratorDao {
 					return cs.getClob(1);
 				}
 			})
-			result = resultClob.getSubString(1,
-				resultClob.
-					length as int)
-			} catch (Exception e) {
-				result = '''Failed to generate code via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.message».'''
-				Logger.error(this, result)
-			}
-			return result
+			result = resultClob.getSubString(1, resultClob.length as int)
+		} catch (Exception e) {
+			result = '''Failed to generate code via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.message».'''
+			Logger.error(this, result)
 		}
+		return result
 	}
+
+}

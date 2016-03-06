@@ -741,6 +741,7 @@ class DatabaseGeneratorTest {
 	@AfterClass
 	def static tearDown() {
 		val jdbcTemplate = new JdbcTemplate(dataSource)
+		//jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
 		//jdbcTemplate.execute("DROP PACKAGE plsql_view")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
 	}

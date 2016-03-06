@@ -12,6 +12,72 @@ class DatabaseGeneratorTest {
 	
 	private static SingleConnectionDataSource dataSource
 	
+	@Test
+	def daoTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgens = dao.findAll
+		val plsqlView = dbgens.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"]
+		Assert.assertTrue(plsqlView.hasParams)
+		Assert.assertTrue(plsqlView.name == "1:1 View (PL/SQL)")
+		Assert.assertTrue(plsqlView.description == "Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.")
+		Assert.assertTrue(plsqlView.objectTypes.size == 1)
+		Assert.assertTrue(plsqlView.objectTypes.get(0) == "TABLES")
+		Assert.assertTrue(plsqlView.params.size == 4)
+		Assert.assertTrue(plsqlView.params.get("View suffix") == "_V")
+		Assert.assertTrue(plsqlView.params.get("Table suffix to be replaced") == "_T")
+		Assert.assertTrue(plsqlView.params.get("Instead-of-trigger suffix") == "_TRG")
+		Assert.assertTrue(plsqlView.params.get("Generate instead-of-trigger?") == "Yes")
+		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").size == 2)
+		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(0) == "Yes")
+		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(1) == "No")
+		Assert.assertFalse(plsqlView.isRefreshable)
+	}
+	
+	@Test
+	def refreshLovTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
+		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 2)
+		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "Yes")
+		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(1) == "No")		
+		dbgen.params.put('With children?', 'No')
+		dao.refresh(dbgen)
+		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 1)
+		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "No")
+	}
+	
+	@Test
+	def generateTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
+		dbgen.objectType = 'TABLE'
+		dbgen.objectName = 'SOME_TABLE'
+		val expected = '''
+			Object type: TABLE
+			Object name: SOME_TABLE
+			With children: Yes
+			With grandchildren: Yes
+		'''
+		val generated = dao.generate(dbgen)
+		Assert.assertEquals(expected.trim, generated.trim)
+	}
+
+	@Test
+	def generateHelloWorldTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD']
+		dbgen.objectType = 'VIEW'
+		dbgen.objectName = 'EMP_V'
+		val expected = '''
+			BEGIN
+			   sys.dbms_output.put_line('Hello VIEW EMP_V!');
+			END;
+			/
+		'''
+		val generated = dao.generate(dbgen)
+		Assert.assertEquals(expected.trim, generated.trim)
+	}
+
 	@BeforeClass
 	def static setup() {
 		dataSource = new SingleConnectionDataSource()
@@ -20,6 +86,82 @@ class DatabaseGeneratorTest {
 		dataSource.username = "oddgen"
 		dataSource.password = "oddgen"
 		val jdbcTemplate = new JdbcTemplate(dataSource)
+
+		// create package specification of plsql_hello_world generator
+		// copy of oddgen/examples/package/plsql/plsql_hello_world.pks
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_hello_world IS
+			   /*
+			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   *
+			   * Licensed under the Apache License, Version 2.0 (the "License");
+			   * you may not use this file except in compliance with the License.
+			   * You may obtain a copy of the License at
+			   *
+			   *     http://www.apache.org/licenses/LICENSE-2.0
+			   *
+			   * Unless required by applicable law or agreed to in writing, software
+			   * distributed under the License is distributed on an "AS IS" BASIS,
+			   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+			   * See the License for the specific language governing permissions and
+			   * limitations under the License.
+			   */
+			
+			   /**
+			   * oddgen PL/SQL hello world example.
+			   *
+			   * @headcom
+			   */
+			
+			   /**
+			   * Generates the result.
+			   *
+			   * @param in_object_type object type to process
+			   * @param in_object_name object_name of object_type_in to process
+			   * @returns generator output
+			   */
+			   FUNCTION generate(in_object_type IN VARCHAR2,
+			                     in_object_name IN VARCHAR2) RETURN CLOB;
+			
+			END plsql_hello_world;
+		''')		
+
+		// create package body of plsql_hello_world generator
+		// copy of oddgen/examples/package/plsql/plsql_hello_world.pkb
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_hello_world IS
+			   /*
+			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   *
+			   * Licensed under the Apache License, Version 2.0 (the "License");
+			   * you may not use this file except in compliance with the License.
+			   * You may obtain a copy of the License at
+			   *
+			   *     http://www.apache.org/licenses/LICENSE-2.0
+			   *
+			   * Unless required by applicable law or agreed to in writing, software
+			   * distributed under the License is distributed on an "AS IS" BASIS,
+			   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+			   * See the License for the specific language governing permissions and
+			   * limitations under the License.
+			   */
+			
+			   --
+			   -- generate
+			   --
+			   FUNCTION generate(in_object_type IN VARCHAR2,
+			                     in_object_name IN VARCHAR2) RETURN CLOB IS
+			      l_result CLOB;
+			   BEGIN
+			      l_result := 'BEGIN' || chr(10) ||
+			                  '   sys.dbms_output.put_line(''Hello ' || in_object_type || ' ' ||
+			                  in_object_name || '!'');' || chr(10) || 'END;' || chr(10) || '/' ||
+			                  chr(10);
+			      RETURN l_result;
+			   END generate;
+			END plsql_hello_world;
+		''')		
+
 		// create package specification of plsql_view generator
 		// copy of oddgen/examples/package/plsql/plsql_view.pks
 		jdbcTemplate.execute('''
@@ -595,39 +737,7 @@ class DatabaseGeneratorTest {
 			END plsql_dummy;
 		''')
 	}
-		
-	@Test
-	def daoTest() {
-		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgens = dao.findAll
-		val plsqlView = dbgens.findFirst[it.owner == dataSource.username.toUpperCase && it.objectName == "PLSQL_VIEW"]
-		Assert.assertTrue(plsqlView.hasParams)
-		Assert.assertTrue(plsqlView.name == "1:1 View (PL/SQL)")
-		Assert.assertTrue(plsqlView.description == "Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.")
-		Assert.assertTrue(plsqlView.objectTypes.size == 1)
-		Assert.assertTrue(plsqlView.objectTypes.get(0) == "TABLES")
-		Assert.assertTrue(plsqlView.params.get("View suffix") == "_V")
-		Assert.assertTrue(plsqlView.params.get("Table suffix to be replaced") == "_T")
-		Assert.assertTrue(plsqlView.params.get("Instead-of-trigger suffix") == "_TRG")
-		Assert.assertTrue(plsqlView.params.get("Generate instead-of-trigger?") == "Yes")
-		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(0) == "Yes")
-		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(1) == "No")
-		Assert.assertFalse(plsqlView.isRefreshable)
-	}
-	
-	@Test
-	def refreshLovTest() {
-		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.objectName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 2)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "Yes")
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(1) == "No")		
-		dbgen.params.put('With children?', 'No')
-		dao.refresh(dbgen)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 1)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "No")
-	}
-	
+
 	@AfterClass
 	def static tearDown() {
 		val jdbcTemplate = new JdbcTemplate(dataSource)

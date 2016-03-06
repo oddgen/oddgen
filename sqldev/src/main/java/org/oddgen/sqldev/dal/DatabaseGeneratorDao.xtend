@@ -35,7 +35,7 @@ class DatabaseGeneratorDao {
 	def private setName(DatabaseGenerator dbgen) {
 		val plsql = '''
 			BEGIN
-				? := «dbgen.owner».«dbgen.objectName».get_name();
+				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
 			END;
 		'''
 		try {
@@ -49,7 +49,7 @@ class DatabaseGeneratorDao {
 		} catch (BadSqlGrammarException e) {
 			if (e.cause.message.contains("PLS-00302")) {
 				// catch component must be declared error
-				dbgen.name = '''«dbgen.owner».«dbgen.objectName»'''
+				dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
 			} else {
 				Logger.error(this, e.cause.message)
 			}
@@ -61,7 +61,7 @@ class DatabaseGeneratorDao {
 	def private setDescription(DatabaseGenerator dbgen) {
 		val plsql = '''
 			BEGIN
-				? := «dbgen.owner».«dbgen.objectName».get_description();
+				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
 			END;
 		'''
 		try {
@@ -88,10 +88,10 @@ class DatabaseGeneratorDao {
 		// convert PL/SQL nested table to comma separated list
 		val plsql = '''
 			DECLARE
-			   l_result «dbgen.owner».«dbgen.objectName».t_string;
+			   l_result «dbgen.generatorOwner».«dbgen.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
-			   l_result := «dbgen.owner».«dbgen.objectName».get_object_types();
+			   l_result := «dbgen.generatorOwner».«dbgen.generatorName».get_object_types();
 			   FOR i IN 1 .. l_result.count
 			   LOOP
 			      IF l_clob IS NOT NULL THEN
@@ -133,11 +133,11 @@ class DatabaseGeneratorDao {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params «dbgen.owner».«dbgen.objectName».t_param;
-			   l_key    «dbgen.owner».«dbgen.objectName».param_type;
+			   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			   l_key    «dbgen.generatorOwner».«dbgen.generatorName».param_type;
 			   l_clob   CLOB;
 			BEGIN
-			   l_params := «dbgen.owner».«dbgen.objectName».get_params();
+			   l_params := «dbgen.generatorOwner».«dbgen.generatorName».get_params();
 			   l_key    := l_params.first;
 			   l_clob   := '<params>';
 			   WHILE l_key IS NOT NULL
@@ -204,12 +204,12 @@ class DatabaseGeneratorDao {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_lovs «dbgen.owner».«dbgen.objectName».t_lov;
-			   l_key  «dbgen.owner».«dbgen.objectName».param_type;
-			   l_lov  «dbgen.owner».«dbgen.objectName».t_string;
+			   l_lovs «dbgen.generatorOwner».«dbgen.generatorName».t_lov;
+			   l_key  «dbgen.generatorOwner».«dbgen.generatorName».param_type;
+			   l_lov  «dbgen.generatorOwner».«dbgen.generatorName».t_string;
 			   l_clob CLOB;
 			BEGIN
-			   l_lovs := «dbgen.owner».«dbgen.objectName».get_lov();
+			   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».get_lov();
 			   l_key  := l_lovs.first;
 			   l_clob := '<lovs>';
 			   WHILE l_key IS NOT NULL
@@ -253,27 +253,27 @@ class DatabaseGeneratorDao {
 			SELECT COUNT(*)
 			  FROM (SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.owner»'
-			               AND package_name = '«dbgen.objectName»'
+			         WHERE owner = '«dbgen.generatorOwner»'
+			               AND package_name = '«dbgen.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 0
 			               AND in_out = 'OUT'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dbgen.owner»'
-			               AND type_name = '«dbgen.objectName»'
+			               AND type_owner = '«dbgen.generatorOwner»'
+			               AND type_name = '«dbgen.generatorName»'
 			               AND type_subname = 'T_LOV'
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.owner»'
-			               AND package_name = '«dbgen.objectName»'
+			         WHERE owner = '«dbgen.generatorOwner»'
+			               AND package_name = '«dbgen.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 1
 			               AND in_out = 'IN'
 			               AND argument_name = 'IN_PARAMS'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dbgen.owner»'
-			               AND type_name = '«dbgen.objectName»'
+			               AND type_owner = '«dbgen.generatorOwner»'
+			               AND type_name = '«dbgen.generatorName»'
 			               AND type_subname = 'T_PARAM')
 		'''
 		val count = jdbcTemplate.queryForObject(sql, Integer)
@@ -286,9 +286,9 @@ class DatabaseGeneratorDao {
 
 	def findAll() {
 		val sql = '''
-			SELECT owner,
-			       object_name,
-			       MAX(generateHasInParams) AS hasParams
+			SELECT owner                    AS generator_owner,
+			       object_name              AS generator_name,
+			       MAX(generateHasInParams) AS has_params
 			  FROM (SELECT /*+no_merge */
 			               func.owner,
 			               func.object_name,
@@ -351,16 +351,16 @@ class DatabaseGeneratorDao {
 			// pass current parameter values as PL/SQL code
 			val plsql = '''
 				DECLARE
-				   l_params «dbgen.owner».«dbgen.objectName».t_param;
-				   l_lovs   «dbgen.owner».«dbgen.objectName».t_lov;
-				   l_key    «dbgen.owner».«dbgen.objectName».param_type;
-				   l_lov    «dbgen.owner».«dbgen.objectName».t_string;
+				   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+				   l_lovs   «dbgen.generatorOwner».«dbgen.generatorName».t_lov;
+				   l_key    «dbgen.generatorOwner».«dbgen.generatorName».param_type;
+				   l_lov    «dbgen.generatorOwner».«dbgen.generatorName».t_string;
 				   l_clob   CLOB;
 				BEGIN
 				   «FOR key : dbgen.params.keySet»
-				   	l_params('«key»') := '«dbgen.params.get(key)»';
+				      l_params('«key»') := '«dbgen.params.get(key)»';
 				   «ENDFOR»
-				   l_lovs := «dbgen.owner».«dbgen.objectName».refresh_lov(in_params => l_params);
+				   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».refresh_lov(in_params => l_params);
 				   l_key  := l_lovs.first;
 				   l_clob := '<lovs>';
 				   WHILE l_key IS NOT NULL
@@ -398,4 +398,46 @@ class DatabaseGeneratorDao {
 			}
 		}
 	}
-}
+
+	def generate(DatabaseGenerator dbgen) {
+		val plsql = '''
+			DECLARE
+			   «IF dbgen.hasParams»
+			   	   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			   «ENDIF»
+			   l_clob   CLOB;
+			BEGIN
+			   «IF dbgen.hasParams»
+			      «FOR key : dbgen.params.keySet»
+			         l_params('«key»') := '«dbgen.params.get(key)»';
+			   	  «ENDFOR»
+			   «ENDIF»
+			   l_clob := «dbgen.generatorOwner».«dbgen.generatorName».generate(
+			                  in_object_type => '«dbgen.objectType»'
+			                , in_object_name => '«dbgen.objectName»'
+			                «IF dbgen.hasParams»
+			                   , in_params      => l_params
+			                «ENDIF»
+			             );
+			   ? := l_clob;
+			END;
+		'''
+		var String result;
+		try {
+			val resultClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
+					cs.registerOutParameter(1, Types.CLOB);
+					cs.execute
+					return cs.getClob(1);
+				}
+			})
+			result = resultClob.getSubString(1,
+				resultClob.
+					length as int)
+			} catch (Exception e) {
+				result = '''Failed to generate code via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.message».'''
+				Logger.error(this, result)
+			}
+			return result
+		}
+	}

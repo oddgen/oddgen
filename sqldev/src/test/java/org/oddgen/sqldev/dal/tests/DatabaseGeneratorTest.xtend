@@ -89,14 +89,14 @@ class DatabaseGeneratorTest {
 			Failed to generate code via «dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE. Got the following error: CallableStatementCallback; bad SQL grammar [DECLARE
 			   l_clob   CLOB;
 			BEGIN
-			   l_clob := ODDGEN.NON_EXISTING_PACKAGE.generate(
+			   l_clob := «dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE.generate(
 			                  in_object_type => 'TYPE'
 			                , in_object_name => 'NAME'
 			             );
 			   ? := l_clob;
 			END;
 			]; nested exception is java.sql.SQLException: ORA-06550: line 4, column 14:
-			PLS-00201: identifier 'ODDGEN.NON_EXISTING_PACKAGE' must be declared
+			PLS-00201: identifier '«dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE' must be declared
 			ORA-06550: line 4, column 4:
 			PL/SQL: Statement ignored
 			.

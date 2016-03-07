@@ -31,15 +31,11 @@ class DatabaseGeneratorDao {
 		this.conn = conn
 		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
 	}
-
-	def private setName(DatabaseGenerator dbgen) {
-		val plsql = '''
-			BEGIN
-				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
-			END;
-		'''
+	
+	def private getString(String plsql) {
+		var String result = null
 		try {
-			dbgen.name = jdbcTemplate.execute(plsql, new CallableStatementCallback<String>() {
+			result = jdbcTemplate.execute(plsql, new CallableStatementCallback<String>() {
 				override String doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.VARCHAR);
 					cs.execute
@@ -49,41 +45,16 @@ class DatabaseGeneratorDao {
 		} catch (BadSqlGrammarException e) {
 			if (e.cause.message.contains("PLS-00302")) {
 				// catch component must be declared error
-				dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
 			} else {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
 			Logger.error(this, e.message)
 		}
+		return result
+		
 	}
-
-	def private setDescription(DatabaseGenerator dbgen) {
-		val plsql = '''
-			BEGIN
-				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
-			END;
-		'''
-		try {
-			dbgen.description = jdbcTemplate.execute(plsql, new CallableStatementCallback<String>() {
-				override String doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.VARCHAR);
-					cs.execute
-					return cs.getString(1);
-				}
-			})
-		} catch (BadSqlGrammarException e) {
-			if (e.cause.message.contains("PLS-00302")) {
-				// catch component must be declared error
-				dbgen.description = dbgen.name
-			} else {
-				Logger.error(this, e.cause.message)
-			}
-		} catch (Exception e) {
-			Logger.error(this, e.message)
-		}
-	}
-
+	
 	def private getDoc(String plsql) {
 		var Document doc = null
 		try {
@@ -107,6 +78,30 @@ class DatabaseGeneratorDao {
 		}
 		return doc
 		
+	}
+
+	def private setName(DatabaseGenerator dbgen) {
+		val plsql = '''
+			BEGIN
+				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
+			END;
+		'''
+		dbgen.name = getString(plsql)
+		if (dbgen.name == null) {
+			dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
+		}
+	}
+
+	def private setDescription(DatabaseGenerator dbgen) {
+		val plsql = '''
+			BEGIN
+				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
+			END;
+		'''
+		dbgen.description = getString(plsql)
+		if (dbgen.description == null) {
+			dbgen.description = dbgen.name
+		}
 	}
 
 	def private setObjectTypes(DatabaseGenerator dbgen) {

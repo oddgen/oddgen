@@ -4,6 +4,9 @@ import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
 class Generator extends AbstractModel {
-	private String name
-	private String description
+	/** name of the generator */
+	String name
+
+	/** description of the generator */
+	String description
 }

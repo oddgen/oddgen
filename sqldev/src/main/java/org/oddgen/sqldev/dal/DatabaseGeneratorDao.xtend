@@ -11,7 +11,7 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.List
 import javax.xml.parsers.DocumentBuilderFactory
-import org.oddgen.sqldev.dal.model.DatabaseGenerator
+import org.oddgen.sqldev.model.DatabaseGenerator
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.BadSqlGrammarException
 import org.springframework.jdbc.core.BeanPropertyRowMapper

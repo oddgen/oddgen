@@ -1,12 +1,12 @@
-package org.oddgen.sqldev.dal.model
+package org.oddgen.sqldev.model
 
 import java.util.HashMap
 import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.eclipse.xtext.xbase.lib.util.ToStringBuilder
+import org.oddgen.sqldev.model.Generator
 
 @Accessors
-class DatabaseGenerator {
+class DatabaseGenerator extends Generator {
 	/** PL/SQL package owner */
 	String generatorOwner
 	
@@ -22,12 +22,6 @@ class DatabaseGenerator {
 	/** indicates if the generate function expects a 3rd parameter named in_params */
 	Boolean hasParams
 
-	/** name of the generator */
-	String name
-
-	/** description of the generator */
-	String description
-
 	/** list of valid object types (1st parameter) */
 	List<String> objectTypes
 
@@ -39,8 +33,4 @@ class DatabaseGenerator {
 
 	/** indicates if the list-of-values are dependent on current params settings and a refresh is supported */
 	Boolean isRefreshable
-	
-	override toString() {
-		new ToStringBuilder(this).addAllFields.toString
-	}
 }

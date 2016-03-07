@@ -15,8 +15,8 @@ class TreeUtils {
 		immatateDblClick(findTree(paramComponent))
 	}
 
-	def static immatateDblClick(JTree paramJTree) {
-		paramJTree.addMouseListener(new MouseAdapter() {
+	def static immatateDblClick(JTree jtree) {
+		jtree.addMouseListener(new MouseAdapter() {
 			override void mousePressed(MouseEvent paramAnonymousMouseEvent) {
 			}
 		})

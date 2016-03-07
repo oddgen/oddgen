@@ -5,21 +5,19 @@ import com.jcabi.log.Logger
 import java.awt.Container
 import java.awt.GridBagConstraints
 import java.awt.event.ItemEvent
-import java.sql.DriverManager
+import java.sql.Connection
 import java.util.ArrayList
 import java.util.List
 import javax.swing.JComboBox
 import javax.swing.JPanel
 import oracle.dbtools.raptor.controls.ConnectionPanelUI
+import oracle.dbtools.raptor.utils.Connections
+import oracle.ide.net.URLFactory
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.dal.model.DatabaseGenerator
-
-import static java.sql.DriverManager.*
 
 @Loggable(prepend=true)
 class OddgenConnectionPanel extends ConnectionPanelUI {
 	private static boolean ADD_BUTTONS = false
-	private List<DatabaseGenerator> dbgens
 
 	def static protected List<JComboBox<?>> getComboBoxList(Container container) {
 		val list = new ArrayList<JComboBox<?>>()
@@ -54,45 +52,47 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 	}
 
 	def protected openConnection() {
-		val prevLoginTimeout = DriverManager.loginTimeout
-		DriverManager.loginTimeout = 5
-		Logger.debug(this, "login timeout reset set to %d", DriverManager.loginTimeout)
 		try {
-			val connectionInfo = s_conns.getConnectionInfo(connectionName)
-			Logger.debug(this, "connectionInfo %s", connectionInfo)
-			if (connectionInfo != null) {
-				// connection information available, so let's try to connect
-				Logger.debug(this, "connection resolver class %1$s for connection name %2$s of type %3$s",
-					s_conns.class, connectionName, s_conns.getConnectionType(connectionName))
-				val conn = s_conns.getConnection(connectionName)
-				Logger.debug(this, "connected to %s", connectionName)
-				if (conn != null) {
-					if (conn.closed) {
-						Logger.debug(this, "connection %s has been closed.", connectionName)
-					} else {
-						val dao = new DatabaseGeneratorDao(conn)
-						dbgens = dao.findAll
-						Logger.debug(this, "discovered %d database generators using connection %s.", dbgens.size, connectionName)
-					}
+			val connectionInfo = Connections.instance. getConnectionInfo(connectionName)
+			val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)
+			Logger.debug(this, "connectionInfo %s.", connectionInfo)
+			Logger.debug(this, "isConnectionOpen %s.", alreadyOpen)
+			val connName = connectionInfo.getProperty("ConnName")
+			var Connection conn = null
+			if (alreadyOpen) {
+				Logger.debug(this, "connection %s is already open.", connName)
+				conn = Connections.instance.getConnection(connectionName)
+				Logger.debug(this, "connection %s reused.", connName)
+			} else {
+				Logger.debug(this, "connection %s is closed", connName)
+				if (connectionInfo.getProperty("password") != null) {
+					Logger.debug(this, "found a stored password for %s, trying to connect...", connName)
+					conn = Connections.instance.getConnection(connectionName)
+					Logger.debug(this, "connected to %s.", connName)
 				}
 			}
+			if (conn != null) {
+				val dao = new DatabaseGeneratorDao(conn)
+				val dbgens = dao.findAll
+				Logger.debug(this, "discovered %d database generators using connection %s.", dbgens.size, connName)
+				val folder = RootNode.instance.dbServerGenerators
+				folder.removeAll(true)
+				for (dbgen : dbgens) {
+					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.name), dbgen)
+					folder.add(node, true)
+				}
+				folder.markDirty(false)
+			}
 		} catch (Exception e) {
-			Logger.error(this, "Cannot connect to %1$s. Got error %2$s.", connectionName, e.message)
-		} finally {
-			DriverManager.loginTimeout = prevLoginTimeout
-			Logger.debug(this, "login timeout reset to original value oft %d", prevLoginTimeout)
+			Logger.error(this, "Cannot open/refresh connection to %1$s. Got error %2$s.", connectionName, e.message)
 		}
 	}
 
 	def refresh() {
 		val Runnable runnable = [|openConnection]
 		val thread = new Thread(runnable)
-		thread.name = "oddgen Connection Opener"
+		thread.name = "oddgen Connection Refresher"
 		thread.start
-	}
-	
-	def getDatabaseGenerators() {
-		return dbgens
 	}
 
 	override itemStateChanged(ItemEvent event) {

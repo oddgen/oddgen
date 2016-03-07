@@ -21,7 +21,7 @@ class RootNode extends DefaultContainer {
 	def static synchronized getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new RootNode
-			Logger.info(RootNode, "RootNode initialized")
+			Logger.info(RootNode, "RootNode created.")
 		}
 		return INSTANCE
 	}
@@ -83,17 +83,18 @@ class RootNode extends DefaultContainer {
 		val folderNode = new FolderNode(folderUrl, folder)
 		_children.add(folderNode)
 		UpdateMessage.fireChildAdded(this as Subject, folderNode)
+		return folderNode
 
 	}
 
 	def initialize() {
 		if (!initialized) {
-			addFolder(CLIENT_GEN_NAME)
-			addFolder(DBSERVER_GEN_NAME)
+			clientGenerators = addFolder(CLIENT_GEN_NAME)
+			dbServerGenerators = addFolder(DBSERVER_GEN_NAME)
 			// refresh tree
 			UpdateMessage.fireStructureChanged(this as Subject)
 			markDirty(false)
-			Logger.info(this, "RootNode initialized")
+			Logger.info(this, "RootNode initialized.")
 			initialized = true
 		}
 	}

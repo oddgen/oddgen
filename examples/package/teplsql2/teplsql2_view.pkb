@@ -136,7 +136,7 @@ $end
    --
    FUNCTION get_name RETURN VARCHAR2 IS
    BEGIN
-      RETURN '1:1 View (PL/SQL)';
+      RETURN '1:1 View (tePLSQL2 - template in conditional PL/SQL block)';
    END get_name;
 
    --

@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    --
    FUNCTION get_name RETURN VARCHAR2 IS
    BEGIN
-      RETURN '1:1 View (PL/SQL)';
+      RETURN '1:1 View (tePLSQL - template in CLOB variable)';
    END get_name;
 
    --

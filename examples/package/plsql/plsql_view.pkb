@@ -35,7 +35,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    --
    FUNCTION get_description RETURN VARCHAR2 IS
    BEGIN
-      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.';
+      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.';
    END get_description;
 
    --

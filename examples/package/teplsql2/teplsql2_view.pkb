@@ -136,7 +136,7 @@ $end
    --
    FUNCTION get_name RETURN VARCHAR2 IS
    BEGIN
-      RETURN '1:1 View (tePLSQL2 - template in conditional PL/SQL block)';
+      RETURN '1:1 View (tePLSQL2)';
    END get_name;
 
    --
@@ -144,7 +144,7 @@ $end
    --
    FUNCTION get_description RETURN VARCHAR2 IS
    BEGIN
-      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.';
+      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The tePLSQL template is defined in a conditional PL/SQL block.';
    END get_description;
 
    --

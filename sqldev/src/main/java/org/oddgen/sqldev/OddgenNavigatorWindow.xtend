@@ -6,9 +6,6 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import javax.swing.JTree
-import javax.swing.tree.TreeNode
-import javax.swing.tree.TreePath
 import oracle.ide.Context
 import oracle.ide.controls.Toolbar
 import oracle.ide.util.PropertyAccess
@@ -87,30 +84,8 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		if (e.source == refreshButton) {
 			connectionPanel.refresh
 		} else if (e.source == collapseallButton) {
-			collapseall
+			RootNode.instance.collapseall
 		}
-	}
-
-	def protected void collapseall(JTree tree, TreePath parent) {
-		val node = parent.getLastPathComponent() as TreeNode;
-		if (node.getChildCount() >= 0) {
-			for (val e = node.children; e.hasMoreElements;) {
-				val n = e.nextElement as TreeNode
-				val path = parent.pathByAddingChild(n)
-				collapseall(tree, path)
-			}
-		}
-		tree.collapsePath(parent)
-	}
-
-	def void collapseall() {
-		val tree = TreeUtils.findTree(this.gui)
-		Logger.debug(this, "tree to collapse: %1$s found in %2$s.", tree, this.gui)
-		val root = tree.model.root as TreeNode;
-		Logger.debug(this, "root node to collapse %s.", root)
-		val treePath = new TreePath(root)
-		collapseall(tree, treePath)
-		tree.expandPath(treePath)
 	}
 
 }

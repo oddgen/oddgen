@@ -14,6 +14,7 @@ import oracle.dbtools.raptor.controls.ConnectionPanelUI
 import oracle.dbtools.raptor.utils.Connections
 import oracle.ide.net.URLFactory
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import oracle.ide.model.UpdateMessage
 
 @Loggable(prepend=true)
 class OddgenConnectionPanel extends ConnectionPanelUI {
@@ -51,9 +52,9 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		}
 	}
 
-	def protected openConnection() {
+	def protected openOrRefreshConnection() {
 		try {
-			val connectionInfo = Connections.instance. getConnectionInfo(connectionName)
+			val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
 			val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)
 			Logger.debug(this, "connectionInfo %s.", connectionInfo)
 			Logger.debug(this, "isConnectionOpen %s.", alreadyOpen)
@@ -79,8 +80,10 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 				folder.removeAll(true)
 				for (dbgen : dbgens) {
 					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.name), dbgen)
-					folder.add(node, true)
+					folder.add(node)
 				}
+				UpdateMessage.fireStructureChanged(folder)
+				folder.expandNode
 				folder.markDirty(false)
 			}
 		} catch (Exception e) {
@@ -89,7 +92,8 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 	}
 
 	def refresh() {
-		val Runnable runnable = [|openConnection]
+		// run in own thread which might lead to odd behavior if the connection cannot be established
+		val Runnable runnable = [|openOrRefreshConnection]
 		val thread = new Thread(runnable)
 		thread.name = "oddgen Connection Refresher"
 		thread.start

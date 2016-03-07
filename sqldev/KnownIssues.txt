@@ -3,3 +3,6 @@ Personal Issue List
 Issues during development, to be fixed later.
 
 - Connection state is not refreshed, when connection has been closed (requires some events on dockable windows)
+  Probably need to register some close event
+
+- Refresh List of Connections somehow. Currently the list contains all connections a start time of oddgen navigator window

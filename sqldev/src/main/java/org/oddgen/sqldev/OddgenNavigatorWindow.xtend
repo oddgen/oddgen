@@ -16,10 +16,10 @@ import java.awt.event.ActionEvent
 @Loggable(prepend=true)
 class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener {
 	private Component gui
-	private Toolbar tb;
-	private ToolbarButton refreshButton;
-	private ToolbarButton collapseallButton;
-	private OddgenConnectionPanel connectionPanel;
+	private Toolbar tb
+	private ToolbarButton refreshButton
+	private ToolbarButton collapseallButton
+	private OddgenConnectionPanel connectionPanel
 
 	new(Context context, String string) {
 		super(context, string)
@@ -53,12 +53,12 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		refreshButton.addActionListener(this)
 	}
 
-	override Component getGUI() {
+	override getGUI() {
 		if (gui == null) {
 			gui = super.getGUI()
 			initialize()
 		}
-		return gui;
+		return gui
 	}
 
 	override getTitleName() {

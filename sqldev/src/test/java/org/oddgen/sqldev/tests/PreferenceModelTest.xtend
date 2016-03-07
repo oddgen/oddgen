@@ -7,7 +7,7 @@ import org.oddgen.sqldev.model.PreferenceModel
 
 class PreferenceModelTest {
 	@Test
-	def void testDefaultOfIsDiscoverPlsqlGenerators() {
+	def testDefaultOfIsDiscoverPlsqlGenerators() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
 		Logger.info(this, "model: " + model)
 		Assert.assertTrue(model.isDiscoverPlsqlGenerators)

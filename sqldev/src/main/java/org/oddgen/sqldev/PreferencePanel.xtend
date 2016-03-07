@@ -31,26 +31,26 @@ class PreferencePanel extends DefaultTraversablePanel {
 		layoutControls()
 	}
 
-	def private void layoutControls() {
-		val FieldLayoutBuilder b = new FieldLayoutBuilder(this)
-		b.setAlignLabelsLeft(true)
-		b.add(
-			b.field.label.withText("&Discover PL/SQL generators:").component(discoverPlsqlGeneratorsCheckBox).
+	def private layoutControls() {
+		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
+		builder.alignLabelsLeft = true
+		builder.add(
+			builder.field.label.withText("&Discover PL/SQL generators:").component(discoverPlsqlGeneratorsCheckBox).
 				withHint(
 					"If checked, PL/SQL generators are discovered within the current database instance when opening the oddgen folder."
 				))
-		b.addVerticalSpring
+		builder.addVerticalSpring
 	}
 
-	override void onEntry(TraversableContext traversableContext) {
-		var PreferenceModel info = getUserInformation(traversableContext)
-		discoverPlsqlGeneratorsCheckBox.setSelected(info.isDiscoverPlsqlGenerators())
+	override onEntry(TraversableContext traversableContext) {
+		var PreferenceModel info = traversableContext.userInformation
+		discoverPlsqlGeneratorsCheckBox.selected = info.isDiscoverPlsqlGenerators
 		super.onEntry(traversableContext)
 	}
 
-	override void onExit(TraversableContext traversableContext) throws TraversalException {
-		var PreferenceModel info = getUserInformation(traversableContext)
-		info.setDiscoverPlsqlGenerators(discoverPlsqlGeneratorsCheckBox.selected)
+	override onExit(TraversableContext traversableContext) throws TraversalException {
+		var PreferenceModel info = traversableContext.userInformation
+		info.discoverPlsqlGenerators = discoverPlsqlGeneratorsCheckBox.selected
 		super.onExit(traversableContext)
 	}
 

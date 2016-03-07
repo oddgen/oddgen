@@ -39,6 +39,6 @@ class GeneratorNode extends DefaultContainer {
 	}
 
 	def getGenerator() {
-		return generator;
+		return generator
 	}
 }

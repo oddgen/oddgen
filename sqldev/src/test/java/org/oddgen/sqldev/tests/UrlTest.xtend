@@ -12,7 +12,7 @@ import org.oddgen.sqldev.resources.OddgenResources
 class UrlTest {
 
 	@Test
-	def void newUrlTest() {
+	def newUrlTest() {
 		// manually register factory and helper
 		// SQL Developer provides hooks in extension.xml for that purpose 
 		val factory = new OddgenUrlStreamHandlerFactory

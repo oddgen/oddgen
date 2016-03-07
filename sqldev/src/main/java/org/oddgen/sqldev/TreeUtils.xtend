@@ -11,28 +11,28 @@ import javax.swing.JTree
 
 @Loggable(prepend=true)
 class TreeUtils {
-	def static void immatateDblClick(Component paramComponent) {
+	def static immatateDblClick(Component paramComponent) {
 		immatateDblClick(findTree(paramComponent))
 	}
 
-	def static void immatateDblClick(JTree paramJTree) {
+	def static immatateDblClick(JTree paramJTree) {
 		paramJTree.addMouseListener(new MouseAdapter() {
 			override void mousePressed(MouseEvent paramAnonymousMouseEvent) {
 			}
 		})
 	}
 
-	def static JTree findTree(Component component) {
+	def static findTree(Component component) {
 		val components = new LinkedList<Component>()
 		components.add(component)
 		while (!components.isEmpty()) {
 			var comp = components.removeLast() as Component
 			var Object obj
-			if ((comp instanceof JTree)) {
+			if (comp instanceof JTree) {
 				obj = comp as JTree
 				return obj as JTree
 			}
-			if ((comp instanceof Container)) {
+			if (comp instanceof Container) {
 				obj = comp as Container
 				components.addAll(Arrays.asList((obj as Container).getComponents()))
 			}

@@ -15,15 +15,15 @@ import oracle.ideri.navigator.DefaultNavigatorWindow
 
 @Loggable(prepend=true)
 class OddgenNavigatorManager extends DefaultNavigatorManager {
-	public static final String NAVIGATOR_WINDOW_ID = "ODDGEN_NAVIGATOR_WINDOW";
+	public static final String NAVIGATOR_WINDOW_ID = "ODDGEN_NAVIGATOR_WINDOW"
 
 	static private OddgenNavigatorManager INSTANCE = null
 
 	new() {
 		// TODO: define and include accelerators
-		// val registry = Ide.getKeyStrokeContextRegistry();
+		// val registry = Ide.getKeyStrokeContextRegistry()
 		// registry.addAcceleratorDefinitionFile(getClass().getClassLoader(),
-		// "/org/oddgen/sqldev/resources/accelerators.xml");
+		// "/org/oddgen/sqldev/resources/accelerators.xml")
 	}
 
 	def static OddgenNavigatorManager getInstance() {
@@ -43,7 +43,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 			1
 		} else {
 			0
-		});
+		})
 	}
 
 	override protected DefaultNavigatorWindow createNavigatorWindow(Context context, ViewId viewId) {
@@ -64,10 +64,10 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	override protected createNavigatorDockingParam() {
-		val param = new DockingParam();
+		val param = new DockingParam()
 		val referenceView = new ViewId(NAVIGATOR_WINDOW_ID, "Default")
 		val referenceDockable = DockStation.dockStation.findDockable(referenceView)
-		param.setPosition(referenceDockable, IdeConstants.SOUTH, IdeConstants.WEST)
+		param.setPosition(referenceDockable, IdeConstants.WEST, IdeConstants.SOUTH)
 		return param
 	}
 

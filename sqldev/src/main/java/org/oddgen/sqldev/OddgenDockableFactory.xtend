@@ -11,22 +11,22 @@ import oracle.ide.layout.ViewId
 @Loggable(prepend=true)
 class OddgenDockableFactory implements DockableFactory {
 
-	private OddgenNavigatorWindow dockable;
+	private OddgenNavigatorWindow dockable
 
 	override void install() {
 		val dockStation = DockStation.getDockStation()
 		dockStation.dock(getLocalDockable(), createDockingParam)
 	}
 
-	def private OddgenNavigatorWindow getLocalDockable() {
+	def private getLocalDockable() {
 		if (dockable == null) {
 			dockable = OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow
 		}
-		return dockable;
+		return dockable
 	}
 
-	def protected DockingParam createDockingParam() {
-		val param = new DockingParam();
+	def protected createDockingParam() {
+		val param = new DockingParam()
 		val referenceView = new ViewId(OddgenNavigatorManager.NAVIGATOR_WINDOW_ID, "Default")
 		Logger.debug(this, "referenceView = " + referenceView)
 		val referenceDockable = DockStation.dockStation.findDockable(referenceView)

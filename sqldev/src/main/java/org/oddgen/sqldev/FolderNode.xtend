@@ -36,6 +36,6 @@ class FolderNode extends DefaultContainer {
 	}
 	
 	def getFolder() {
-		return folder;
+		return folder
 	}	
 }

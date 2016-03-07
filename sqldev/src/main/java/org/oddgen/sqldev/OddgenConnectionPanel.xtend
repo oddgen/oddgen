@@ -40,12 +40,12 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		super(#["oraJDBC"], false, false)
 		val connComboBox = getComboBoxList(this).get(0) // alternative deprecated this.connCombo
 		// ensure arrow keys do not throw ItemChangedState events
-		connComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+		connComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE)
 		connComboBox.selectedIndex = 0
 	}
 
 	@Loggable(value=LoggableConstants.DEBUG, prepend=true)
-	override protected void addButtons(JPanel panel, GridBagConstraints constraints) {
+	override protected addButtons(JPanel panel, GridBagConstraints constraints) {
 		// called during object construction, therefore no setter for addButtons
 		if (ADD_BUTTONS) {
 			super.addButtons(panel, constraints)
@@ -96,7 +96,7 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 	}
 
 	override itemStateChanged(ItemEvent event) {
-		checkConnection();
+		checkConnection()
 		if (event.stateChange == ItemEvent.SELECTED) {
 			refresh()
 		}

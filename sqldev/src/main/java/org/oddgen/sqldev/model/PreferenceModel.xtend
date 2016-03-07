@@ -27,7 +27,7 @@ class PreferenceModel extends HashStructureAdapter {
 		super(hash)
 	}
 
-	def static PreferenceModel getInstance(PropertyStorage prefs) {
+	def static getInstance(PropertyStorage prefs) {
 		return new PreferenceModel(findOrCreate(prefs, DATA_KEY))
 	}
 
@@ -36,11 +36,11 @@ class PreferenceModel extends HashStructureAdapter {
 	 */
 	static final String KEY_DISCOVER_PLSQL_GENERATORS = "discoverPlsqlGenerators"
 
-	def boolean isDiscoverPlsqlGenerators() {
+	def isDiscoverPlsqlGenerators() {
 		return getHashStructure.getBoolean(KEY_DISCOVER_PLSQL_GENERATORS, true)
 	}
 
-	def void setDiscoverPlsqlGenerators(boolean discoverPlsqlGenerators) {
+	def setDiscoverPlsqlGenerators(boolean discoverPlsqlGenerators) {
 		getHashStructure.putBoolean(KEY_DISCOVER_PLSQL_GENERATORS, discoverPlsqlGenerators)
 	}
 

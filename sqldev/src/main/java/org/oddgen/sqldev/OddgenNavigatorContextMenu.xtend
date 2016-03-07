@@ -19,28 +19,28 @@ import oracle.ideimpl.explorer.ExplorerNode
 
 @Loggable(prepend=true)
 class OddgenNavigatorContextMenu implements ContextMenuListener, Controller {
-	private static final int OPEN_CMD_ID = Ide.findOrCreateCmdID("oddgen.OPEN");
-	private static final int REFRESH_CMD_ID = Ide.findOrCreateCmdID("oddgen.REFRESH");
-	private static final int COLLAPSEALL_CMD_ID = Ide.findOrCreateCmdID("oddgen.COLLAPSEALL");
+	private static final int OPEN_CMD_ID = Ide.findOrCreateCmdID("oddgen.OPEN")
+	private static final int REFRESH_CMD_ID = Ide.findOrCreateCmdID("oddgen.REFRESH")
+	private static final int COLLAPSEALL_CMD_ID = Ide.findOrCreateCmdID("oddgen.COLLAPSEALL")
 	private static final IdeAction OPEN_ACTION = getAction(OPEN_CMD_ID)
 	private static final IdeAction REFRESH_ACTION = getAction(REFRESH_CMD_ID)
 	private static final IdeAction COLLAPSEALL_ACTION = getAction(COLLAPSEALL_CMD_ID)
 	private static OddgenNavigatorContextMenu INSTANCE
 
 	def private static IdeAction getAction(int actionId) {
-		val action = IdeAction.get(actionId);
-		action.addController(getInstance());
-		return action;
+		val action = IdeAction.get(actionId)
+		action.addController(getInstance())
+		return action
 	}
 
 	def static synchronized getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new OddgenNavigatorContextMenu();
+			INSTANCE = new OddgenNavigatorContextMenu()
 		}
-		return INSTANCE;
+		return INSTANCE
 	}
 
-	def void attachMouseListener(Component component) {
+	def attachMouseListener(Component component) {
 		var tree = TreeUtils.findTree(component)
 		tree.addMouseListener(
 			new MouseAdapter() {

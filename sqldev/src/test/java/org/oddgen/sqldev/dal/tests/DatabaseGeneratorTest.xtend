@@ -129,6 +129,14 @@ class DatabaseGeneratorTest {
 		createPlsqlView
 		createPlsqlDummy
 	}
+	
+	@AfterClass
+	def static tearDown() {
+		val jdbcTemplate = new JdbcTemplate(dataSource)
+		// jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
+		// jdbcTemplate.execute("DROP PACKAGE plsql_view")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
+	}	
 
 	def static createPlsqlHelloWorld() {
 		// create package specification of plsql_hello_world generator
@@ -789,11 +797,4 @@ class DatabaseGeneratorTest {
 		''')
 	}
 
-	@AfterClass
-	def static tearDown() {
-		val jdbcTemplate = new JdbcTemplate(dataSource)
-		// jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
-		// jdbcTemplate.execute("DROP PACKAGE plsql_view")
-		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
-	}
 }

@@ -9,43 +9,48 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
 class DatabaseGeneratorTest {
-	
+
 	private static SingleConnectionDataSource dataSource
-	
+	private static JdbcTemplate jdbcTemplate
+
 	@Test
 	def daoTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgens = dao.findAll
-		val plsqlView = dbgens.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"]
+		val plsqlView = dbgens.findFirst [
+			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"
+		]
 		Assert.assertTrue(plsqlView.hasParams)
-		Assert.assertTrue(plsqlView.name == "1:1 View (PL/SQL)")
-		Assert.assertTrue(plsqlView.description == "Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.")
-		Assert.assertTrue(plsqlView.objectTypes.size == 1)
-		Assert.assertTrue(plsqlView.objectTypes.get(0) == "TABLES")
-		Assert.assertTrue(plsqlView.params.size == 4)
-		Assert.assertTrue(plsqlView.params.get("View suffix") == "_V")
-		Assert.assertTrue(plsqlView.params.get("Table suffix to be replaced") == "_T")
-		Assert.assertTrue(plsqlView.params.get("Instead-of-trigger suffix") == "_TRG")
-		Assert.assertTrue(plsqlView.params.get("Generate instead-of-trigger?") == "Yes")
-		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").size == 2)
-		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(0) == "Yes")
-		Assert.assertTrue(plsqlView.lovs.get("Generate instead-of-trigger?").get(1) == "No")
+		Assert.assertEquals("1:1 View (PL/SQL)", plsqlView.name)
+		Assert.assertEquals(
+			"Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.",
+			plsqlView.description)
+		Assert.assertEquals(1, plsqlView.objectTypes.size)
+		Assert.assertEquals("TABLES", plsqlView.objectTypes.get(0))
+		Assert.assertEquals(4, plsqlView.params.size)
+		Assert.assertEquals("_V", plsqlView.params.get("View suffix"))
+		Assert.assertEquals("_T", plsqlView.params.get("Table suffix to be replaced"))
+		Assert.assertEquals("_TRG", plsqlView.params.get("Instead-of-trigger suffix"))
+		Assert.assertEquals("Yes", plsqlView.params.get("Generate instead-of-trigger?"))
+		Assert.assertEquals(2, plsqlView.lovs.get("Generate instead-of-trigger?").size)
+		Assert.assertEquals("Yes", plsqlView.lovs.get("Generate instead-of-trigger?").get(0))
+		Assert.assertEquals("No", plsqlView.lovs.get("Generate instead-of-trigger?").get(1))
 		Assert.assertFalse(plsqlView.isRefreshable)
 	}
-	
+
 	@Test
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 2)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "Yes")
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(1) == "No")		
+		Assert.assertEquals(2, dbgen.lovs.get("With grandchildren?").size)
+		Assert.assertEquals("Yes", dbgen.lovs.get("With grandchildren?").get(0))
+		Assert.assertEquals("No", dbgen.lovs.get("With grandchildren?").get(1))
 		dbgen.params.put('With children?', 'No')
 		dao.refresh(dbgen)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").size == 1)
-		Assert.assertTrue(dbgen.lovs.get("With grandchildren?").get(0) == "No")
+		Assert.assertEquals(1, dbgen.lovs.get("With grandchildren?").size)
+		Assert.assertEquals("No", dbgen.lovs.get("With grandchildren?").get(0))
 	}
-	
+
 	@Test
 	def generateTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
@@ -65,7 +70,9 @@ class DatabaseGeneratorTest {
 	@Test
 	def generateHelloWorldTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD']
+		val dbgen = dao.findAll.findFirst [
+			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD'
+		]
 		dbgen.objectType = 'VIEW'
 		dbgen.objectName = 'EMP_V'
 		val expected = '''
@@ -81,7 +88,9 @@ class DatabaseGeneratorTest {
 	@Test
 	def generateErrorTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD']
+		val dbgen = dao.findAll.findFirst [
+			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD'
+		]
 		dbgen.generatorName = 'NON_EXISTING_PACKAGE'
 		dbgen.objectType = 'TYPE'
 		dbgen.objectName = 'NAME'
@@ -105,17 +114,23 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
-
-
 	@BeforeClass
 	def static setup() {
+		// create dataSource and jdbcTemplate
 		dataSource = new SingleConnectionDataSource()
 		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
 		dataSource.url = "jdbc:oracle:thin:@titisee.trivadis.com:1521/phspdb2"
 		dataSource.username = "oddgen"
 		dataSource.password = "oddgen"
-		val jdbcTemplate = new JdbcTemplate(dataSource)
+		jdbcTemplate = new JdbcTemplate(dataSource)
 
+		// deploy PL/SQL packages 
+		createPlsqlHelloWorld
+		createPlsqlView
+		createPlsqlDummy
+	}
+
+	def static createPlsqlHelloWorld() {
 		// create package specification of plsql_hello_world generator
 		// copy of oddgen/examples/package/plsql/plsql_hello_world.pks
 		jdbcTemplate.execute('''
@@ -153,7 +168,7 @@ class DatabaseGeneratorTest {
 			                     in_object_name IN VARCHAR2) RETURN CLOB;
 			
 			END plsql_hello_world;
-		''')		
+		''')
 
 		// create package body of plsql_hello_world generator
 		// copy of oddgen/examples/package/plsql/plsql_hello_world.pkb
@@ -189,8 +204,10 @@ class DatabaseGeneratorTest {
 			      RETURN l_result;
 			   END generate;
 			END plsql_hello_world;
-		''')		
+		''')
+	}
 
+	def static createPlsqlView() {
 		// create package specification of plsql_view generator
 		// copy of oddgen/examples/package/plsql/plsql_view.pks
 		jdbcTemplate.execute('''
@@ -325,6 +342,7 @@ class DatabaseGeneratorTest {
 			                     in_object_name IN VARCHAR2) RETURN CLOB;
 			END plsql_view;
 		''')
+
 		// create package body of plsql_view generator
 		// copy of oddgen/examples/package/plsql/plsql_view.pkb
 		jdbcTemplate.execute('''
@@ -348,7 +366,7 @@ class DatabaseGeneratorTest {
 			   --
 			   -- private constants
 			   --
-			   c_new_line      CONSTANT string_type    := chr(10);
+			   c_new_line     CONSTANT string_type    := chr(10);
 			   co_max_obj_len  CONSTANT simple_integer := 30;
 			   co_oddgen_error CONSTANT simple_integer := -20501;
 			
@@ -365,7 +383,7 @@ class DatabaseGeneratorTest {
 			   --
 			   FUNCTION get_description RETURN VARCHAR2 IS
 			   BEGIN
-			      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.';
+			      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.';
 			   END get_description;
 			
 			   --
@@ -700,7 +718,10 @@ class DatabaseGeneratorTest {
 			                      in_params      => l_params);
 			   END generate;
 			END plsql_view;
-		''')		
+		''')
+	}
+
+	def static createPlsqlDummy() {
 		// create package specification of dummy generator with refresh_lov function
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE plsql_dummy AUTHID CURRENT_USER IS
@@ -721,6 +742,7 @@ class DatabaseGeneratorTest {
 			                     in_params      IN t_param) RETURN CLOB;
 			END plsql_dummy;
 		''')
+
 		// create package body of dummy generator with refresh_lov function
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE BODY plsql_dummy IS
@@ -770,8 +792,8 @@ class DatabaseGeneratorTest {
 	@AfterClass
 	def static tearDown() {
 		val jdbcTemplate = new JdbcTemplate(dataSource)
-		//jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
-		//jdbcTemplate.execute("DROP PACKAGE plsql_view")
+		// jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
+		// jdbcTemplate.execute("DROP PACKAGE plsql_view")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
 	}
 }

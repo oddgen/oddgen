@@ -42,6 +42,7 @@ class DatabaseGeneratorTest {
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
+		Assert.assertTrue(dbgen.isRefreshable)
 		Assert.assertEquals(2, dbgen.lovs.get("With grandchildren?").size)
 		Assert.assertEquals("Yes", dbgen.lovs.get("With grandchildren?").get(0))
 		Assert.assertEquals("No", dbgen.lovs.get("With grandchildren?").get(1))
@@ -743,8 +744,10 @@ class DatabaseGeneratorTest {
 			
 			   FUNCTION get_lov RETURN t_lov;
 			
-			   FUNCTION refresh_lov(in_params IN t_param) RETURN t_lov;
-			
+			   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
+			                        in_object_name IN VARCHAR2,
+			                        in_params      IN t_param) RETURN t_lov;
+
 			   FUNCTION generate(in_object_type IN VARCHAR2,
 			                     in_object_name IN VARCHAR2,
 			                     in_params      IN t_param) RETURN CLOB;
@@ -770,7 +773,9 @@ class DatabaseGeneratorTest {
 			      RETURN l_lov;
 			   END get_lov;
 			
-			   FUNCTION refresh_lov(in_params IN t_param) RETURN t_lov IS
+			   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
+			                        in_object_name IN VARCHAR2,
+			                        in_params      IN t_param) RETURN t_lov IS
 			      l_lov t_lov;
 			   BEGIN
 			      l_lov('With children?') := NEW t_string('Yes', 'No');

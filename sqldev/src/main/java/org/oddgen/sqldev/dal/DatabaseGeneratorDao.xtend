@@ -246,6 +246,26 @@ class DatabaseGeneratorDao {
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 1
 			               AND in_out = 'IN'
+			               AND argument_name = 'IN_OBJECT_TYPE'
+			               AND data_type = 'VARCHAR2'
+			        UNION ALL
+			        SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dbgen.generatorOwner»'
+			               AND package_name = '«dbgen.generatorName»'
+			               AND object_name = 'REFRESH_LOV'
+			               AND position = 2
+			               AND in_out = 'IN'
+			               AND argument_name = 'IN_OBJECT_NAME'
+			               AND data_type = 'VARCHAR2'
+			        UNION ALL
+			        SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dbgen.generatorOwner»'
+			               AND package_name = '«dbgen.generatorName»'
+			               AND object_name = 'REFRESH_LOV'
+			               AND position = 3
+			               AND in_out = 'IN'
 			               AND argument_name = 'IN_PARAMS'
 			               AND data_type = 'PL/SQL TABLE'
 			               AND type_owner = '«dbgen.generatorOwner»'
@@ -253,7 +273,7 @@ class DatabaseGeneratorDao {
 			               AND type_subname = 'T_PARAM')
 		'''
 		val count = jdbcTemplate.queryForObject(sql, Integer)
-		if (count == 2) {
+		if (count == 4) {
 			dbgen.isRefreshable = true
 		} else {
 			dbgen.isRefreshable = false
@@ -336,7 +356,11 @@ class DatabaseGeneratorDao {
 				   «FOR key : dbgen.params.keySet»
 				      l_params('«key»') := '«dbgen.params.get(key)»';
 				   «ENDFOR»
-				   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».refresh_lov(in_params => l_params);
+				   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».refresh_lov(
+				                in_object_type => '«dbgen.objectType»',
+				                in_object_name => '«dbgen.objectName»',
+				                in_params      => l_params
+				             );
 				   l_key  := l_lovs.first;
 				   l_clob := '<lovs>';
 				   WHILE l_key IS NOT NULL

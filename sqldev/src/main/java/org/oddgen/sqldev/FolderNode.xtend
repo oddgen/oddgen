@@ -4,19 +4,15 @@ import com.jcabi.log.Logger
 import java.net.URL
 import javax.swing.tree.TreePath
 import oracle.ide.model.DefaultContainer
+import oracle.ide.model.UpdateMessage
+import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
+import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.Folder
 import org.oddgen.sqldev.resources.OddgenResources
 
 class FolderNode extends DefaultContainer {
 	Folder folder;
-
-	new() {
-	}
-
-	new(URL url) {
-		this(url, null)
-	}
 
 	new(URL url, Folder folder) {
 		super(url)
@@ -43,6 +39,33 @@ class FolderNode extends DefaultContainer {
 		return folder
 	}
 
+	def openBackground() {
+		if (this == RootNode.instance.dbServerGenerators) {
+			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+			if (conn != null) {
+				val dao = new DatabaseGeneratorDao(conn)
+				val dbgens = dao.findAll
+				Logger.debug(this, "discovered %d database generators", dbgens.size)
+				val folder = RootNode.instance.dbServerGenerators
+				folder.removeAll(true)
+				for (dbgen : dbgens) {
+					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.name), dbgen)
+					folder.add(node)
+				}
+				UpdateMessage.fireStructureChanged(folder)
+				folder.expandNode
+				folder.markDirty(false)
+			}
+		}
+	}
+
+	override openImpl() {
+		val Runnable runnable = [|openBackground]
+		val thread = new Thread(runnable)
+		thread.name = "oddgen Open Generator Folder"
+		thread.start
+	}
+
 	def expandNode() {
 		val tree = TreeUtils.findTree(OddgenNavigatorManager.instance.navigatorWindow.GUI)
 		Logger.debug(this, "tree is %s", tree)
@@ -67,5 +90,5 @@ class FolderNode extends DefaultContainer {
 			Logger.debug(this, "selected")
 		}
 	}
-	
+
 }

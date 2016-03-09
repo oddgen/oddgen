@@ -47,7 +47,7 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		}
 	}
 
-	def refresh() {
+	def void refresh() {
 		RootNode.instance.dbServerGenerators.openImpl
 	}
 

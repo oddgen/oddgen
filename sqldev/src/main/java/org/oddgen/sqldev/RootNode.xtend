@@ -113,7 +113,9 @@ class RootNode extends DefaultContainer {
 			}
 		}
 		if (parent != root) {
-			tree.collapsePath(parent)
+			if (!tree.isCollapsed(parent)) {
+				tree.collapsePath(parent)
+			}
 		}
 	}
 

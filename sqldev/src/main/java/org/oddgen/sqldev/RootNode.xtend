@@ -10,7 +10,7 @@ import oracle.ide.model.Subject
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
-import org.oddgen.sqldev.model.Folder
+import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
 class RootNode extends DefaultContainer {
@@ -19,8 +19,8 @@ class RootNode extends DefaultContainer {
 	private static String DBSERVER_GEN_NAME = OddgenResources.getString("DBSERVER_GEN_NODE_LONG_LABEL")
 	private static RootNode INSTANCE
 	private boolean initialized = false
-	private FolderNode clientGenerators
-	private FolderNode dbServerGenerators
+	private GeneratorFolderNode clientGenerators
+	private GeneratorFolderNode dbServerGenerators
 
 	def static synchronized getInstance() {
 		if (INSTANCE == null) {
@@ -80,11 +80,11 @@ class RootNode extends DefaultContainer {
 	}
 
 	def protected addFolder(String name) {
-		val folder = new Folder()
+		val folder = new GeneratorFolder()
 		folder.name = name
 		folder.description = name
 		val folderUrl = URLFactory.newURL(getURL(), name)
-		val folderNode = new FolderNode(folderUrl, folder)
+		val folderNode = new GeneratorFolderNode(folderUrl, folder)
 		_children.add(folderNode)
 		UpdateMessage.fireChildAdded(this as Subject, folderNode)
 		return folderNode

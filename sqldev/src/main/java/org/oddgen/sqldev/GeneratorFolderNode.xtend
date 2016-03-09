@@ -8,13 +8,13 @@ import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.Folder
+import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
-class FolderNode extends DefaultContainer {
-	Folder folder;
+class GeneratorFolderNode extends DefaultContainer {
+	GeneratorFolder folder;
 
-	new(URL url, Folder folder) {
+	new(URL url, GeneratorFolder folder) {
 		super(url)
 		this.folder = folder
 	}

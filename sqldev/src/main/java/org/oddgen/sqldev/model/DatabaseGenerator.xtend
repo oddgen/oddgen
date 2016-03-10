@@ -1,12 +1,12 @@
 package org.oddgen.sqldev.model
 
+import java.util.ArrayList
 import java.util.HashMap
 import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.oddgen.sqldev.model.Generator
 
 @Accessors
-class DatabaseGenerator extends Generator {
+class DatabaseGenerator extends Generator implements Cloneable{
 	/** PL/SQL package owner */
 	String generatorOwner
 	
@@ -33,4 +33,23 @@ class DatabaseGenerator extends Generator {
 
 	/** indicates if the list-of-values are dependent on current params settings and a refresh is supported */
 	Boolean isRefreshable
+	
+	override clone() {
+		val clone = new DatabaseGenerator
+		clone.name = new String(this.name)
+		clone.description = new String(this.description)
+		clone.generatorOwner = new String(this.generatorOwner)
+		clone.generatorName = new String(this.generatorName)
+		clone.objectType = if (this.objectType != null) {new String(this.objectType)}
+		clone.objectName = if (this.objectName != null) {new String(this.objectName)}
+		clone.hasParams = new Boolean(this.hasParams)
+		clone.objectTypes = new ArrayList<String>()
+		for (type : this.objectTypes) {
+			clone.objectTypes.add(new String(type))
+		}
+		clone.params = this.params.clone() as HashMap<String, String>
+		clone.lovs = this.lovs.clone() as HashMap<String, List<String>>
+		clone.isRefreshable = new Boolean(this.isRefreshable)
+ 		return clone
+	}
 }

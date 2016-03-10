@@ -5,6 +5,7 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.model.DatabaseGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
@@ -115,6 +116,23 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
+	@Test
+	def dbgenCloneTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgens = dao.findAll
+		val plsqlView = dbgens.findFirst [
+			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"
+		]
+		val clone = plsqlView.clone() as DatabaseGenerator
+		Assert.assertEquals(plsqlView.hasParams, clone.hasParams)
+		Assert.assertEquals(plsqlView.name, clone.name)
+		Assert.assertEquals(plsqlView.description, clone.description)
+		Assert.assertEquals(plsqlView.objectTypes, clone.objectTypes)
+		Assert.assertEquals(plsqlView.params, clone.params)
+		Assert.assertEquals(plsqlView.lovs, clone.lovs)
+		Assert.assertEquals(plsqlView.isRefreshable, clone.isRefreshable)		
+	}
+
 	@BeforeClass
 	def static setup() {
 		// create dataSource and jdbcTemplate
@@ -130,14 +148,14 @@ class DatabaseGeneratorTest {
 		createPlsqlView
 		createPlsqlDummy
 	}
-	
+
 	@AfterClass
 	def static tearDown() {
 		val jdbcTemplate = new JdbcTemplate(dataSource)
 		// jdbcTemplate.execute("DROP PACKAGE plsql_hello_world")
 		// jdbcTemplate.execute("DROP PACKAGE plsql_view")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
-	}	
+	}
 
 	def static createPlsqlHelloWorld() {
 		// create package specification of plsql_hello_world generator
@@ -747,7 +765,7 @@ class DatabaseGeneratorTest {
 			   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
 			                        in_object_name IN VARCHAR2,
 			                        in_params      IN t_param) RETURN t_lov;
-
+			
 			   FUNCTION generate(in_object_type IN VARCHAR2,
 			                     in_object_name IN VARCHAR2,
 			                     in_params      IN t_param) RETURN CLOB;

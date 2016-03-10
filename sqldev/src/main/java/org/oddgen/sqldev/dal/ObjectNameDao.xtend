@@ -3,11 +3,9 @@ package org.oddgen.sqldev.dal
 import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
-import java.util.List
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
-import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Element
@@ -27,22 +25,24 @@ class ObjectNameDao {
 	def findUserObjectNames(ObjectType objectType) {
 		// ignore generated objects, such as IOT overflow tables
 		val sql = '''
-			SELECT object_type AS type_name,
-			       object_name AS name
-			 FROM user_objects 
-			WHERE object_type = ?
-			  AND generated = 'N'
-			ORDER BY object_name
+			 SELECT object_name
+			   FROM user_objects
+			  WHERE object_type = ?
+			    AND generated = 'N'
+			 ORDER BY object_name
 		'''
-		val params = #[objectType.name]
-		val names = jdbcTemplate.query(sql, params, new BeanPropertyRowMapper<ObjectName>(ObjectName))
+		val names = jdbcTemplate.queryForList(sql, String, objectType.name)
+		val objectNames = new ArrayList<ObjectName>()
 		for (name : names) {
-			name.generator = objectType.generator
+			val objectName = new ObjectName()
+			objectName.name = name 
+			objectName.objectType = objectType
+			objectNames.add(objectName)
 		}
-		return names
+		return objectNames
 	}
 
-	def List<ObjectName> findObjectNames(ObjectType objectType) {
+	def findObjectNames(ObjectType objectType) {
 		val dbgen = objectType.
 			generator as DatabaseGenerator
 		// convert PL/SQL nested table XML
@@ -63,18 +63,17 @@ class ObjectNameDao {
 		'''
 		val doc = dalTools.getDoc(plsql)
 		if (doc != null) {
-			val names = new ArrayList<ObjectName>()
+			val objectNames = new ArrayList<ObjectName>()
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
 				val name = value.textContent
 				val objectName = new ObjectName()
 				objectName.name = name
-				objectName.typeName = objectType.name
-				objectName.generator = objectType.generator
-				names.add(objectName)
+				objectName.objectType = objectType
+				objectNames.add(objectName)
 			}
-			return names
+			return objectNames
 		} else {
 			return findUserObjectNames(objectType)
 		}

@@ -4,7 +4,6 @@ import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
 class ObjectName {
-	Generator generator
-	String typeName
+	ObjectType objectType
 	String name
 }

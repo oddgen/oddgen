@@ -47,7 +47,7 @@ class GeneratorFolderNode extends DefaultContainer {
 				val dbgens = dao.findAll
 				Logger.debug(this, "discovered %d database generators", dbgens.size)
 				val folder = RootNode.instance.dbServerGenerators
-				folder.removeAll(true)
+				folder.removeAll
 				for (dbgen : dbgens) {
 					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.name), dbgen)
 					folder.add(node)

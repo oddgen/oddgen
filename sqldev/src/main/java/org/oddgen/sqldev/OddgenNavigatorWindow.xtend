@@ -9,7 +9,9 @@ import java.awt.event.ActionListener
 import java.sql.Connection
 import oracle.dbtools.raptor.utils.Connections
 import oracle.ide.Context
+import oracle.ide.controller.ContextMenu
 import oracle.ide.controls.Toolbar
+import oracle.ide.util.MnemonicSolver
 import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
@@ -18,18 +20,25 @@ import org.oddgen.sqldev.resources.OddgenResources
 @Loggable(prepend=true)
 class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener {
 	private Component gui
+	private ContextMenu contextMenu
 	private Toolbar tb
 	private ToolbarButton refreshButton
 	private ToolbarButton collapseallButton
 	private OddgenConnectionPanel connectionPanel
+	private OddgenNavigatorViewController controller
 
 	new(Context context, String string) {
 		super(context, string)
 	}
 
+	def protected intitializeContextMenu() {
+		contextMenu = new ContextMenu(new MnemonicSolver());
+		contextMenu.addContextMenuListener(OddgenNavigatorContextMenu.instance)
+	}
+
 	def protected initialize() {
-		// TODO: add ContextMenu, TreeExplorer
 		createToolbar
+		intitializeContextMenu
 		Logger.info(this, "OddgenNavigatorWindow initialized")
 	}
 
@@ -62,6 +71,17 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			initialize()
 		}
 		return gui
+	}
+
+	override getController() {
+		if (controller == null) {
+			controller = new OddgenNavigatorViewController()
+		}
+		return controller;
+	}
+
+	override getContextMenu() {
+		return contextMenu
 	}
 
 	override getTitleName() {

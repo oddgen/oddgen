@@ -16,6 +16,21 @@
 						<property name="Category">View</property>
 					</properties>
 				</action>
+				<action id="ODDGEN_GENERATE_TO_WORKSHEET">
+					<properties>
+						<property name="Name">${CTX_MENU_GEN_TO_WORKSHEET_LABEL}</property>
+					</properties>
+				</action>
+				<action id="ODDGEN_GENERATE_TO_CLIPBOARD">
+					<properties>
+						<property name="Name">${CTX_MENU_GEN_TO_CLIPBOARD_LABEL}</property>
+					</properties>
+				</action>
+				<action id="ODDGEN_GENERATE_DIALOG">
+					<properties>
+						<property name="Name">${CTX_MENU_GEN_DIALOG_LABEL}</property>
+					</properties>
+				</action>
 			</actions>
 			<controllers xmlns="http://xmlns.oracle.com/ide/extension">
 				<controller class="org.oddgen.sqldev.OddgenNavigatorViewController">

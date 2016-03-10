@@ -33,7 +33,7 @@
 				</action>
 			</actions>
 			<controllers xmlns="http://xmlns.oracle.com/ide/extension">
-				<controller class="org.oddgen.sqldev.OddgenNavigatorViewController">
+				<controller class="org.oddgen.sqldev.OddgenNavigatorController">
 					<update-rules>
 						<update-rule rule="always-enabled">
 							<action id="ODDGEN_SHOW_NAVIGATOR">

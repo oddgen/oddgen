@@ -43,7 +43,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    --
    FUNCTION get_object_types RETURN t_string IS
    BEGIN
-      RETURN NEW t_string('TABLES');
+      RETURN NEW t_string('TABLE');
    END get_object_types;
 
    --

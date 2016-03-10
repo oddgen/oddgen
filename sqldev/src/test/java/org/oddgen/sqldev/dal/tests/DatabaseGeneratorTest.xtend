@@ -26,7 +26,7 @@ class DatabaseGeneratorTest {
 			"Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.",
 			plsqlView.description)
 		Assert.assertEquals(1, plsqlView.objectTypes.size)
-		Assert.assertEquals("TABLES", plsqlView.objectTypes.get(0))
+		Assert.assertEquals("TABLE", plsqlView.objectTypes.get(0))
 		Assert.assertEquals(4, plsqlView.params.size)
 		Assert.assertEquals("_V", plsqlView.params.get("View suffix"))
 		Assert.assertEquals("_T", plsqlView.params.get("Table suffix to be replaced"))
@@ -400,7 +400,7 @@ class DatabaseGeneratorTest {
 			   --
 			   FUNCTION get_object_types RETURN t_string IS
 			   BEGIN
-			      RETURN NEW t_string('TABLES');
+			      RETURN NEW t_string('TABLE');
 			   END get_object_types;
 			
 			   --

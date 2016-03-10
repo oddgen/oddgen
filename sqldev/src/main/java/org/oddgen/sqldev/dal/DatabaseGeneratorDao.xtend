@@ -10,74 +10,25 @@ import java.sql.Types
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.List
-import javax.xml.parsers.DocumentBuilderFactory
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.springframework.dao.DataAccessException
-import org.springframework.jdbc.BadSqlGrammarException
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.xml.sax.InputSource
 
 @Loggable(prepend=true)
 class DatabaseGeneratorDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
+	private DalTools dalTools
 
 	new(Connection conn) {
 		this.conn = conn
 		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-	}
-	
-	def private getString(String plsql) {
-		var String result = null
-		try {
-			result = jdbcTemplate.execute(plsql, new CallableStatementCallback<String>() {
-				override String doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.VARCHAR);
-					cs.execute
-					return cs.getString(1);
-				}
-			})
-		} catch (BadSqlGrammarException e) {
-			if (e.cause.message.contains("PLS-00302")) {
-				// catch component must be declared error
-			} else {
-				Logger.error(this, e.cause.message)
-			}
-		} catch (Exception e) {
-			Logger.error(this, e.message)
-		}
-		return result
-		
-	}
-	
-	def private getDoc(String plsql) {
-		var Document doc = null
-		try {
-			val paramsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
-				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.CLOB);
-					cs.execute
-					return cs.getClob(1);
-				}
-			})
-			val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-			doc = docBuilder.parse(new InputSource(paramsClob.characterStream))
-		} catch (BadSqlGrammarException e) {
-			if (e.cause.message.contains("PLS-00302")) {
-				// catch component must be declared error
-			} else {
-				Logger.error(this, e.cause.message)
-			}
-		} catch (Exception e) {
-			Logger.error(this, e.message)
-		}
-		return doc
-		
+		this.dalTools = new DalTools(conn)
 	}
 
 	def private setName(DatabaseGenerator dbgen) {
@@ -86,7 +37,7 @@ class DatabaseGeneratorDao {
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
 			END;
 		'''
-		dbgen.name = getString(plsql)
+		dbgen.name = dalTools.getString(plsql)
 		if (dbgen.name == null) {
 			dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
 		}
@@ -98,7 +49,7 @@ class DatabaseGeneratorDao {
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
 			END;
 		'''
-		dbgen.description = getString(plsql)
+		dbgen.description = dalTools.getString(plsql)
 		if (dbgen.description == null) {
 			dbgen.description = dbgen.name
 		}
@@ -122,7 +73,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.objectTypes = new ArrayList<String>()
-		val doc = getDoc(plsql)
+		val doc = dalTools.getDoc(plsql)
 		if (doc == null) {
 			dbgen.objectTypes.add("TABLE")
 			dbgen.objectTypes.add("VIEW")
@@ -159,7 +110,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.params = new HashMap<String, String>()
-		val doc = getDoc(plsql)
+		val doc = dalTools.getDoc(plsql)
 		if (doc != null) {
 			val params = doc.getElementsByTagName("param")
 			for (var i = 0; i < params.length; i++) {
@@ -220,7 +171,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.lovs = new HashMap<String, List<String>>()
-		val doc = getDoc(plsql)
+		val doc = dalTools.getDoc(plsql)
 		setLovs(dbgen, doc)
 	}
 
@@ -378,7 +329,7 @@ class DatabaseGeneratorDao {
 				   ? := l_clob;
 				END;
 			'''
-			val doc = getDoc(plsql)
+			val doc = dalTools.getDoc(plsql)
 			setLovs(dbgen, doc)
 		}
 	}

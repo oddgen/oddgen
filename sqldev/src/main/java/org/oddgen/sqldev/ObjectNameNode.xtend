@@ -41,5 +41,9 @@ class ObjectNameNode extends DefaultContainer {
 	override mayHaveChildren() {
 		return false
 	}
+	
+	override getData() {
+		return objectName
+	}
 
 }

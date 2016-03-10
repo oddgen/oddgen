@@ -114,7 +114,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		return connectionPanel.connectionName
 	}
 
-	def getConnection() {
+	def synchronized getConnection() {
 		var Connection conn = null
 		try {
 			val connectionInfo = Connections.instance.getConnectionInfo(connectionName)

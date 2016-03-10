@@ -3,11 +3,17 @@ package org.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.awt.event.ActionEvent
+import oracle.dbtools.worksheet.editor.OpenWorksheetWizard
+import oracle.dbtools.worksheet.editor.Worksheet
 import oracle.ide.Context
 import oracle.ide.Ide
 import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
+import oracle.javatools.editor.BasicEditorPane
+import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.model.ObjectName
 
 @Loggable(value=LoggableConstants.DEBUG, prepend=true)
 class OddgenNavigatorController extends ShowNavigatorController {
@@ -34,6 +40,26 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			INSTANCE = new OddgenNavigatorController()
 		}
 		return INSTANCE
+	}
+
+	def generateToWorksheet(Context context) {
+		val worksheet = OpenWorksheetWizard.openNewTempWorksheet("oddgen", null) as Worksheet
+		worksheet.comboConnection = null
+		val editorPane = worksheet.getDefaultFocusComponent() as BasicEditorPane
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		val dao = new DatabaseGeneratorDao(conn)
+		val result = '''
+				«FOR selection : context.selection SEPARATOR '\n'»
+					«val node = selection as ObjectNameNode»
+					«Logger.debug(this, "Generating %s to worksheet...", node.shortLabel)»
+					«val objectName = node.data as ObjectName»
+					«val dbgen = (objectName.objectType.generator as DatabaseGenerator).clone as DatabaseGenerator»
+					«dbgen.objectType = objectName.objectType.name»
+					«dbgen.objectName = objectName.name»
+					«dao.generate(dbgen)»
+				«ENDFOR»
+		'''
+		editorPane.text = result
 	}
 
 	override update(IdeAction action, Context context) {
@@ -65,8 +91,12 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				}
 				return true
 			} else if (action.commandId == GENERATE_TO_WORKSHEET_CMD_ID) {
-				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,
-					"Generate to worksheet is currently not implemented.", "oddgen", null);
+				// run it in this thread to avoid deadlocks
+				generateToWorksheet(context)
+//				val Runnable runnable = [|generateToWorksheet(context)]
+//				val thread = new Thread(runnable)
+//				thread.name = "oddgen Worksheet Generator"
+//				thread.start
 				return true
 			} else if (action.commandId == GENERATE_TO_CLIPBOARD_CMD_ID) {
 				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,

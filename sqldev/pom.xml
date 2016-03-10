@@ -94,6 +94,13 @@
 		</dependency>
 		<dependency>
 			<groupId>oracle</groupId>
+			<artifactId>oracle.sqldeveloper.worksheet</artifactId>
+			<version>12.2.0</version>
+			<scope>system</scope>
+			<systemPath>${sqldev.basedir}/sqldeveloper/extensions/oracle.sqldeveloper.worksheet.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>oracle</groupId>
 			<artifactId>ojdbc6</artifactId>
 			<version>12.1.0.2.0</version>
 			<scope>system</scope>

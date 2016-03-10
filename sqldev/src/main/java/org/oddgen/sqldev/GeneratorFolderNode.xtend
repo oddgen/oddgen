@@ -86,8 +86,6 @@ class GeneratorFolderNode extends DefaultContainer {
 			Logger.debug(this, "childPath is %s", childPath)
 			tree.expandPath(childPath)
 			Logger.debug(this, "expanded")
-			tree.selectionPath = childPath
-			Logger.debug(this, "selected")
 		}
 	}
 

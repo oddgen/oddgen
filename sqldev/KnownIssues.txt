@@ -6,3 +6,5 @@ Issues during development, to be fixed later.
   Probably need to register some close event
 
 - Refresh List of Connections somehow. Currently the list contains all connections a start time of oddgen navigator window
+
+- Make all SQL statements compatible to older Oracle Database versions. Should run against 9.2.0.8

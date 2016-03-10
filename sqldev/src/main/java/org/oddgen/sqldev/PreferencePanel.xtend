@@ -35,9 +35,10 @@ class PreferencePanel extends DefaultTraversablePanel {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
 		builder.add(
-			builder.field.label.withText("&Discover PL/SQL generators:").component(discoverPlsqlGeneratorsCheckBox).
+			builder.field.label.withText("&Discover PL/SQL generators on refresh:").component(
+				discoverPlsqlGeneratorsCheckBox).
 				withHint(
-					"If checked, PL/SQL generators are discovered within the current database instance when opening the oddgen folder."
+					"If checked, PL/SQL generators are immediately discovered when the connection refresh button is pressed, otherwise the discovery process is delayed until the Database Server Generates folder is opened."
 				))
 		builder.addVerticalSpring
 	}

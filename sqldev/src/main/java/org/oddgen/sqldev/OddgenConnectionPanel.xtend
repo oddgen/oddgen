@@ -10,6 +10,9 @@ import java.util.List
 import javax.swing.JComboBox
 import javax.swing.JPanel
 import oracle.dbtools.raptor.controls.ConnectionPanelUI
+import oracle.ide.config.Preferences
+import oracle.ide.model.UpdateMessage
+import org.oddgen.sqldev.model.PreferenceModel
 
 @Loggable(prepend=true)
 class OddgenConnectionPanel extends ConnectionPanelUI {
@@ -47,8 +50,27 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		}
 	}
 
+	def refreshBackground() {
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		if (conn != null) {
+			val folder = RootNode.instance.dbServerGenerators
+			folder.removeAll
+			folder.close
+			UpdateMessage.fireStructureChanged(folder)
+			folder.markDirty(false)
+		}
+	}
+
 	def void refresh() {
-		RootNode.instance.dbServerGenerators.openImpl
+		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+		if (preferences.discoverPlsqlGenerators) {
+			RootNode.instance.dbServerGenerators.openImpl
+		} else {
+			val Runnable runnable = [|refreshBackground]
+			val thread = new Thread(runnable)
+			thread.name = "oddgen Refresh Connection"
+			thread.start
+		}
 	}
 
 	override itemStateChanged(ItemEvent event) {

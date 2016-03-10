@@ -1,5 +1,6 @@
 package org.oddgen.sqldev.dal
 
+import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.sql.CallableStatement
 import java.sql.Clob
@@ -15,6 +16,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 
+@Loggable(prepend=true)
 class DalTools {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate

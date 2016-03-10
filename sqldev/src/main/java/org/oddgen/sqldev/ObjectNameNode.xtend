@@ -38,4 +38,8 @@ class ObjectNameNode extends DefaultContainer {
 		return displayName
 	}
 
+	override mayHaveChildren() {
+		return false
+	}
+
 }

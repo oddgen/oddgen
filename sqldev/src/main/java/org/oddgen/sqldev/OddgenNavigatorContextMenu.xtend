@@ -21,7 +21,7 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 	override handleDefaultAction(Context context) {
 		Logger.debug(this, "handleDefaultAction context: %s", context)
 		if (context.element instanceof ObjectNameNode) {
-			OddgenNavigatorViewController.GENERATE_TO_WORKSHEET_ACTION.performAction
+			OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION.performAction
 			return true
 		}
 		return false
@@ -39,8 +39,8 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 		for (component : contextMenu.getGUI(false).getComponents) {
 			Logger.debug(this, "component of menu: %s", component)
 		}
-		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorViewController.GENERATE_TO_WORKSHEET_ACTION))
-		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorViewController.GENERATE_TO_CLIPBOARD_ACTION))
-		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorViewController.GENERATE_DIALOG_ACTION))
+		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION))
+		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_CLIPBOARD_ACTION))
+		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_DIALOG_ACTION))
 	}
 }

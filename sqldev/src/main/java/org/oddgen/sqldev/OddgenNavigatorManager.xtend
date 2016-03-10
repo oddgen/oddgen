@@ -35,7 +35,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	override protected createShowNavigatorAction() {
-		return IdeAction.find(OddgenNavigatorViewController::SHOW_ODDGEN_NAVIGATOR_CMD_ID)
+		return IdeAction.find(OddgenNavigatorController::SHOW_ODDGEN_NAVIGATOR_CMD_ID)
 	}
 
 	override protected createNavigatorWindow() {

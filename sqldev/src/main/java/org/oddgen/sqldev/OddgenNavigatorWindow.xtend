@@ -25,7 +25,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	private ToolbarButton refreshButton
 	private ToolbarButton collapseallButton
 	private OddgenConnectionPanel connectionPanel
-	private OddgenNavigatorViewController controller
+	private OddgenNavigatorController controller
 
 	new(Context context, String string) {
 		super(context, string)
@@ -75,7 +75,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 
 	override getController() {
 		if (controller == null) {
-			controller = new OddgenNavigatorViewController()
+			controller = new OddgenNavigatorController()
 		}
 		return controller;
 	}

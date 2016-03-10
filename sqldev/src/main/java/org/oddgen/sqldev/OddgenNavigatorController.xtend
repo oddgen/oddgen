@@ -10,8 +10,8 @@ import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
 
 @Loggable(value=LoggableConstants.DEBUG, prepend=true)
-class OddgenNavigatorViewController extends ShowNavigatorController {
-	private static OddgenNavigatorViewController INSTANCE
+class OddgenNavigatorController extends ShowNavigatorController {
+	private static OddgenNavigatorController INSTANCE
 
 	private static final int GENERATE_TO_WORKSHEET_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_GENERATE_TO_WORKSHEET")
 	private static final int GENERATE_TO_CLIPBOARD_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_GENERATE_TO_CLIPBOARD")
@@ -31,7 +31,7 @@ class OddgenNavigatorViewController extends ShowNavigatorController {
 
 	def static synchronized getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new OddgenNavigatorViewController()
+			INSTANCE = new OddgenNavigatorController()
 		}
 		return INSTANCE
 	}

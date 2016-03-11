@@ -368,8 +368,8 @@ class DatabaseGeneratorDao {
 			})
 			result = resultClob.getSubString(1, resultClob.length as int)
 		} catch (Exception e) {
-			result = '''Failed to generate code via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.message».'''
-			Logger.error(this, result)
+			result = '''Failed to generate code for «dbgen.objectType».«dbgen.objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
+			Logger.error(this, plsql + result)
 		}
 		return result
 	}

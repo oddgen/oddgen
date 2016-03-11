@@ -18,8 +18,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    --
    -- private constants
    --
-   co_max_obj_len  CONSTANT simple_integer := 30;
-   co_oddgen_error CONSTANT simple_integer := -20501;
+   co_max_obj_len  CONSTANT pls_integer := 30;
+   co_oddgen_error CONSTANT pls_integer := -20501;
 
    --
    -- get_name

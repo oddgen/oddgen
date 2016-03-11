@@ -232,51 +232,61 @@ class DatabaseGeneratorDao {
 	}
 
 	def findAll() {
+		// uses Oracle dictionary structure as of 9.2.0.8
 		val sql = '''
-			SELECT owner                    AS generator_owner,
-			       object_name              AS generator_name,
-			       MAX(generateHasInParams) AS has_params
-			  FROM (SELECT /*+no_merge */
-			               func.owner,
-			               func.object_name,
-			               func.procedure_name,
-			               nvl((SELECT 1
-			                      FROM all_arguments arg
-			                     WHERE arg.object_id = func.object_id
-			                       AND arg.subprogram_id = func.subprogram_id
-			                       AND arg.position = 3
-			                       AND arg.argument_name = 'IN_PARAMS'
-			                       AND in_out = 'IN'
-			                       AND arg.data_type = 'PL/SQL TABLE'
-			                       AND arg.type_subname = 'T_PARAM'), 0) AS generateHasInParams
-			          FROM all_procedures func
-			         WHERE func.procedure_name = 'GENERATE'
-			           AND func.owner IN (SELECT username
-			                                FROM all_users
-			                               WHERE oracle_maintained = 'N')
-			           AND EXISTS (SELECT 1
-			                         FROM all_arguments arg
-			                        WHERE arg.object_id = func.object_id
-			                          AND arg.subprogram_id = func.subprogram_id
-			                          AND arg.position = 0
-			                          AND in_out = 'OUT'
-			                          AND arg.data_type = 'CLOB')
-			           AND EXISTS (SELECT 1
-			                         FROM all_arguments arg
-			                         WHERE arg.object_id = func.object_id
-			                          AND arg.subprogram_id = func.subprogram_id
-			                          AND arg.position = 1
-			                          AND arg.argument_name = 'IN_OBJECT_TYPE'
-			                          AND in_out = 'IN'
-			                          AND arg.data_type = 'VARCHAR2')
-			           AND EXISTS (SELECT 1
-			                         FROM all_arguments arg
-			                        WHERE arg.object_id = func.object_id
-			                          AND arg.subprogram_id = func.subprogram_id
-			                          AND arg.position = 2
-			                          AND arg.argument_name = 'IN_OBJECT_NAME'
-			                          AND in_out = 'IN'
-			                          AND arg.data_type = 'VARCHAR2'))
+			WITH 
+			   dbgens AS (
+			      SELECT proc.owner,
+			             proc.object_name,
+			             proc.procedure_name,
+			             nvl((SELECT 1
+			                   FROM all_arguments arg
+			                  WHERE arg.owner = obj.owner
+			                        AND arg.package_name = obj.object_name
+			                        AND arg.object_name = proc.procedure_name
+			                        AND arg.position = 3
+			                        AND arg.argument_name = 'IN_PARAMS'
+			                        AND in_out = 'IN'
+			                        AND arg.data_type = 'PL/SQL TABLE'
+			                        AND arg.type_subname = 'T_PARAM'),
+			                 0) AS generate_has_inparams
+			        FROM all_procedures proc
+			        JOIN all_objects obj
+			          ON obj.owner = proc.owner
+			             AND obj.object_name = proc.object_name
+			       WHERE proc.procedure_name = 'GENERATE'
+			             AND obj.object_type = 'PACKAGE'
+			             AND EXISTS (SELECT 1
+			                FROM all_arguments arg
+			               WHERE arg.owner = obj.owner
+			                     AND arg.package_name = obj.object_name
+			                     AND arg.object_name = proc.procedure_name
+			                     AND arg.position = 0
+			                     AND in_out = 'OUT'
+			                     AND arg.data_type = 'CLOB')
+			             AND EXISTS (SELECT 1
+			                FROM all_arguments arg
+			               WHERE arg.owner = obj.owner
+			                     AND arg.package_name = obj.object_name
+			                     AND arg.object_name = proc.procedure_name
+			                     AND arg.position = 1
+			                     AND arg.argument_name = 'IN_OBJECT_TYPE'
+			                     AND in_out = 'IN'
+			                     AND arg.data_type = 'VARCHAR2')
+			             AND EXISTS (SELECT 1
+			                FROM all_arguments arg
+			               WHERE arg.owner = obj.owner
+			                     AND arg.package_name = obj.object_name
+			                     AND arg.object_name = proc.procedure_name
+			                     AND arg.position = 2
+			                     AND arg.argument_name = 'IN_OBJECT_NAME'
+			                     AND in_out = 'IN'
+			                     AND arg.data_type = 'VARCHAR2')
+			   )
+			SELECT owner AS generator_owner,
+			       object_name AS generator_name,
+			       MAX(generate_has_inparams) AS has_params
+			  FROM dbgens
 			 GROUP BY owner, object_name
 			 ORDER BY owner, object_name
 		'''

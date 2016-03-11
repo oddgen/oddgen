@@ -18,9 +18,9 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    --
    -- private constants
    --
-   c_new_line     CONSTANT string_type    := chr(10);
-   co_max_obj_len  CONSTANT simple_integer := 30;
-   co_oddgen_error CONSTANT simple_integer := -20501;
+   c_new_line      CONSTANT string_type := chr(10);
+   co_max_obj_len  CONSTANT pls_integer := 30;
+   co_oddgen_error CONSTANT pls_integer := -20501;
 
    --
    -- get_name

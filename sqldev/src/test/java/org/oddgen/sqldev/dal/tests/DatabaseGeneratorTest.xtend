@@ -5,7 +5,6 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.DatabaseGenerator
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
@@ -97,20 +96,10 @@ class DatabaseGeneratorTest {
 		dbgen.objectType = 'TYPE'
 		dbgen.objectName = 'NAME'
 		val expected = '''
-			Failed to generate code via «dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE. Got the following error: CallableStatementCallback; bad SQL grammar [DECLARE
-			   l_clob   CLOB;
-			BEGIN
-			   l_clob := «dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE.generate(
-			                  in_object_type => 'TYPE'
-			                , in_object_name => 'NAME'
-			             );
-			   ? := l_clob;
-			END;
-			]; nested exception is java.sql.SQLException: ORA-06550: line 4, column 14:
-			PLS-00201: identifier '«dbgen.generatorOwner.toUpperCase».NON_EXISTING_PACKAGE' must be declared
+			Failed to generate code for TYPE.NAME via ODDGEN.NON_EXISTING_PACKAGE. Got the following error: ORA-06550: line 4, column 14:
+			PLS-00201: identifier 'ODDGEN.NON_EXISTING_PACKAGE' must be declared
 			ORA-06550: line 4, column 4:
 			PL/SQL: Statement ignored
-			.
 		'''
 		val generated = dao.generate(dbgen)
 		Assert.assertEquals(expected.trim, generated.trim)
@@ -393,9 +382,9 @@ class DatabaseGeneratorTest {
 			   --
 			   -- private constants
 			   --
-			   c_new_line     CONSTANT string_type    := chr(10);
-			   co_max_obj_len  CONSTANT simple_integer := 30;
-			   co_oddgen_error CONSTANT simple_integer := -20501;
+			   c_new_line      CONSTANT string_type := chr(10);
+			   co_max_obj_len  CONSTANT pls_integer := 30;
+			   co_oddgen_error CONSTANT pls_integer := -20501;
 			
 			   --
 			   -- get_name

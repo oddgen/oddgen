@@ -123,7 +123,7 @@ class DatabaseGeneratorTest {
 		val plsqlView = dbgens.findFirst [
 			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"
 		]
-		val clone = plsqlView.clone() as DatabaseGenerator
+		val clone = plsqlView.copy
 		Assert.assertEquals(plsqlView.hasParams, clone.hasParams)
 		Assert.assertEquals(plsqlView.name, clone.name)
 		Assert.assertEquals(plsqlView.description, clone.description)

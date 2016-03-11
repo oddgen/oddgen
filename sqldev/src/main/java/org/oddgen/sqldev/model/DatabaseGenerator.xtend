@@ -52,4 +52,8 @@ class DatabaseGenerator extends Generator implements Cloneable{
 		clone.isRefreshable = new Boolean(this.isRefreshable)
  		return clone
 	}
+	
+	def copy() {
+		return clone() as DatabaseGenerator
+	}
 }

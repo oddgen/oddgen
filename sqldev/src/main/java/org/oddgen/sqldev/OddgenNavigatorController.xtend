@@ -2,6 +2,8 @@ package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import java.sql.Connection
 import java.util.ArrayList
@@ -44,7 +46,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return INSTANCE
 	}
-	
+
 	def selectedDatabaseGenerators(Context context) {
 		val dbgens = new ArrayList<DatabaseGenerator>()
 		for (selection : context.selection) {
@@ -57,23 +59,43 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return dbgens
 	}
-	
-	def generateToWorksheet(List<DatabaseGenerator> dbgens, Connection conn) {
+
+	def generateToString(List<DatabaseGenerator> dbgens, Connection conn) {
 		val dao = new DatabaseGeneratorDao(conn)
 		val result = '''
-				«FOR dbgen : dbgens SEPARATOR '\n'»
-					«Logger.debug(this, "Generating %1$s.%2$s to worksheet...", dbgen.objectType, dbgen.objectName)»
-					«dao.generate(dbgen)»
-				«ENDFOR»
+			«FOR dbgen : dbgens SEPARATOR '\n'»
+				«Logger.debug(this, "Generating %1$s.%2$s to worksheet...", dbgen.objectType, dbgen.objectName)»
+				«dao.generate(dbgen)»
+			«ENDFOR»
 		'''
+		return result
+	}
+
+	def generateToWorksheet(List<DatabaseGenerator> dbgens, Connection conn) {
+		val result = dbgens.generateToString(conn)
 		SwingUtilities.invokeAndWait(new Runnable() {
 			override run() {
 				val worksheet = OpenWorksheetWizard.openNewTempWorksheet("oddgen", result) as Worksheet
 				worksheet.comboConnection = null
 			}
 		});
-		
-		
+	}
+
+	def generateToClipboard(List<DatabaseGenerator> dbgens, Connection conn) {
+		val result = dbgens.generateToString(conn)
+		SwingUtilities.invokeAndWait(
+			new Runnable() {
+				override run() {
+					val selection = new StringSelection(result)
+					val clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
+					clipboard.setContents(selection, null)
+					// dialog properties are managed in $HOME/.sqldeveloper/system*/o.ide.*/.oracle_javatools_msgdlg.properties
+					// TODO: find out how to manage these properties via SQL Developer					
+					MessageDialog.optionalInformation("oddgen: confirm generate to clipboard",
+						OddgenNavigatorManager.instance.navigatorWindow.GUI, "Code generated to your clipboard.",
+						"oddgen", null);
+				}
+			});
 	}
 
 	override update(IdeAction action, Context context) {
@@ -113,8 +135,12 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				thread.start
 				return true
 			} else if (action.commandId == GENERATE_TO_CLIPBOARD_CMD_ID) {
-				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,
-					"Generate to clipboard is currently not implemented.", "oddgen", null);
+				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+				val dbgens = selectedDatabaseGenerators(context)
+				val Runnable runnable = [|dbgens.generateToClipboard(conn)]
+				val thread = new Thread(runnable)
+				thread.name = "oddgen Clipboard Generator"
+				thread.start
 				return true
 			} else if (action.commandId == GENERATE_DIALOG_CMD_ID) {
 				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,

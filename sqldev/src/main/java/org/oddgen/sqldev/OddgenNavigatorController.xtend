@@ -3,6 +3,10 @@ package org.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.awt.event.ActionEvent
+import java.sql.Connection
+import java.util.ArrayList
+import java.util.List
+import javax.swing.SwingUtilities
 import oracle.dbtools.worksheet.editor.OpenWorksheetWizard
 import oracle.dbtools.worksheet.editor.Worksheet
 import oracle.ide.Context
@@ -10,7 +14,6 @@ import oracle.ide.Ide
 import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
-import oracle.javatools.editor.BasicEditorPane
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.model.ObjectName
@@ -41,25 +44,36 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return INSTANCE
 	}
-
-	def generateToWorksheet(Context context) {
-		val worksheet = OpenWorksheetWizard.openNewTempWorksheet("oddgen", null) as Worksheet
-		worksheet.comboConnection = null
-		val editorPane = worksheet.getDefaultFocusComponent() as BasicEditorPane
-		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+	
+	def selectedDatabaseGenerators(Context context) {
+		val dbgens = new ArrayList<DatabaseGenerator>()
+		for (selection : context.selection) {
+			val node = selection as ObjectNameNode
+			val objectName = node.data as ObjectName
+			val dbgen = (objectName.objectType.generator as DatabaseGenerator).copy
+			dbgen.objectType = objectName.objectType.name
+			dbgen.objectName = objectName.name
+			dbgens.add(dbgen)
+		}
+		return dbgens
+	}
+	
+	def generateToWorksheet(List<DatabaseGenerator> dbgens, Connection conn) {
 		val dao = new DatabaseGeneratorDao(conn)
 		val result = '''
-				«FOR selection : context.selection SEPARATOR '\n'»
-					«val node = selection as ObjectNameNode»
-					«Logger.debug(this, "Generating %s to worksheet...", node.shortLabel)»
-					«val objectName = node.data as ObjectName»
-					«val dbgen = (objectName.objectType.generator as DatabaseGenerator).clone as DatabaseGenerator»
-					«dbgen.objectType = objectName.objectType.name»
-					«dbgen.objectName = objectName.name»
+				«FOR dbgen : dbgens SEPARATOR '\n'»
+					«Logger.debug(this, "Generating %1$s.%2$s to worksheet...", dbgen.objectType, dbgen.objectName)»
 					«dao.generate(dbgen)»
 				«ENDFOR»
 		'''
-		editorPane.text = result
+		SwingUtilities.invokeAndWait(new Runnable() {
+			override run() {
+				val worksheet = OpenWorksheetWizard.openNewTempWorksheet("oddgen", result) as Worksheet
+				worksheet.comboConnection = null
+			}
+		});
+		
+		
 	}
 
 	override update(IdeAction action, Context context) {
@@ -91,12 +105,12 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				}
 				return true
 			} else if (action.commandId == GENERATE_TO_WORKSHEET_CMD_ID) {
-				// run it in this thread to avoid deadlocks
-				generateToWorksheet(context)
-//				val Runnable runnable = [|generateToWorksheet(context)]
-//				val thread = new Thread(runnable)
-//				thread.name = "oddgen Worksheet Generator"
-//				thread.start
+				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+				val dbgens = selectedDatabaseGenerators(context)
+				val Runnable runnable = [|dbgens.generateToWorksheet(conn)]
+				val thread = new Thread(runnable)
+				thread.name = "oddgen Worksheet Generator"
+				thread.start
 				return true
 			} else if (action.commandId == GENERATE_TO_CLIPBOARD_CMD_ID) {
 				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,

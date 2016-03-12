@@ -167,7 +167,7 @@ class DatabaseGeneratorTest {
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE plsql_hello_world IS
 			   /*
-			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
 			   *
 			   * Licensed under the Apache License, Version 2.0 (the "License");
 			   * you may not use this file except in compliance with the License.
@@ -206,7 +206,7 @@ class DatabaseGeneratorTest {
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE BODY plsql_hello_world IS
 			   /*
-			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
 			   *
 			   * Licensed under the Apache License, Version 2.0 (the "License");
 			   * you may not use this file except in compliance with the License.
@@ -244,7 +244,7 @@ class DatabaseGeneratorTest {
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 			   /*
-			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
 			   *
 			   * Licensed under the Apache License, Version 2.0 (the "License");
 			   * you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ class DatabaseGeneratorTest {
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE BODY plsql_view IS
 			   /*
-			   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+			   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
 			   *
 			   * Licensed under the Apache License, Version 2.0 (the "License");
 			   * you may not use this file except in compliance with the License.

@@ -16,6 +16,7 @@
 package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -39,6 +40,7 @@ import javax.swing.JScrollPane
 import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
+import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 
 @Loggable(value=LoggableConstants.DEBUG)
@@ -196,6 +198,9 @@ class GenerateDialog extends JDialog implements ActionListener {
 				comboBox.selectedItem = dbgen.params.get(name)
 				paneParams.add(comboBox, c)
 				params.put(name, comboBox)
+				if (dbgen.isRefreshable) {
+					comboBox.addActionListener(this)
+				}
 			} else {
 				val textField = new JTextField(dbgen.params.get(name))
 				paneParams.add(textField, c);
@@ -204,8 +209,8 @@ class GenerateDialog extends JDialog implements ActionListener {
 		}
 	}
 
-	def updateDatabaseGenerators() {
-		for (dbgen : dbgens) {
+	def updateDatabaseGenerators(boolean first) {
+		for (dbgen : dbgens.filter[!first || it == dbgens.get(0)]) {
 			for (name : dbgen.params.keySet) {
 				val component = params.get(name)
 				var String value
@@ -224,15 +229,50 @@ class GenerateDialog extends JDialog implements ActionListener {
 	}
 
 	def generateToWorksheet() {
-		updateDatabaseGenerators()
+		updateDatabaseGenerators(false)
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		OddgenNavigatorController.instance.generateToWorksheet(dbgens, conn)
 	}
 
 	def generateToClipboard() {
-		updateDatabaseGenerators()
+		updateDatabaseGenerators(false)
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		OddgenNavigatorController.instance.generateToClipboard(dbgens, conn)
+	}
+	
+	def refreshLovs() {
+		// do everything in the event thread to avoid strange UI behavior
+		updateDatabaseGenerators(true)
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		val dao = new DatabaseGeneratorDao(conn)
+		val dbgen = dbgens.get(0)
+		dao.refresh(dbgen)
+		for (name : params.keySet) {
+			val component = params.get(name)
+			if (!(component instanceof JTextField)) {
+				val comboBox = component as JComboBox<String>
+				comboBox.removeActionListener(this)
+				val model = comboBox.model as DefaultComboBoxModel<String>
+				val selected = model.selectedItem as String
+				Logger.debug(this, "selected value for combobox %1$s before change: %2$s", name, selected)
+				model.removeAllElements
+				for (value : dbgen.lovs.get(name)) {
+					model.addElement(value)
+				}
+				var String newSelectedValue
+				if (selected == null || dbgen.lovs.get(name).findFirst[it == selected] == null) {
+					Logger.debug(this, "changing value, first value in list");
+					newSelectedValue = model.getElementAt(0)
+				} else {
+					Logger.debug(this, "keeping value");
+					newSelectedValue = selected
+				}
+				model.selectedItem = newSelectedValue
+				Logger.debug(this, "selected value for combobox %1$s after change: %2$s", name, model.selectedItem)
+				comboBox.addActionListener(this)
+				
+			}
+		}
 	}
 
 	override actionPerformed(ActionEvent e) {
@@ -250,6 +290,9 @@ class GenerateDialog extends JDialog implements ActionListener {
 			thread.name = "oddgen Clipboard Generator"
 			thread.start
 			exit
+		} else if (e.getSource.class.name == "javax.swing.JComboBox") {
+			// do not use instanceof to avoid rawtypes warning
+			refreshLovs()
 		}
 	}
 

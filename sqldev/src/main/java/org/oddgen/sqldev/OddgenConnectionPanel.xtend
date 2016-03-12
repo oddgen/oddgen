@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
@@ -14,7 +29,7 @@ import oracle.ide.config.Preferences
 import oracle.ide.model.UpdateMessage
 import org.oddgen.sqldev.model.PreferenceModel
 
-@Loggable(prepend=true)
+@Loggable
 class OddgenConnectionPanel extends ConnectionPanelUI {
 	private static boolean ADD_BUTTONS = false
 
@@ -41,7 +56,7 @@ class OddgenConnectionPanel extends ConnectionPanelUI {
 		connComboBox.selectedIndex = 0
 	}
 
-	@Loggable(value=LoggableConstants.DEBUG, prepend=true)
+	@Loggable(value=LoggableConstants.DEBUG)
 	override protected addButtons(JPanel panel, GridBagConstraints constraints) {
 		// called during object construction, therefore no setter for addButtons
 		if (ADD_BUTTONS) {

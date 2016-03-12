@@ -1,3 +1,18 @@
+/*
+ * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
@@ -17,7 +32,7 @@ import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
 import org.oddgen.sqldev.resources.OddgenResources
 
-@Loggable(prepend=true)
+@Loggable
 class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener {
 	private Component gui
 	private ContextMenu contextMenu
@@ -42,7 +57,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		Logger.info(this, "OddgenNavigatorWindow initialized")
 	}
 
-	@Loggable(value=LoggableConstants.DEBUG, prepend=true)
+	@Loggable(value=LoggableConstants.DEBUG)
 	def protected createToolbar() {
 		if (tb != null) {
 			tb.dispose

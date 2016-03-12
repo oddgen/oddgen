@@ -20,7 +20,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.model.ObjectName
 
-@Loggable(value=LoggableConstants.DEBUG, prepend=true)
+@Loggable(value=LoggableConstants.DEBUG)
 class OddgenNavigatorController extends ShowNavigatorController {
 	private static OddgenNavigatorController INSTANCE
 
@@ -143,8 +143,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				thread.start
 				return true
 			} else if (action.commandId == GENERATE_DIALOG_CMD_ID) {
-				MessageDialog.information(OddgenNavigatorManager.instance.navigatorWindow.GUI,
-					"Generate dialog is currently not implemented.", "oddgen", null);
+				val dbgens = selectedDatabaseGenerators(context)
+				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, dbgens)
 				return true
 			}
 		}

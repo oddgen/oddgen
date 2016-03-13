@@ -57,6 +57,7 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
         FROM dba_objects
        WHERE object_type = in_object_type
          AND owner = USER
+         AND generated = 'N'
        ORDER BY object_name;
       RETURN l_object_names;
    END get_object_names;

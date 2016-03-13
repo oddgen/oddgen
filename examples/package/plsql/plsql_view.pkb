@@ -57,6 +57,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
         INTO l_object_names
         FROM user_objects
        WHERE object_type = in_object_type
+         AND generated = 'N'
        ORDER BY object_name;
       RETURN l_object_names;
    END get_object_names;

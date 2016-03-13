@@ -43,12 +43,11 @@ GRANT SELECT ON dba_objects TO oddgen;
 GRANT SELECT ON dba_constraints TO oddgen;
 GRANT SELECT ON dba_tables TO oddgen;
 GRANT SELECT ANY TABLE TO ftldb;
-GRANT INHERIT PRIVILEGES ON USER oddgen TO PUBLIC;
 
 PROMPT ====================================================================
-PROMPT Grants for tePLSQL (requires teplsql and Oracle 12c)
+PROMPT Grants on Oracle 12c
 PROMPT ====================================================================
 PROMPT 
-PROMPT GRANT select_catalog_role TO PACKAGE teplsql.teplsql;
+GRANT INHERIT PRIVILEGES ON USER oddgen TO PUBLIC;
 
 SPOOL OFF

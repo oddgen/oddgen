@@ -23,7 +23,7 @@ PROMPT ====================================================================
 PROMPT This script creates the user ODDGEN with all required privileges. 
 PROMPT Run this script as SYS.
 PROMPT Please change default tablespace and password.
-PROMPT Please change schema name for FTLDB and tePLSQL as well.
+PROMPT Please change schema name for FTLDB and tePLSQL.
 PROMPT ====================================================================
 
 PROMPT ====================================================================
@@ -34,7 +34,7 @@ CREATE USER oddgen IDENTIFIED BY oddgen
   TEMPORARY TABLESPACE TEMP;
   
 PROMPT ====================================================================
-PROMPT Grants
+PROMPT Common grants
 PROMPT ====================================================================
 GRANT CONNECT, RESOURCE to oddgen;
 GRANT SELECT_CATALOG_ROLE, SELECT ANY DICTIONARY to oddgen;
@@ -42,10 +42,32 @@ GRANT CREATE SYNONYM TO oddgen;
 GRANT SELECT ON dba_objects TO oddgen;
 GRANT SELECT ON dba_constraints TO oddgen;
 GRANT SELECT ON dba_tables TO oddgen;
+
+PROMPT ====================================================================
+PROMPT Grants required for FTLDB
+PROMPT   to install FLTDB run the following scripts
+PROMPT      1. dba_install 
+PROMPT      2. dba_switch_java_permissions (grant public)
+PROMPT      3. dba_switch_plsql_privileges (grant public)
+PROMPT   see https://github.com/ftldb/ftldb/blob/master/README.md
+PROMPT ====================================================================
 GRANT SELECT ANY TABLE TO ftldb;
+GRANT EXECUTE ON ftldb.varchar2_nt TO oddgen;
+GRANT EXECUTE ON ftldb.ftldb_api TO oddgen;
+
+PROMPT ====================================================================
+PROMPT Grants required for tePLSQL
+PROMPT   to install tePLSQL you need to deploy the following files
+PROMPT      1. TE_TEMPLATES.sql
+PROMPT      2. tePLSQL.pks
+PROMPT      3. tePLSQL.pkb
+PROMPT   see https://github.com/osalvador/tePLSQL/blob/master/README.md
+PROMPT ====================================================================
+GRANT EXECUTE ON teplsql.teplsql TO oddgen;
 
 PROMPT ====================================================================
 PROMPT Grants on Oracle 12c
+PROMPT   required for invoker rights database server generators only
 PROMPT ====================================================================
 PROMPT 
 GRANT INHERIT PRIVILEGES ON USER oddgen TO PUBLIC;

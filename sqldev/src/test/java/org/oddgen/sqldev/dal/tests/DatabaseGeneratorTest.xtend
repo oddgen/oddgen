@@ -229,9 +229,9 @@ class DatabaseGeneratorTest {
 			      l_result CLOB;
 			   BEGIN
 			      l_result := 'BEGIN' || chr(10) ||
-			                  '   sys.dbms_output.put_line(''Hello ' || in_object_type || ' ' ||
-			                  in_object_name || '!'');' || chr(10) || 'END;' || chr(10) || '/' ||
-			                  chr(10);
+			                  '   sys.dbms_output.put_line(''Hello ' || in_object_type || ' ' || in_object_name || '!'');' || chr(10) ||
+			                  'END;' || chr(10) || 
+			                  '/' || chr(10);
 			      RETURN l_result;
 			   END generate;
 			END plsql_hello_world;

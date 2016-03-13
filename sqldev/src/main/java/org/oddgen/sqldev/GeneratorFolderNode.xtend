@@ -56,21 +56,21 @@ class GeneratorFolderNode extends DefaultContainer {
 
 	def openBackground() {
 		if (this == RootNode.instance.dbServerGenerators) {
+			val folder = RootNode.instance.dbServerGenerators
+			folder.removeAll
 			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 			if (conn != null) {
 				val dao = new DatabaseGeneratorDao(conn)
 				val dbgens = dao.findAll
 				Logger.debug(this, "discovered %d database generators", dbgens.size)
-				val folder = RootNode.instance.dbServerGenerators
-				folder.removeAll
 				for (dbgen : dbgens) {
 					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.name), dbgen)
 					folder.add(node)
 				}
-				UpdateMessage.fireStructureChanged(folder)
-				folder.expandNode
-				folder.markDirty(false)
 			}
+			UpdateMessage.fireStructureChanged(folder)
+			folder.expandNode
+			folder.markDirty(false)
 		}
 	}
 

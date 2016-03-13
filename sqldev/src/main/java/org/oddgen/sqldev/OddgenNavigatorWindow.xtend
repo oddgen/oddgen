@@ -18,28 +18,35 @@ package org.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.sql.Connection
 import oracle.dbtools.raptor.utils.Connections
+import oracle.dbtools.worksheet.editor.ConnComboBox
 import oracle.ide.Context
+import oracle.ide.config.Preferences
 import oracle.ide.controller.ContextMenu
 import oracle.ide.controls.Toolbar
+import oracle.ide.model.UpdateMessage
 import oracle.ide.util.MnemonicSolver
 import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
+import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
+import javax.swing.DefaultComboBoxModel
+import oracle.dbtools.raptor.utils.ConnectionDisconnectListener
+import oracle.dbtools.raptor.utils.ConnectionDetails
+import oracle.dbtools.raptor.utils.DisconnectVetoException
 
 @Loggable
-class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener {
+class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener, ConnectionDisconnectListener {
 	private Component gui
 	private ContextMenu contextMenu
 	private Toolbar tb
 	private ToolbarButton refreshButton
 	private ToolbarButton collapseallButton
-	private OddgenConnectionPanel connectionPanel
+	private ConnComboBox connComboBox;
 	private OddgenNavigatorController controller
 
 	new(Context context, String string) {
@@ -62,22 +69,18 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		if (tb != null) {
 			tb.dispose
 		}
-		if (connectionPanel == null) {
-			connectionPanel = new OddgenConnectionPanel()
-			connectionPanel.connectionPrompt = null
-			connectionPanel.connectionLabel = null
-			connectionPanel.maximumSize = new Dimension(300, 50)
-			connectionPanel.minimumSize = new Dimension(100, 0)
-			refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
-			collapseallButton = new ToolbarButton(OddgenResources.getIcon("COLLAPSEALL_ICON"))
-		}
+		connComboBox = new ConnComboBox()
+		refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
+		collapseallButton = new ToolbarButton(OddgenResources.getIcon("COLLAPSEALL_ICON"))
 		toolbarVisible = true
 		tb = toolbar
-		tb?.add(connectionPanel)
+		tb?.add(connComboBox.JComboBox)
 		tb?.add(refreshButton)
 		tb?.add(collapseallButton)
+		connComboBox.addActionListener(this)
 		refreshButton.addActionListener(this)
 		collapseallButton.addActionListener(this)
+		Connections.instance.addConnectionDisconnectListener(this)
 	}
 
 	override getGUI() {
@@ -118,18 +121,33 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	}
 
 	override actionPerformed(ActionEvent e) {
-		if (e.source == refreshButton) {
-			connectionPanel.refresh
+		if (e.source == connComboBox.JComboBox) {
+			val selection = connComboBox.JComboBox.selectedItem as String
+			connComboBox.currentConnection = selection
+			refreshConnection
+		} else if (e.source == refreshButton) {
+			repopulateConnections
+			refreshConnection
 		} else if (e.source == collapseallButton) {
 			RootNode.instance.collapseall
 		}
 	}
 
-	def getConnectionName() {
-		return connectionPanel.connectionName
+	override checkDisconnect(ConnectionDetails connectionDetails) throws DisconnectVetoException {
 	}
 
-	def synchronized getConnection() {
+	override connectionDisconnected(ConnectionDetails connectionDetails) {
+		if (connectionDetails.qualifiedConnectionName == connComboBox.JComboBox.model.selectedItem as String) {
+			connComboBox.currentConnection = null
+			refreshConnection
+		}
+	}
+
+	def getConnectionName() {
+		return connComboBox.JComboBox.selectedItem as String
+	}
+
+	def getConnection() {
 		var Connection conn = null
 		try {
 			val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
@@ -155,4 +173,29 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		return conn
 	}
 
+	def refreshConnection() {
+		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+		if (preferences.discoverPlsqlGenerators) {
+			RootNode.instance.dbServerGenerators.openImpl
+		} else {
+			val folder = RootNode.instance.dbServerGenerators
+			folder.removeAll
+			folder.close
+			UpdateMessage.fireStructureChanged(folder)
+			folder.markDirty(false)
+		}
+	}
+
+	def repopulateConnections() {
+		connComboBox.JComboBox.removeActionListener(this)
+		val model = connComboBox.JComboBox.model as DefaultComboBoxModel<String>
+		val selection = model.selectedItem as String
+		model.removeAllElements
+		for (name : Connections.instance.connNames) {
+			model.addElement(name)
+		}
+		connComboBox.currentConnection = selection
+		connComboBox.JComboBox.addActionListener(this)
+		Logger.debug(this, "repopulated connections and set selection to %s", selection)
+	}
 }

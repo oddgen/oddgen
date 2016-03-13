@@ -215,7 +215,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				val component = params.get(name)
 				var String value
 				if (component instanceof JTextField) {
-					value = (component as JTextField).text
+					value = component.text
 				} else {
 					value = (component as JComboBox<String>).selectedItem as String
 				}

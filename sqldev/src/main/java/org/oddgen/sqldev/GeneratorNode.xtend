@@ -50,7 +50,7 @@ class GeneratorNode extends DefaultContainer {
 
 	override openImpl() {
 		if (generator instanceof DatabaseGenerator) {
-			val gen = generator as DatabaseGenerator
+			val gen = generator
 			for (name : gen.objectTypes) {
 				val objectType = new ObjectType()
 				objectType.generator = generator

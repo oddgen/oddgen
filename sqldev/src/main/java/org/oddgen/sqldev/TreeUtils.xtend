@@ -37,19 +37,16 @@ class TreeUtils {
 		})
 	}
 
-	def static findTree(Component component) {
+	def static JTree findTree(Component component) {
 		val components = new LinkedList<Component>()
 		components.add(component)
 		while (!components.isEmpty()) {
-			var comp = components.removeLast() as Component
-			var Object obj
+			var comp = components.removeLast()
 			if (comp instanceof JTree) {
-				obj = comp as JTree
-				return obj as JTree
+				return comp
 			}
 			if (comp instanceof Container) {
-				obj = comp as Container
-				components.addAll(Arrays.asList((obj as Container).getComponents()))
+				components.addAll(Arrays.asList((comp).getComponents()))
 			}
 		}
 		return null

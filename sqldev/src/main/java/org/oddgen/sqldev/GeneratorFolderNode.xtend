@@ -54,7 +54,7 @@ class GeneratorFolderNode extends DefaultContainer {
 		return folder
 	}
 
-	def openBackground() {
+	def void openBackground() {
 		if (this == RootNode.instance.dbServerGenerators) {
 			val folder = RootNode.instance.dbServerGenerators
 			folder.removeAll

@@ -21,7 +21,11 @@ import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.sql.Connection
+import javax.swing.DefaultComboBoxModel
+import oracle.dbtools.raptor.utils.ConnectionDetails
+import oracle.dbtools.raptor.utils.ConnectionDisconnectListener
 import oracle.dbtools.raptor.utils.Connections
+import oracle.dbtools.raptor.utils.DisconnectVetoException
 import oracle.dbtools.worksheet.editor.ConnComboBox
 import oracle.ide.Context
 import oracle.ide.config.Preferences
@@ -34,10 +38,6 @@ import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
 import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
-import javax.swing.DefaultComboBoxModel
-import oracle.dbtools.raptor.utils.ConnectionDisconnectListener
-import oracle.dbtools.raptor.utils.ConnectionDetails
-import oracle.dbtools.raptor.utils.DisconnectVetoException
 
 @Loggable
 class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener, ConnectionDisconnectListener {
@@ -67,7 +67,10 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	@Loggable(value=LoggableConstants.DEBUG)
 	def protected createToolbar() {
 		if (tb != null) {
+			tb.removeAll
 			tb.dispose
+			RootNode.instance.dbServerGenerators.removeAll(true)
+			RootNode.instance.dbServerGenerators.markDirty(false)
 		}
 		connComboBox = new ConnComboBox()
 		refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))

@@ -8,6 +8,6 @@
         <u:author>#EXTENSION_OWNER#</u:author>
         <u:author-url>https://www.oddgen.org/</u:author-url>
 		<u:description><![CDATA[SQL Developer extension to invoke dictionary driven code generators.]]></u:description>
-        <u:bundle-url>http://www.oddgen.org/download/#EXTENSION_DEPLOYABLE#</u:bundle-url>
+        <u:bundle-url>https://github.com/oddgen/oddgen/releases/download/v#EXTENSION_SHORT_VERSION#/#EXTENSION_DEPLOYABLE#</u:bundle-url>
     </u:update>
 </updates>

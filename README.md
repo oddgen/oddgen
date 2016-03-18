@@ -13,8 +13,13 @@ See <https://www.oddgen.org/> for more information about the product.
 Binary releases are published [here](https://github.com/oddgen/oddgen/releases).
 
 ## Issues
-Please file your bug reports, enhancement requests, questions and other support requests within Github's issue tracker [Issues](https://help.github.com/articles/about-issues/) [here](https://github.com/oddgen/oddgen/issues/new).
+Please file your bug reports, enhancement requests, questions and other support requests within Github's issue tracker [Issues](https://help.github.com/articles/about-issues/). The following links should help you to find similar issue:
 
+* [Questions](https://github.com/oddgen/oddgen/issues?q=is%3Aissue+label%3Aquestion)
+* [Open Enhancements](https://github.com/oddgen/oddgen/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
+* [Open Bugs](https://github.com/oddgen/oddgen/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+
+[submitting new issue](https://github.com/oddgen/oddgen/issues/new).
 
 ## How to Contribute
 

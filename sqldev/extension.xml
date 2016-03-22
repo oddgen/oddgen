@@ -47,8 +47,11 @@
 				<menus>
 					<menubar id="javax.ide.view.MAIN_WINDOW_MENUBAR_ID">
 						<menu id="javax.ide.VIEW_MENU_ID">
-							<section id="ODDGEN_NEW_MENU_SECTION_ID">
-								<item action-ref="ODDGEN_SHOW_NAVIGATOR" weight="10.0" />
+							<!-- weight 0.5 used for Database section -->
+							<section id="ODDGEN_NEW_MENU_SECTION_ID" weight="0.4f">
+								<!-- weight within section, relevant for multiple items only. -->
+								<!-- looks like items with same weight are sorted alphabetically -->
+								<item action-ref="ODDGEN_SHOW_NAVIGATOR" weight="1.0f" />
 							</section>
 						</menu>
 					</menubar>

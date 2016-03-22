@@ -117,7 +117,7 @@ class DatabaseGeneratorTest {
 			PL/SQL: Statement ignored
 		'''
 		val generated = dao.generate(dbgen)
-		Assert.assertEquals(expected.trim, generated.trim)
+		Assert.assertEquals(expected.trim, generated?.trim)
 	}
 
 	@Test

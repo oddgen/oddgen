@@ -38,7 +38,7 @@ import org.w3c.dom.Element
 class DatabaseGeneratorDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
-	private DalTools dalTools
+	private extension DalTools dalTools
 
 	new(Connection conn) {
 		this.conn = conn
@@ -52,7 +52,7 @@ class DatabaseGeneratorDao {
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
 			END;
 		'''
-		dbgen.name = dalTools.getString(plsql)
+		dbgen.name = plsql.string
 		if (dbgen.name == null) {
 			dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
 		}
@@ -64,7 +64,7 @@ class DatabaseGeneratorDao {
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
 			END;
 		'''
-		dbgen.description = dalTools.getString(plsql)
+		dbgen.description = plsql.string
 		if (dbgen.description == null) {
 			dbgen.description = dbgen.name
 		}
@@ -88,7 +88,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.objectTypes = new ArrayList<String>()
-		val doc = dalTools.getDoc(plsql)
+		val doc = plsql.doc
 		if (doc == null) {
 			dbgen.objectTypes.add("TABLE")
 			dbgen.objectTypes.add("VIEW")
@@ -125,7 +125,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.params = new HashMap<String, String>()
-		val doc = dalTools.getDoc(plsql)
+		val doc = plsql.doc
 		if (doc != null) {
 			val params = doc.getElementsByTagName("param")
 			for (var i = 0; i < params.length; i++) {
@@ -186,7 +186,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		dbgen.lovs = new HashMap<String, List<String>>()
-		val doc = dalTools.getDoc(plsql)
+		val doc = plsql.doc
 		setLovs(dbgen, doc)
 	}
 
@@ -354,7 +354,7 @@ class DatabaseGeneratorDao {
 				   ? := l_clob;
 				END;
 			'''
-			val doc = dalTools.getDoc(plsql)
+			val doc = plsql.doc
 			setLovs(dbgen, doc)
 		}
 	}
@@ -384,7 +384,7 @@ class DatabaseGeneratorDao {
 		'''
 		var String result;
 		try {
-			val resultClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+			val resultClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
 				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.CLOB);
 					cs.execute

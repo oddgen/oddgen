@@ -29,7 +29,7 @@ import org.w3c.dom.Element
 class ObjectNameDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
-	private DalTools dalTools
+	private extension DalTools dalTools
 
 	new(Connection conn) {
 		this.conn = conn
@@ -76,7 +76,7 @@ class ObjectNameDao {
 			   ? := l_clob;
 			END;
 		'''
-		val doc = dalTools.getDoc(plsql)
+		val doc = plsql.doc
 		if (doc != null) {
 			val objectNames = new ArrayList<ObjectName>()
 			val values = doc.getElementsByTagName("value")

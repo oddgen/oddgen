@@ -41,10 +41,15 @@ class DalTools {
 		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
 	}
 
+	def removeCarriageReturns(String plsql) {
+		// fix for issue #3: no CR in PL/SQL blocks on Ora DB 10.2 - see MOS note 1399110.1 for details.
+		return plsql.replace("\r", "")
+	}
+
 	def getString(String plsql) {
 		var String result = null
 		try {
-			result = jdbcTemplate.execute(plsql, new CallableStatementCallback<String>() {
+			result = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<String>() {
 				override String doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.VARCHAR);
 					cs.execute
@@ -66,7 +71,7 @@ class DalTools {
 	def getDoc(String plsql) {
 		var Document doc = null
 		try {
-			val paramsClob = jdbcTemplate.execute(plsql, new CallableStatementCallback<Clob>() {
+			val paramsClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
 				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.CLOB);
 					cs.execute

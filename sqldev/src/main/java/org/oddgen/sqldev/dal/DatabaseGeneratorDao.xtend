@@ -36,6 +36,8 @@ import org.w3c.dom.Element
 
 @Loggable
 class DatabaseGeneratorDao {
+	private static int MAX_DEPTH = 2
+	private int depth = 0
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
 	private extension DalTools dalTools
@@ -92,8 +94,7 @@ class DatabaseGeneratorDao {
 		if (doc == null) {
 			dbgen.objectTypes.add("TABLE")
 			dbgen.objectTypes.add("VIEW")
-		}
-		else {
+		} else {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
@@ -359,7 +360,8 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def generate(DatabaseGenerator dbgen) {
+	def String generate(DatabaseGenerator dbgen) {
+		depth++
 		val plsql = '''
 			DECLARE
 			   «IF dbgen.hasParams»
@@ -393,8 +395,17 @@ class DatabaseGeneratorDao {
 			})
 			result = resultClob.getSubString(1, resultClob.length as int)
 		} catch (Exception e) {
-			result = '''Failed to generate code for «dbgen.objectType».«dbgen.objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
-			Logger.error(this, plsql + result)
+			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
+				// catch : existing state of packages has been discarded
+				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
+				result = dbgen.
+					generate
+			} else {
+				result = '''Failed to generate code for «dbgen.objectType».«dbgen.objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
+				Logger.error(this, plsql + result)
+			}
+		} finally {
+			depth--
 		}
 		return result
 	}

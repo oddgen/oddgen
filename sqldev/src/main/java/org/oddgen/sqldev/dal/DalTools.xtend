@@ -33,6 +33,8 @@ import org.xml.sax.InputSource
 
 @Loggable
 class DalTools {
+	private static int MAX_DEPTH = 2
+	private int depth = 0
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
 
@@ -46,7 +48,8 @@ class DalTools {
 		return plsql.replace("\r", "")
 	}
 
-	def getString(String plsql) {
+	def String getString(String plsql) {
+		depth++
 		var String result = null
 		try {
 			result = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<String>() {
@@ -63,12 +66,22 @@ class DalTools {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)
+			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
+				// catch : existing state of packages has been discarded
+				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
+				result = plsql.string
+			} else {
+				Logger.error(this, e.message)
+
+			}
+		} finally {
+			depth--
 		}
 		return result
 	}
 
-	def getDoc(String plsql) {
+	def Document getDoc(String plsql) {
+		depth++
 		var Document doc = null
 		try {
 			val paramsClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
@@ -87,7 +100,16 @@ class DalTools {
 				Logger.error(this, e.cause.message)
 			}
 		} catch (Exception e) {
-			Logger.error(this, e.message)
+			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
+				// catch : existing state of packages has been discarded
+				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
+				doc = plsql.doc
+			} else {
+				Logger.error(this, e.message)
+
+			}
+		} finally {
+			depth--
 		}
 		return doc
 	}

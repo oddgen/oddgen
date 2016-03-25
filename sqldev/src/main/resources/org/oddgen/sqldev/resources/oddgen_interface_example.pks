@@ -102,7 +102,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * Generates the result.
    * Complete signature. 
-   * Either this signature or the simplified signture or both must be implemented.
+   * Either this signature or the simplified signature or both must be implemented.
    *
    * @param in_object_type object type to process
    * @param in_object_name object_name of in_object_type to process
@@ -116,7 +116,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * Generate the result.  
    * Simplified signature, which is applicable in SQL. 
-   * Either this signature or the comölete signture or both must be implemented.
+   * Either this signature or the complete signature or both must be implemented.
    *
    * @param in_object_type object type to process
    * @param in_object_name object_name of in_object_type to process

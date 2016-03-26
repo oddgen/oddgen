@@ -90,22 +90,6 @@ CREATE OR REPLACE PACKAGE teplsql2_view IS
    FUNCTION get_lov RETURN t_lov;
 
    /**
-   * Updates the list of values per parameter.
-   * This function is called after a parameter change in the GUI.
-   * While this allows to amend the list-of-values based on user entry, 
-   * this function call makes the GUI less responsive and affects multiple selection.
-   * Do not implement this function, unless you really need it.
-   *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @param in_params parameters to configure the behavior of the generator
-   * @returns parameters with their list-of-values
-   */
-   -- FUNCTION refresh_lov(in_object_type IN VARCHAR2,
-   --                      in_object_name IN VARCHAR2,
-   --                      in_params      IN t_param) RETURN t_lov;
-
-   /**
    * Generates the result.
    * This function cannot be omitted. 
    *

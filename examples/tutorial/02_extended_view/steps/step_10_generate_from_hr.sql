@@ -1,0 +1,1 @@
+GRANT EXECUTE ON extended_view TO PUBLIC;

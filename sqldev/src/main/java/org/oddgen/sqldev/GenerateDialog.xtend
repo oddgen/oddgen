@@ -43,6 +43,7 @@ import javax.swing.SwingUtilities
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.resources.OddgenResources
+import javax.swing.JCheckBox
 
 @Loggable(value=LoggableConstants.DEBUG)
 class GenerateDialog extends JDialog implements ActionListener {
@@ -55,6 +56,9 @@ class GenerateDialog extends JDialog implements ActionListener {
 	private JPanel paneParams;
 	private int paramPos = -1;
 	private HashMap<String, Component> params = new HashMap<String, Component>()
+
+	private static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]
+	private static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]
 
 	def static createAndShow(Component parent, List<DatabaseGenerator> dbgens) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -161,6 +165,18 @@ class GenerateDialog extends JDialog implements ActionListener {
 
 	}
 
+	def private isCheckBox(String name) {
+		val dbgen = dbgens.get(0)
+		val lovs = dbgen.lovs.get(name)
+		if (lovs != null && lovs.size > 0 && lovs.size < 3) {
+			val entry = lovs.get(0).toLowerCase
+			if (BOOLEAN_TRUE.findFirst[it == entry] != null || BOOLEAN_FALSE.findFirst[it == entry] != null) {
+				return true
+			}
+		}
+		return false
+	}
+	
 	def private addParam(String name) {
 		paramPos++
 		val c = new GridBagConstraints();
@@ -190,7 +206,19 @@ class GenerateDialog extends JDialog implements ActionListener {
 			paneParams.add(textObjectName, c);
 		} else {
 			val lovs = dbgen.lovs.get(name)
-			if (lovs != null && lovs.size > 0) {
+			if (name.isCheckBox) {
+				val checkBox = new JCheckBox("")
+				val entry = lovs.findFirst[it == dbgen.params.get(name)].toLowerCase
+				checkBox.selected = BOOLEAN_TRUE.findFirst[it == entry] != null
+				paneParams.add(checkBox, c)
+				params.put(name, checkBox)
+				if (dbgen.isRefreshable) {
+					checkBox.addActionListener(this)
+				}
+				if (dbgen.lovs.get(name).size == 1) {
+					checkBox.enabled = false
+				}				
+			} else if (lovs != null && lovs.size > 0) {
 				val comboBoxModel = new DefaultComboBoxModel<String>();
 				for (lov : lovs) {
 					comboBoxModel.addElement(lov)
@@ -201,6 +229,10 @@ class GenerateDialog extends JDialog implements ActionListener {
 				params.put(name, comboBox)
 				if (dbgen.isRefreshable) {
 					comboBox.addActionListener(this)
+				}
+				if (dbgen.lovs.get(name).size == 1) {
+					comboBox.editable = false
+					comboBox.enabled = false
 				}
 			} else {
 				val textField = new JTextField(dbgen.params.get(name))
@@ -217,6 +249,17 @@ class GenerateDialog extends JDialog implements ActionListener {
 				var String value
 				if (component instanceof JTextField) {
 					value = component.text
+				} else if (component instanceof JCheckBox) {
+					val lovs = dbgens.get(0).lovs.get(name)
+					if (lovs.size == 1) {
+						value = lovs.get(0)
+					} else {
+						if (component.selected && BOOLEAN_TRUE.findFirst[it == lovs.get(0).toLowerCase] != null) {
+							value = lovs.get(0)
+						} else {
+							value = lovs.get(1)
+						}
+					}
 				} else {
 					value = (component as JComboBox<String>).selectedItem as String
 				}
@@ -250,12 +293,27 @@ class GenerateDialog extends JDialog implements ActionListener {
 		dao.refresh(dbgen)
 		for (name : params.keySet) {
 			val component = params.get(name)
-			if (!(component instanceof JTextField)) {
+			if (component instanceof JCheckBox) {
+				val checkBox = component as JCheckBox
+				val selected = checkBox.selected
+				Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name, selected, checkBox.enabled)
+				var Boolean newSelected 
+				if (dbgen.lovs.get(name).size == 1) {
+					newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0)] != null
+					checkBox.enabled = false
+				} else {
+					newSelected = selected
+					checkBox.enabled = true
+				}
+				checkBox.selected = newSelected
+				Logger.debug(this, "selected value for checkBox %1$s after change: %2$s (enabled: %3$s)", name, checkBox.selected, checkBox.enabled)
+			} else if (component.class.name == "javax.swing.JComboBox") {
+				// do not use instanceof for JComboBox to avoid rawtypes warning
 				val comboBox = component as JComboBox<String>
 				comboBox.removeActionListener(this)
 				val model = comboBox.model as DefaultComboBoxModel<String>
 				val selected = model.selectedItem as String
-				Logger.debug(this, "selected value for combobox %1$s before change: %2$s", name, selected)
+				Logger.debug(this, "selected value for comboBox %1$s before change: %2$s (enabled: %3$s)", name, selected, comboBox.enabled)
 				model.removeAllElements
 				for (value : dbgen.lovs.get(name)) {
 					model.addElement(value)
@@ -269,9 +327,15 @@ class GenerateDialog extends JDialog implements ActionListener {
 					newSelectedValue = selected
 				}
 				model.selectedItem = newSelectedValue
-				Logger.debug(this, "selected value for combobox %1$s after change: %2$s", name, model.selectedItem)
+				if (model.size > 1) {
+					comboBox.editable = true
+					comboBox.enabled = true
+				} else {
+					comboBox.editable = false
+					comboBox.enabled = false
+				}
+				Logger.debug(this, "selected value for comboBox %1$s after change: %2$s (enabled: %3$s)", name, model.selectedItem, comboBox.enabled)
 				comboBox.addActionListener(this)
-				
 			}
 		}
 	}
@@ -291,8 +355,8 @@ class GenerateDialog extends JDialog implements ActionListener {
 			thread.name = "oddgen Clipboard Generator"
 			thread.start
 			exit
-		} else if (e.getSource.class.name == "javax.swing.JComboBox") {
-			// do not use instanceof to avoid rawtypes warning
+		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox) {
+			// do not use instanceof for JComboBox to avoid rawtypes warning
 			refreshLovs()
 		}
 	}

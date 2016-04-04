@@ -17,6 +17,7 @@ package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
+import java.awt.Cursor
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
@@ -78,12 +79,19 @@ class OddgenNavigatorController extends ShowNavigatorController {
 
 	def generateToString(List<DatabaseGenerator> dbgens, Connection conn) {
 		val dao = new DatabaseGeneratorDao(conn)
-		val result = '''
-			«FOR dbgen : dbgens SEPARATOR '\n'»
-				«Logger.debug(this, "Generating %1$s.%2$s to worksheet...", dbgen.objectType, dbgen.objectName)»
-				«dao.generate(dbgen)»
-			«ENDFOR»
-		'''
+		var String result;
+		val gui = OddgenNavigatorManager.instance.navigatorWindow.GUI
+		try {
+			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+			result = '''
+				«FOR dbgen : dbgens SEPARATOR '\n'»
+					«Logger.debug(this, "Generating %1$s.%2$s to string...", dbgen.objectType, dbgen.objectName)»
+					«dao.generate(dbgen)»
+				«ENDFOR»
+			'''
+		} finally {
+			gui.cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
+		}
 		return result
 	}
 

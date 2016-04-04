@@ -22,6 +22,7 @@ import oracle.ide.panels.TraversableContext
 import oracle.ide.panels.TraversalException
 import oracle.javatools.ui.layout.FieldLayoutBuilder
 import org.oddgen.sqldev.model.PreferenceModel
+import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable
 class PreferencePanel extends DefaultTraversablePanel {
@@ -35,11 +36,10 @@ class PreferencePanel extends DefaultTraversablePanel {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
 		builder.add(
-			builder.field.label.withText("&Discover PL/SQL generators on refresh:").component(
-				discoverPlsqlGeneratorsCheckBox).
-				withHint(
-					"If checked, PL/SQL generators are immediately discovered when the connection refresh button is pressed, otherwise the discovery process is delayed until the Database Server Generates folder is opened."
-				))
+			builder.field.label.withText(OddgenResources.getString("PREF_DISCOVER_PLSQL_GENERATORS_LABEL")).component(
+				discoverPlsqlGeneratorsCheckBox).withHint(
+				OddgenResources.getString("PREF_DISCOVER_PLSQL_GENERATORS_HINT")
+			))
 		builder.addVerticalSpring
 	}
 

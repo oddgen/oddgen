@@ -31,10 +31,9 @@ class ObjectNameNode extends DefaultContainer {
 	}
 
 	override getIcon() {
-		val typeName = objectName.objectType.name.toLowerCase
-		if (typeName.startsWith("table")) {
+		if (objectName.objectType.name == "TABLE") {
 			return OddgenResources.getIcon("TABLE_ICON")
-		} else if (typeName.startsWith("view")) {
+		} else if (objectName.objectType.name == "VIEW") {
 			return OddgenResources.getIcon("VIEW_ICON")
 		} else {
 			return OddgenResources.getIcon("UNKNOWN_ICON")

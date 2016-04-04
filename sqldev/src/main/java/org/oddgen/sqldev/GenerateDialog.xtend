@@ -42,6 +42,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
 class GenerateDialog extends JDialog implements ActionListener {
@@ -74,7 +75,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 	}
 
 	new(Component parent, List<DatabaseGenerator> dbgens) {
-		super(SwingUtilities.windowForComponent(parent), '''oddgen - «dbgens.get(0).name»''',
+		super(SwingUtilities.windowForComponent(parent), '''«OddgenResources.getString("DIALOG_TITLE")» - «dbgens.get(0).name»''',
 			ModalityType.APPLICATION_MODAL)
 		this.dbgens = dbgens
 		val pane = this.getContentPane();
@@ -97,8 +98,8 @@ class GenerateDialog extends JDialog implements ActionListener {
 
 		// Parameters pane
 		paneParams = new JPanel(new GridBagLayout())
-		addParam("Object type")
-		addParam("Object name")
+		addParam(OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM"))
+		addParam(OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM"))
 		for (param : dbgens.get(0).params.keySet) {
 			param.addParam
 		}
@@ -118,7 +119,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 
 		// Buttons pane
 		val panelButtons = new JPanel(new GridBagLayout())
-		buttonGenerateToWorksheet = new JButton("Generate to worksheet");
+		buttonGenerateToWorksheet = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_WORKSHEET_BUTTON"))
 		buttonGenerateToWorksheet.addActionListener(this);
 		c.gridx = 0;
 		c.gridy = 0;
@@ -128,7 +129,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		c.weightx = 0;
 		c.weighty = 0;
 		panelButtons.add(buttonGenerateToWorksheet, c);
-		buttonGenerateToClipboard = new JButton("Generate to clipboard");
+		buttonGenerateToClipboard = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_CLIPBOARD_BUTTON"));
 		buttonGenerateToClipboard.addActionListener(this);
 		c.gridx = 1;
 		c.insets = new Insets(0, 10, 0, 0); // top, left, bottom, right
@@ -136,7 +137,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		c.weightx = 0;
 		c.weighty = 0;
 		panelButtons.add(buttonGenerateToClipboard, c);
-		buttonCancel = new JButton("Cancel");
+		buttonCancel = new JButton(OddgenResources.getString("DIALOG_CANCEL_BUTTON"));
 		buttonCancel.addActionListener(this);
 		c.gridx = 2;
 		c.gridy = 0;
@@ -177,12 +178,12 @@ class GenerateDialog extends JDialog implements ActionListener {
 		c.gridx = 1
 		c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
 		c.weightx = 1
-		if (name == "Object type") {
+		if (name == OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM")) {
 			val textObjectType = new JTextField(dbgen.objectType)
 			textObjectType.editable = false
 			textObjectType.enabled = false
 			paneParams.add(textObjectType, c);
-		} else if (name == "Object name") {
+		} else if (name == OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM")) {
 			val textObjectName = new JTextField(if(dbgens.size > 1) "***" else dbgen.objectName)
 			textObjectName.editable = false
 			textObjectName.enabled = false

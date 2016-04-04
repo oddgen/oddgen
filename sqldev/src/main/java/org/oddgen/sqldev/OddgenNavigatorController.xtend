@@ -34,6 +34,7 @@ import oracle.javatools.dialogs.MessageDialog
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.model.ObjectName
+import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
 class OddgenNavigatorController extends ShowNavigatorController {
@@ -90,7 +91,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		val result = dbgens.generateToString(conn)
 		SwingUtilities.invokeAndWait(new Runnable() {
 			override run() {
-				val worksheet = OpenWorksheetWizard.openNewTempWorksheet("oddgen", result) as Worksheet
+				val worksheet = OpenWorksheetWizard.openNewTempWorksheet(OddgenResources.getString("WORKSHEET_TITLE"), result) as Worksheet
 				worksheet.comboConnection = null
 			}
 		});
@@ -107,8 +108,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 					// dialog properties are managed in $HOME/.sqldeveloper/system*/o.ide.*/.oracle_javatools_msgdlg.properties
 					// TODO: find out how to manage these properties via SQL Developer					
 					MessageDialog.optionalInformation("oddgen: confirm generate to clipboard",
-						OddgenNavigatorManager.instance.navigatorWindow.GUI, "Code generated to your clipboard.",
-						"oddgen", null);
+						OddgenNavigatorManager.instance.navigatorWindow.GUI, OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_MESSAGE"),
+						OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_TITLE"), null);
 				}
 			});
 	}

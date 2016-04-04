@@ -33,16 +33,16 @@ class ObjectTypeNode extends DefaultContainer {
 		this.objectType = objectType
 		displayName = objectType.name.toLowerCase.toFirstUpper
 		if (displayName == "Table") {
-			displayName = "Tables"
+			displayName = OddgenResources.getString("NODE_TABLES_DISPLAY_NAME")
 		} else if (displayName == "View") {
-			displayName = "Views"
+			displayName = OddgenResources.getString("NODE_VIEWS_DISPLAY_NAME")
 		}	
 	}
 
 	override getIcon() {
-		if (displayName.startsWith("Table")) {
+		if (objectType.name == "TABLE") {
 			return OddgenResources.getIcon("TABLE_FOLDER_ICON")
-		} else if (displayName.startsWith("View")) {
+		} else if (objectType.name == "VIEW") {
 			return OddgenResources.getIcon("VIEW_FOLDER_ICON")
 		} else {
 			return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")			

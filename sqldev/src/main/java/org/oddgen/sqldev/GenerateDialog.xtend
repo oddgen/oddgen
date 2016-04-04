@@ -294,7 +294,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		for (name : params.keySet) {
 			val component = params.get(name)
 			if (component instanceof JCheckBox) {
-				val checkBox = component as JCheckBox
+				val checkBox = component
 				val selected = checkBox.selected
 				Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name, selected, checkBox.enabled)
 				var Boolean newSelected 

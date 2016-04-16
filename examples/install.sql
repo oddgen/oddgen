@@ -50,6 +50,8 @@ PROMPT ====================================================================
 SHOW ERRORS
 @./package/plsql/plsql_view.pks
 SHOW ERRORS
+@./package/plsql/dropall.pks
+SHOW ERRORS
 @./package/ftldb/ftldb_hello_world.pks
 SHOW ERRORS
 @./package/ftldb/ftldb_view.pks
@@ -69,6 +71,8 @@ PROMPT ====================================================================
 @./package/plsql/plsql_hello_world.pkb
 SHOW ERRORS
 @./package/plsql/plsql_view.pkb
+SHOW ERRORS
+@./package/plsql/dropall.pkb
 SHOW ERRORS
 @./package/ftldb/ftldb_hello_world.pkb
 SHOW ERRORS
@@ -91,6 +95,7 @@ PROMPT be created.
 PROMPT ====================================================================
 GRANT EXECUTE ON plsql_hello_world TO PUBLIC;
 GRANT EXECUTE ON plsql_view TO PUBLIC;
+GRANT EXECUTE ON dropall to PUBLIC;
 GRANT EXECUTE ON ftldb_hello_world TO PUBLIC;
 GRANT EXECUTE ON ftldb_view TO PUBLIC;
 GRANT EXECUTE ON teplsql_hello_world TO PUBLIC;

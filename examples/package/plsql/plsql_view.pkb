@@ -16,7 +16,15 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    */
 
    --
-   -- private constants
+   -- parameter names used also as labels in the GUI
+   --
+   co_view_suffix  CONSTANT param_type := 'View suffix';
+   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
+   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
+   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
+
+   --
+   -- other constants
    --
    c_new_line      CONSTANT string_type := chr(10);
    co_max_obj_len  CONSTANT pls_integer := 30;

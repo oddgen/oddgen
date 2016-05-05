@@ -30,14 +30,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
    TYPE t_param IS TABLE OF string_type INDEX BY param_type;
    TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
 
-   --
-   -- parameter names used also as labels in the GUI
-   --
-   co_view_suffix  CONSTANT param_type := 'View suffix';
-   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
-   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
-   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
-
    /**
    * Get name of the generator, used in tree view
    * If this function is not implemented, the package name will be used.

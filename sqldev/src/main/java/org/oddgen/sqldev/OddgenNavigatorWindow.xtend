@@ -164,11 +164,10 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 				Logger.debug(this, "connection %s reused.", connName)
 			} else {
 				Logger.debug(this, "connection %s is closed", connName)
-				if (connectionInfo.getProperty("password") != null) {
-					Logger.debug(this, "found a stored password for %s, trying to connect...", connName)
-					conn = Connections.instance.getConnection(connectionName)
-					Logger.debug(this, "connected to %s.", connName)
-				}
+				Logger.debug(this, "opening connection to %s, will prompt for password if password is not stored...",
+					connName)
+				conn = Connections.instance.getConnection(connectionName)
+				Logger.debug(this, "connected to %s.", connName)
 			}
 		} catch (Exception e) {
 			Logger.error(this, "Cannot open/refresh connection to %1$s. Got error %2$s.", connectionName, e.message)

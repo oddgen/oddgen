@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.Properties
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
@@ -75,12 +76,15 @@ class ObjectNameTest {
 
 	@BeforeClass
 	def static void setup() {
+		// get properties
+		val p = new Properties()
+		p.load(ObjectNameTest.getClass().getResourceAsStream("/test.properties"))		
 		// create dataSource and jdbcTemplate
 		dataSource = new SingleConnectionDataSource()
 		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
-		dataSource.url = "jdbc:oracle:thin:@titisee.trivadis.com:1521/phspdb2"
-		dataSource.username = "scott"
-		dataSource.password = "tiger"
+		dataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
+		dataSource.username = p.getProperty("scott_username")
+		dataSource.password = p.getProperty("scott_password")
 		jdbcTemplate = new JdbcTemplate(dataSource)
 
 		// deploy PL/SQL packages 

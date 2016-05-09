@@ -19,6 +19,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.util.ArrayList
+import java.util.Properties
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
@@ -37,12 +38,15 @@ class GenerateDialogTest {
 
 	@BeforeClass
 	def static void setup() {
+		// get properties
+		val p = new Properties()
+		p.load(GenerateDialogTest.getClass().getResourceAsStream("/test.properties"))		
 		// create dataSource and jdbcTemplate
 		dataSource = new SingleConnectionDataSource()
 		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
-		dataSource.url = "jdbc:oracle:thin:@titisee.trivadis.com:1521/phspdb2"
-		dataSource.username = "scott"
-		dataSource.password = "tiger"
+		dataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
+		dataSource.username = p.getProperty("scott_username")
+		dataSource.password = p.getProperty("scott_password")
 		jdbcTemplate = new JdbcTemplate(dataSource)
 	}
 

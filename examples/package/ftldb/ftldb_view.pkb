@@ -177,6 +177,21 @@ $END
    END get_lov;
 
    --
+   -- refresh_param_states
+   --
+   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param IS
+   
+      l_param_states t_param;
+   BEGIN
+      IF in_params(co_gen_iot) = 'Yes' THEN
+         l_param_states(co_iot_suffix) := '1'; -- enable
+      ELSE
+         l_param_states(co_iot_suffix) := '0'; -- disable
+      END IF;
+      RETURN l_param_states;
+   END refresh_param_states;
+
+   --
    -- generate (1)
    --
    FUNCTION generate(in_object_type IN VARCHAR2,

@@ -27,8 +27,8 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    -- other constants
    --
    c_new_line      CONSTANT string_type := chr(10);
-   co_max_obj_len  CONSTANT pls_integer := 30;
-   co_oddgen_error CONSTANT pls_integer := -20501;
+   co_max_obj_len  CONSTANT PLS_INTEGER := 30;
+   co_oddgen_error CONSTANT PLS_INTEGER := -20501;
 
    --
    -- get_name
@@ -65,7 +65,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
         INTO l_object_names
         FROM user_objects
        WHERE object_type = in_object_type
-         AND generated = 'N'
+             AND generated = 'N'
        ORDER BY object_name;
       RETURN l_object_names;
    END get_object_names;
@@ -92,6 +92,21 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
       l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
       RETURN l_lov;
    END get_lov;
+
+   --
+   -- refresh_param_states
+   --
+   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param IS
+   
+      l_param_states t_param;
+   BEGIN
+      IF in_params(co_gen_iot) = 'Yes' THEN
+         l_param_states(co_iot_suffix) := '1'; -- enable
+      ELSE
+         l_param_states(co_iot_suffix) := '0'; -- disable
+      END IF;
+      RETURN l_param_states;
+   END refresh_param_states;
 
    --
    -- generate (1)
@@ -193,8 +208,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
          CLOSE c_columns;
          IF NOT l_found THEN
             raise_application_error(co_oddgen_error,
-                                    'Table ' || in_object_name ||
-                                    ' not found.');
+                                    'Table ' || in_object_name || ' not found.');
          END IF;
          IF get_view_name = in_object_name THEN
             raise_application_error(co_oddgen_error,
@@ -203,14 +217,12 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
          END IF;
          IF l_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
             raise_application_error(co_oddgen_error,
-                                    'Invalid value <' ||
-                                    l_params(co_gen_iot) ||
+                                    'Invalid value <' || l_params(co_gen_iot) ||
                                     '> for parameter <' || co_gen_iot ||
                                     '>. Valid are Yes and No.');
          END IF;
          IF l_params(co_gen_iot) = 'Yes' THEN
-            IF get_iot_name = get_view_name OR
-               get_iot_name = in_object_name THEN
+            IF get_iot_name = get_view_name OR get_iot_name = in_object_name THEN
                raise_application_error(co_oddgen_error,
                                        'Change <' || co_iot_suffix ||
                                        '>. The target instead-of-trigger must be named differently than its base view and base table.');
@@ -222,8 +234,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
             CLOSE c_pk_columns;
             IF NOT l_found THEN
                raise_application_error(co_oddgen_error,
-                                       'No primary key found in table ' ||
-                                       in_object_name ||
+                                       'No primary key found in table ' || in_object_name ||
                                        '. Cannot generate instead-of-trigger.');
             END IF;
          END IF;
@@ -243,8 +254,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
                   i := in_params.next(i);
                ELSE
                   raise_application_error(co_oddgen_error,
-                                          'Parameter <' || i ||
-                                          '> is not known.');
+                                          'Parameter <' || i || '> is not known.');
                END IF;
             END LOOP input_params;
          END IF;
@@ -290,8 +300,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
             ELSE
                l_line := c_new_line || '         AND ';
             END IF;
-            l_line  := l_line || l_rec.column_name || ' = :OLD.' ||
-                       l_rec.column_name;
+            l_line  := l_line || l_rec.column_name || ' = :OLD.' || l_rec.column_name;
             l_where := l_where || l_line;
          END LOOP pk_columns;
          RETURN l_where;
@@ -303,8 +312,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
          IF l_params(co_gen_iot) = 'Yes' THEN
             add_line('-- create simple instead-of-trigger for demonstration purposes');
             add_line('CREATE OR REPLACE TRIGGER ' || get_iot_name);
-            add_line('   INSTEAD OF INSERT OR UPDATE OR DELETE ON ' ||
-                     get_view_name);
+            add_line('   INSTEAD OF INSERT OR UPDATE OR DELETE ON ' || get_view_name);
             add_line('BEGIN');
             add_line('   IF INSERTING THEN');
             add_line('      INSERT INTO ' || in_object_name || ' (');
@@ -338,8 +346,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
                ELSE
                   l_line := '             ';
                END IF;
-               l_line := l_line || l_rec.column_name || ' = :NEW.' ||
-                         l_rec.column_name;
+               l_line := l_line || l_rec.column_name || ' = :NEW.' || l_rec.column_name;
                IF l_rec.is_last = 0 THEN
                   l_line := l_line || ',';
                END IF;
@@ -370,8 +377,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    --
    -- generate (2)
    --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB IS
+   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB IS
       l_params t_param;
    BEGIN
       RETURN generate(in_object_type => in_object_type,

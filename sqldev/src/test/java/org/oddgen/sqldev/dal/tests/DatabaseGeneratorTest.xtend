@@ -51,6 +51,8 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(2, plsqlView.lovs.get("Generate instead-of-trigger?").size)
 		Assert.assertEquals("Yes", plsqlView.lovs.get("Generate instead-of-trigger?").get(0))
 		Assert.assertEquals("No", plsqlView.lovs.get("Generate instead-of-trigger?").get(1))
+		Assert.assertEquals(1, plsqlView.paramStates.size)
+		Assert.assertEquals("1", plsqlView.paramStates.get("Instead-of-trigger suffix"))
 		Assert.assertFalse(plsqlView.isRefreshable)
 	}
 
@@ -278,17 +280,8 @@ class DatabaseGeneratorTest {
 			   TYPE t_param IS TABLE OF string_type INDEX BY param_type;
 			   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
 			
-			   --
-			   -- parameter names used also as labels in the GUI
-			   --
-			   co_view_suffix  CONSTANT param_type := 'View suffix';
-			   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
-			   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
-			   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
-			
 			   /**
 			   * Get name of the generator, used in tree view
-			   * If this function is not implemented, the package name will be used.
 			   *
 			   * @returns name of the generator
 			   */
@@ -296,7 +289,6 @@ class DatabaseGeneratorTest {
 			
 			   /**
 			   * Get a description of the generator.
-			   * If this function is not implemented, the owner and the package name will be used.
 			   * 
 			   * @returns description of the generator
 			   */
@@ -304,7 +296,6 @@ class DatabaseGeneratorTest {
 			
 			   /**
 			   * Get a list of supported object types.
-			   * If this function is not implemented, [TABLE, VIEW] will be used. 
 			   *
 			   * @returns a list of supported object types
 			   */
@@ -312,8 +303,6 @@ class DatabaseGeneratorTest {
 			
 			   /**
 			   * Get a list of objects for a object type.
-			   * If this function is not implemented, the result of the following query will be used:
-			   * "SELECT object_name FROM user_objects WHERE object_type = in_object_type"
 			   *
 			   * @param in_object_type object type to filter objects
 			   * @returns a list of objects
@@ -322,7 +311,6 @@ class DatabaseGeneratorTest {
 			
 			   /**
 			   * Get all parameters supported by the generator including default values.
-			   * If this function is not implemented, no parameters will be used.
 			   *
 			   * @returns parameters supported by the generator
 			   */
@@ -330,28 +318,21 @@ class DatabaseGeneratorTest {
 			
 			   /**
 			   * Get a list of values per parameter, if such a LOV is applicable.
-			   * If this function is not implemented, then the parameters cannot be validated in the GUI.
 			   *
 			   * @returns parameters with their list-of-values
 			   */
 			   FUNCTION get_lov RETURN t_lov;
 			
 			   /**
-			   * Updates the list of values per parameter.
-			   * This function is called after a parameter change in the GUI.
-			   * While this allows to amend the list-of-values based on user entry, 
-			   * this function call makes the GUI less responsive and disables multiple selection.
-			   * Do not implement this function, unless you really need it.
+			   * Enables/disables co_iot_suffix based on co_gen_iot
 			   *
 			   * @param in_params parameters to configure the behavior of the generator
-			   * @returns parameters with their list-of-values
+			   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
 			   */
-			   --FUNCTION refresh_lov(in_params IN t_param)
-			   --   RETURN t_lov;
+			   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param;
 			
 			   /**
 			   * Generates the result.
-			   * This function cannot be omitted. 
 			   *
 			   * @param in_object_type object type to process
 			   * @param in_object_name object_name of in_object_type to process
@@ -373,8 +354,7 @@ class DatabaseGeneratorTest {
 			   * @returns generator output
 			   * @throws ORA-20501 when parameter validation fails
 			   */
-			   FUNCTION generate(in_object_type IN VARCHAR2,
-			                     in_object_name IN VARCHAR2) RETURN CLOB;
+			   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB;
 			END plsql_view;
 		''')
 
@@ -399,11 +379,19 @@ class DatabaseGeneratorTest {
 			   */
 			
 			   --
-			   -- private constants
+			   -- parameter names used also as labels in the GUI
+			   --
+			   co_view_suffix  CONSTANT param_type := 'View suffix';
+			   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
+			   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
+			   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
+			
+			   --
+			   -- other constants
 			   --
 			   c_new_line      CONSTANT string_type := chr(10);
-			   co_max_obj_len  CONSTANT pls_integer := 30;
-			   co_oddgen_error CONSTANT pls_integer := -20501;
+			   co_max_obj_len  CONSTANT PLS_INTEGER := 30;
+			   co_oddgen_error CONSTANT PLS_INTEGER := -20501;
 			
 			   --
 			   -- get_name
@@ -440,7 +428,7 @@ class DatabaseGeneratorTest {
 			        INTO l_object_names
 			        FROM user_objects
 			       WHERE object_type = in_object_type
-			         AND generated = 'N'
+			             AND generated = 'N'
 			       ORDER BY object_name;
 			      RETURN l_object_names;
 			   END get_object_names;
@@ -467,6 +455,21 @@ class DatabaseGeneratorTest {
 			      l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
 			      RETURN l_lov;
 			   END get_lov;
+			
+			   --
+			   -- refresh_param_states
+			   --
+			   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param IS
+			   
+			      l_param_states t_param;
+			   BEGIN
+			      IF in_params(co_gen_iot) = 'Yes' THEN
+			         l_param_states(co_iot_suffix) := '1'; -- enable
+			      ELSE
+			         l_param_states(co_iot_suffix) := '0'; -- disable
+			      END IF;
+			      RETURN l_param_states;
+			   END refresh_param_states;
 			
 			   --
 			   -- generate (1)
@@ -568,8 +571,7 @@ class DatabaseGeneratorTest {
 			         CLOSE c_columns;
 			         IF NOT l_found THEN
 			            raise_application_error(co_oddgen_error,
-			                                    'Table ' || in_object_name ||
-			                                    ' not found.');
+			                                    'Table ' || in_object_name || ' not found.');
 			         END IF;
 			         IF get_view_name = in_object_name THEN
 			            raise_application_error(co_oddgen_error,
@@ -578,14 +580,12 @@ class DatabaseGeneratorTest {
 			         END IF;
 			         IF l_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
 			            raise_application_error(co_oddgen_error,
-			                                    'Invalid value <' ||
-			                                    l_params(co_gen_iot) ||
+			                                    'Invalid value <' || l_params(co_gen_iot) ||
 			                                    '> for parameter <' || co_gen_iot ||
 			                                    '>. Valid are Yes and No.');
 			         END IF;
 			         IF l_params(co_gen_iot) = 'Yes' THEN
-			            IF get_iot_name = get_view_name OR
-			               get_iot_name = in_object_name THEN
+			            IF get_iot_name = get_view_name OR get_iot_name = in_object_name THEN
 			               raise_application_error(co_oddgen_error,
 			                                       'Change <' || co_iot_suffix ||
 			                                       '>. The target instead-of-trigger must be named differently than its base view and base table.');
@@ -597,8 +597,7 @@ class DatabaseGeneratorTest {
 			            CLOSE c_pk_columns;
 			            IF NOT l_found THEN
 			               raise_application_error(co_oddgen_error,
-			                                       'No primary key found in table ' ||
-			                                       in_object_name ||
+			                                       'No primary key found in table ' || in_object_name ||
 			                                       '. Cannot generate instead-of-trigger.');
 			            END IF;
 			         END IF;
@@ -618,8 +617,7 @@ class DatabaseGeneratorTest {
 			                  i := in_params.next(i);
 			               ELSE
 			                  raise_application_error(co_oddgen_error,
-			                                          'Parameter <' || i ||
-			                                          '> is not known.');
+			                                          'Parameter <' || i || '> is not known.');
 			               END IF;
 			            END LOOP input_params;
 			         END IF;
@@ -665,8 +663,7 @@ class DatabaseGeneratorTest {
 			            ELSE
 			               l_line := c_new_line || '         AND ';
 			            END IF;
-			            l_line  := l_line || l_rec.column_name || ' = :OLD.' ||
-			                       l_rec.column_name;
+			            l_line  := l_line || l_rec.column_name || ' = :OLD.' || l_rec.column_name;
 			            l_where := l_where || l_line;
 			         END LOOP pk_columns;
 			         RETURN l_where;
@@ -678,8 +675,7 @@ class DatabaseGeneratorTest {
 			         IF l_params(co_gen_iot) = 'Yes' THEN
 			            add_line('-- create simple instead-of-trigger for demonstration purposes');
 			            add_line('CREATE OR REPLACE TRIGGER ' || get_iot_name);
-			            add_line('   INSTEAD OF INSERT OR UPDATE OR DELETE ON ' ||
-			                     get_view_name);
+			            add_line('   INSTEAD OF INSERT OR UPDATE OR DELETE ON ' || get_view_name);
 			            add_line('BEGIN');
 			            add_line('   IF INSERTING THEN');
 			            add_line('      INSERT INTO ' || in_object_name || ' (');
@@ -713,8 +709,7 @@ class DatabaseGeneratorTest {
 			               ELSE
 			                  l_line := '             ';
 			               END IF;
-			               l_line := l_line || l_rec.column_name || ' = :NEW.' ||
-			                         l_rec.column_name;
+			               l_line := l_line || l_rec.column_name || ' = :NEW.' || l_rec.column_name;
 			               IF l_rec.is_last = 0 THEN
 			                  l_line := l_line || ',';
 			               END IF;
@@ -745,8 +740,7 @@ class DatabaseGeneratorTest {
 			   --
 			   -- generate (2)
 			   --
-			   FUNCTION generate(in_object_type IN VARCHAR2,
-			                     in_object_name IN VARCHAR2) RETURN CLOB IS
+			   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB IS
 			      l_params t_param;
 			   BEGIN
 			      RETURN generate(in_object_type => in_object_type,

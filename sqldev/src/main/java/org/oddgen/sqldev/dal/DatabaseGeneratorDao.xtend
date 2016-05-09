@@ -190,6 +190,45 @@ class DatabaseGeneratorDao {
 		val doc = plsql.doc
 		setLovs(dbgen, doc)
 	}
+	
+	def private setParamStates(DatabaseGenerator dbgen) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   l_params       «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			   l_param_states «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			   l_key          «dbgen.generatorOwner».«dbgen.generatorName».param_type;
+			   l_clob         CLOB;
+			BEGIN
+			   «FOR key : dbgen.params.keySet»
+			      l_params('«key»') := '«dbgen.params.get(key)»';
+			   «ENDFOR»
+			   l_param_states := «dbgen.generatorOwner».«dbgen.generatorName».refresh_param_states(in_params => l_params);
+			   l_key          := l_param_states.first;
+			   l_clob         := '<paramStates>';
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      l_clob := l_clob || '<paramState><key>' || l_key || '</key><value>' || l_param_states(l_key) || '</value></paramState>';
+			      l_param_states.delete(l_key);
+			      l_key := l_param_states.first;
+			   END LOOP;
+			   l_clob := l_clob || '</paramStates>';
+			   ? := l_clob;
+			END;
+		'''
+		dbgen.paramStates = new HashMap<String, String>()
+		val doc = plsql.doc
+		if (doc != null) {
+			val paramStates = doc.getElementsByTagName("paramState")
+			for (var i = 0; i < paramStates.length; i++) {
+				val paramState = paramStates.item(i) as Element
+				val key = paramState.getElementsByTagName("key").item(0).textContent
+				val value = paramState.getElementsByTagName("value").item(0).textContent
+				dbgen.paramStates.put(key, value)
+			}
+		}
+	}
+	
 
 	def private setRefreshable(DatabaseGenerator dbgen) {
 		val sql = '''
@@ -314,6 +353,7 @@ class DatabaseGeneratorDao {
 			dbgen.setRefreshable
 			dbgen.setParams
 			dbgen.setLovs
+			dbgen.setParamStates
 		}
 		return dbgens
 	}
@@ -358,7 +398,8 @@ class DatabaseGeneratorDao {
 			val doc = plsql.doc
 			setLovs(dbgen, doc)
 		}
-	}
+		dbgen.setParamStates
+	}	
 
 	def String generate(DatabaseGenerator dbgen) {
 		depth++

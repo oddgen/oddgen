@@ -45,6 +45,9 @@ class DatabaseGenerator extends Generator implements Cloneable{
 
 	/** list-of-values for params */
 	HashMap<String, List<String>> lovs
+	
+	/** parameter states (enable/disable parameters) */
+	HashMap<String, String> paramStates
 
 	/** indicates if the list-of-values are dependent on current params settings and a refresh is supported */
 	Boolean isRefreshable
@@ -64,6 +67,7 @@ class DatabaseGenerator extends Generator implements Cloneable{
 		}
 		clone.params = this.params.clone() as HashMap<String, String>
 		clone.lovs = this.lovs.clone() as HashMap<String, List<String>>
+		clone.paramStates = this.paramStates.clone() as HashMap<String, String>
 		clone.isRefreshable = new Boolean(this.isRefreshable)
  		return clone
 	}

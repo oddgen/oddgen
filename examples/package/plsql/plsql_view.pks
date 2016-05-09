@@ -21,9 +21,9 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
    * @headcom
    */
 
-   --
-   -- oddgen PL/SQL data types
-   --
+   /*
+   * oddgen PL/SQL data types
+   */
    SUBTYPE string_type IS VARCHAR2(1000 CHAR);
    SUBTYPE param_type IS VARCHAR2(30 CHAR);
    TYPE t_string IS TABLE OF string_type;
@@ -32,7 +32,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get name of the generator, used in tree view
-   * If this function is not implemented, the package name will be used.
    *
    * @returns name of the generator
    */
@@ -40,7 +39,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get a description of the generator.
-   * If this function is not implemented, the owner and the package name will be used.
    * 
    * @returns description of the generator
    */
@@ -48,7 +46,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get a list of supported object types.
-   * If this function is not implemented, [TABLE, VIEW] will be used. 
    *
    * @returns a list of supported object types
    */
@@ -56,8 +53,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get a list of objects for a object type.
-   * If this function is not implemented, the result of the following query will be used:
-   * "SELECT object_name FROM user_objects WHERE object_type = in_object_type"
    *
    * @param in_object_type object type to filter objects
    * @returns a list of objects
@@ -66,7 +61,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get all parameters supported by the generator including default values.
-   * If this function is not implemented, no parameters will be used.
    *
    * @returns parameters supported by the generator
    */
@@ -74,15 +68,21 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
 
    /**
    * Get a list of values per parameter, if such a LOV is applicable.
-   * If this function is not implemented, then the parameters cannot be validated in the GUI.
    *
    * @returns parameters with their list-of-values
    */
    FUNCTION get_lov RETURN t_lov;
- 
+
+   /**
+   * Enables/disables co_iot_suffix based on co_gen_iot
+   *
+   * @param in_params parameters to configure the behavior of the generator
+   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   */
+   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param;
+
    /**
    * Generates the result.
-   * This function cannot be omitted. 
    *
    * @param in_object_type object type to process
    * @param in_object_name object_name of in_object_type to process
@@ -104,7 +104,6 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
    * @returns generator output
    * @throws ORA-20501 when parameter validation fails
    */
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB;
+   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB;
 END plsql_view;
 /

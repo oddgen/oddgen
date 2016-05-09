@@ -162,6 +162,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		pane.add(panelButtons, c);
 		pane.setPreferredSize(new Dimension(600, 375));
 		SwingUtilities.getRootPane(buttonGenerateToWorksheet).defaultButton = buttonGenerateToWorksheet
+		refresh
 
 	}
 
@@ -212,9 +213,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				checkBox.selected = BOOLEAN_TRUE.findFirst[it == entry] != null
 				paneParams.add(checkBox, c)
 				params.put(name, checkBox)
-				if (dbgen.isRefreshable) {
-					checkBox.addActionListener(this)
-				}
+				checkBox.addActionListener(this)
 				if (dbgen.lovs.get(name).size == 1) {
 					checkBox.enabled = false
 				}				
@@ -227,9 +226,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				comboBox.selectedItem = dbgen.params.get(name)
 				paneParams.add(comboBox, c)
 				params.put(name, comboBox)
-				if (dbgen.isRefreshable) {
-					comboBox.addActionListener(this)
-				}
+				comboBox.addActionListener(this)
 				if (dbgen.lovs.get(name).size == 1) {
 					comboBox.editable = false
 					comboBox.enabled = false
@@ -238,6 +235,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				val textField = new JTextField(dbgen.params.get(name))
 				paneParams.add(textField, c);
 				params.put(name, textField)
+				textField.addActionListener(this)
 			}
 		}
 	}
@@ -284,7 +282,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		OddgenNavigatorController.instance.generateToClipboard(dbgens, conn)
 	}
 	
-	def refreshLovs() {
+	def refresh() {
 		// do everything in the event thread to avoid strange UI behavior
 		updateDatabaseGenerators(true)
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
@@ -299,7 +297,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name, selected, checkBox.enabled)
 				var Boolean newSelected 
 				if (dbgen.lovs.get(name).size == 1) {
-					newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0)] != null
+					newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0).toLowerCase] != null
 					checkBox.enabled = false
 				} else {
 					newSelected = selected
@@ -338,6 +336,14 @@ class GenerateDialog extends JDialog implements ActionListener {
 				comboBox.addActionListener(this)
 			}
 		}
+		for (name : dbgen.paramStates.keySet) {
+			val component = params.get(name)
+			if (BOOLEAN_TRUE.findFirst[it == dbgen.paramStates.get(name).toLowerCase] != null) {
+				component.enabled = true
+			} else {
+				component.enabled = false
+			}
+		}
 	}
 
 	override actionPerformed(ActionEvent e) {
@@ -355,9 +361,9 @@ class GenerateDialog extends JDialog implements ActionListener {
 			thread.name = "oddgen Clipboard Generator"
 			thread.start
 			exit
-		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox) {
+		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox || e.getSource instanceof JTextField) {
 			// do not use instanceof for JComboBox to avoid rawtypes warning
-			refreshLovs()
+			refresh()
 		}
 	}
 

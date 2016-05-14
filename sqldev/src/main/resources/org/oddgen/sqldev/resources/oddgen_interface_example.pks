@@ -86,6 +86,19 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    FUNCTION get_params RETURN t_param;
 
    /**
+   * Get all parameter names in the order to be displayed in the 
+   * generate dialog.
+   * If this function is not implemented, the parameters are ordered 
+   * implicitly by name. Parameter names returend by this function 
+   * are taking precedence. Remaining parameters are ordered by name.
+   *
+   * @returns ordered parameter names
+   *
+   * @since v0.2
+   */
+   FUNCTION get_ordered_params RETURN t_string;
+
+   /**
    * Get the list of values per parameter, if such a LOV is applicable.
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
    *

@@ -17,6 +17,7 @@ package org.oddgen.sqldev.model
 
 import java.util.ArrayList
 import java.util.HashMap
+import java.util.LinkedHashMap
 import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
@@ -44,7 +45,7 @@ class DatabaseGenerator extends Generator implements Cloneable{
 	HashMap<String, String> params
 
 	/** list-of-values for params */
-	HashMap<String, List<String>> lovs
+	LinkedHashMap<String, List<String>> lovs
 	
 	/** parameter states (enable/disable parameters) */
 	HashMap<String, String> paramStates
@@ -66,7 +67,7 @@ class DatabaseGenerator extends Generator implements Cloneable{
 			clone.objectTypes.add(new String(type))
 		}
 		clone.params = this.params.clone() as HashMap<String, String>
-		clone.lovs = this.lovs.clone() as HashMap<String, List<String>>
+		clone.lovs = this.lovs.clone() as LinkedHashMap<String, List<String>>
 		clone.paramStates = this.paramStates.clone() as HashMap<String, String>
 		clone.isRefreshable = new Boolean(this.isRefreshable)
  		return clone

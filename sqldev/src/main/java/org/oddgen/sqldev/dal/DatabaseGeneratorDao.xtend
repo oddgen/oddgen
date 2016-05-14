@@ -24,6 +24,7 @@ import java.sql.SQLException
 import java.sql.Types
 import java.util.ArrayList
 import java.util.HashMap
+import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.springframework.dao.DataAccessException
@@ -186,7 +187,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.lovs = new HashMap<String, List<String>>()
+		dbgen.lovs = new LinkedHashMap<String, List<String>>()
 		val doc = plsql.doc
 		setLovs(dbgen, doc)
 	}

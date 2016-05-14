@@ -79,7 +79,8 @@ class GenerateDialog extends JDialog implements ActionListener {
 	}
 
 	new(Component parent, List<DatabaseGenerator> dbgens) {
-		super(SwingUtilities.windowForComponent(parent), '''«OddgenResources.getString("DIALOG_TITLE")» - «dbgens.get(0).name»''',
+		super(SwingUtilities.
+			windowForComponent(parent), '''«OddgenResources.getString("DIALOG_TITLE")» - «dbgens.get(0).name»''',
 			ModalityType.APPLICATION_MODAL)
 		this.dbgens = dbgens
 		val pane = this.getContentPane();
@@ -177,7 +178,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		}
 		return false
 	}
-	
+
 	def private addParam(String name) {
 		paramPos++
 		val c = new GridBagConstraints();
@@ -216,7 +217,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 				checkBox.addActionListener(this)
 				if (dbgen.lovs.get(name).size == 1) {
 					checkBox.enabled = false
-				}				
+				}
 			} else if (lovs != null && lovs.size > 0) {
 				val comboBoxModel = new DefaultComboBoxModel<String>();
 				for (lov : lovs) {
@@ -281,68 +282,77 @@ class GenerateDialog extends JDialog implements ActionListener {
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		OddgenNavigatorController.instance.generateToClipboard(dbgens, conn)
 	}
-	
+
 	def refresh() {
 		// do everything in the event thread to avoid strange UI behavior
 		updateDatabaseGenerators(true)
-		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-		val dao = new DatabaseGeneratorDao(conn)
-		val dbgen = dbgens.get(0)
-		dao.refresh(dbgen)
-		for (name : params.keySet) {
-			val component = params.get(name)
-			if (component instanceof JCheckBox) {
-				val checkBox = component
-				val selected = checkBox.selected
-				Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name, selected, checkBox.enabled)
-				var Boolean newSelected 
-				if (dbgen.lovs.get(name).size == 1) {
-					newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0).toLowerCase] != null
-					checkBox.enabled = false
-				} else {
-					newSelected = selected
-					checkBox.enabled = true
+		try {
+			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+			val dao = new DatabaseGeneratorDao(conn)
+			val dbgen = dbgens.get(0)
+			dao.refresh(dbgen)
+			for (name : params.keySet) {
+				val component = params.get(name)
+				if (component instanceof JCheckBox) {
+					val checkBox = component
+					val selected = checkBox.selected
+					Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name,
+						selected, checkBox.enabled)
+					var Boolean newSelected
+					if (dbgen.lovs.get(name).size == 1) {
+						newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0).toLowerCase] != null
+						checkBox.enabled = false
+					} else {
+						newSelected = selected
+						checkBox.enabled = true
+					}
+					checkBox.selected = newSelected
+					Logger.debug(this, "selected value for checkBox %1$s after change: %2$s (enabled: %3$s)", name,
+						checkBox.selected, checkBox.enabled)
+				} else if (component.class.name == "javax.swing.JComboBox") {
+					// do not use instanceof for JComboBox to avoid rawtypes warning
+					val comboBox = component as JComboBox<String>
+					comboBox.removeActionListener(this)
+					val model = comboBox.model as DefaultComboBoxModel<String>
+					val selected = model.selectedItem as String
+					Logger.debug(this, "selected value for comboBox %1$s before change: %2$s (enabled: %3$s)", name,
+						selected, comboBox.enabled)
+					model.removeAllElements
+					for (value : dbgen.lovs.get(name)) {
+						model.addElement(value)
+					}
+					var String newSelectedValue
+					if (selected == null || dbgen.lovs.get(name).findFirst[it == selected] == null) {
+						Logger.debug(this, "changing value, first value in list");
+						newSelectedValue = model.getElementAt(0)
+					} else {
+						Logger.debug(this, "keeping value");
+						newSelectedValue = selected
+					}
+					model.selectedItem = newSelectedValue
+					if (model.size > 1) {
+						comboBox.editable = true
+						comboBox.enabled = true
+					} else {
+						comboBox.editable = false
+						comboBox.enabled = false
+					}
+					Logger.debug(this, "selected value for comboBox %1$s after change: %2$s (enabled: %3$s)", name,
+						model.selectedItem, comboBox.enabled)
+					comboBox.addActionListener(this)
 				}
-				checkBox.selected = newSelected
-				Logger.debug(this, "selected value for checkBox %1$s after change: %2$s (enabled: %3$s)", name, checkBox.selected, checkBox.enabled)
-			} else if (component.class.name == "javax.swing.JComboBox") {
-				// do not use instanceof for JComboBox to avoid rawtypes warning
-				val comboBox = component as JComboBox<String>
-				comboBox.removeActionListener(this)
-				val model = comboBox.model as DefaultComboBoxModel<String>
-				val selected = model.selectedItem as String
-				Logger.debug(this, "selected value for comboBox %1$s before change: %2$s (enabled: %3$s)", name, selected, comboBox.enabled)
-				model.removeAllElements
-				for (value : dbgen.lovs.get(name)) {
-					model.addElement(value)
-				}
-				var String newSelectedValue
-				if (selected == null || dbgen.lovs.get(name).findFirst[it == selected] == null) {
-					Logger.debug(this, "changing value, first value in list");
-					newSelectedValue = model.getElementAt(0)
-				} else {
-					Logger.debug(this, "keeping value");
-					newSelectedValue = selected
-				}
-				model.selectedItem = newSelectedValue
-				if (model.size > 1) {
-					comboBox.editable = true
-					comboBox.enabled = true
-				} else {
-					comboBox.editable = false
-					comboBox.enabled = false
-				}
-				Logger.debug(this, "selected value for comboBox %1$s after change: %2$s (enabled: %3$s)", name, model.selectedItem, comboBox.enabled)
-				comboBox.addActionListener(this)
 			}
-		}
-		for (name : dbgen.paramStates.keySet) {
-			val component = params.get(name)
-			if (BOOLEAN_TRUE.findFirst[it == dbgen.paramStates.get(name).toLowerCase] != null) {
-				component.enabled = true
-			} else {
-				component.enabled = false
+			for (name : dbgen.paramStates.keySet) {
+				val component = params.get(name)
+				if (BOOLEAN_TRUE.findFirst[it == dbgen.paramStates.get(name).toLowerCase] != null) {
+					component.enabled = true
+				} else {
+					component.enabled = false
+				}
 			}
+		} catch (ExceptionInInitializerError e) {
+			// ignore this error, expected during unit tests only
+			Logger.error(this, "refresh failed. OK during unit test.")
 		}
 	}
 
@@ -361,7 +371,8 @@ class GenerateDialog extends JDialog implements ActionListener {
 			thread.name = "oddgen Clipboard Generator"
 			thread.start
 			exit
-		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox || e.getSource instanceof JTextField) {
+		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox ||
+			e.getSource instanceof JTextField) {
 			// do not use instanceof for JComboBox to avoid rawtypes warning
 			refresh()
 		}

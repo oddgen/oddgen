@@ -65,6 +65,14 @@ CREATE OR REPLACE PACKAGE ftldb_view IS
    * @returns parameters supported by the generator
    */
    FUNCTION get_params RETURN t_param;
+   
+  /**
+   * Get all parameter names in the order to be displayed in the 
+   * generate dialog.
+   *
+   * @returns ordered parameter names
+   */
+   FUNCTION get_ordered_params RETURN t_string;  
 
    /**
    * Get a list of values per parameter, if such a LOV is applicable.

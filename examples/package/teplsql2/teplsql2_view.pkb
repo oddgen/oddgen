@@ -193,6 +193,20 @@ $end
       l_params(co_gen_iot) := 'Yes';
       RETURN l_params;
    END get_params;
+   
+   --
+   -- get_ordered_params
+   --
+   FUNCTION get_ordered_params RETURN t_string IS
+      l_ordered_params t_string;
+   BEGIN
+      l_ordered_params := NEW t_string();
+      l_ordered_params.extend(3);
+      l_ordered_params(1) := co_view_suffix;
+      l_ordered_params(2) := co_table_suffix;
+      l_ordered_params(3) := co_gen_iot;
+      RETURN l_ordered_params;
+   END get_ordered_params;
 
    --
    -- get_lov

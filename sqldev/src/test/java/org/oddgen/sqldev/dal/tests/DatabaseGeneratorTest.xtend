@@ -44,6 +44,10 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(1, plsqlView.objectTypes.size)
 		Assert.assertEquals("TABLE", plsqlView.objectTypes.get(0))
 		Assert.assertEquals(4, plsqlView.params.size)
+		Assert.assertEquals("View suffix", plsqlView.params.keySet.get(0))
+		Assert.assertEquals("Table suffix to be replaced", plsqlView.params.keySet.get(1))
+		Assert.assertEquals("Generate instead-of-trigger?", plsqlView.params.keySet.get(2))
+		Assert.assertEquals("Instead-of-trigger suffix", plsqlView.params.keySet.get(3))
 		Assert.assertEquals("_V", plsqlView.params.get("View suffix"))
 		Assert.assertEquals("_T", plsqlView.params.get("Table suffix to be replaced"))
 		Assert.assertEquals("_TRG", plsqlView.params.get("Instead-of-trigger suffix"))
@@ -271,9 +275,9 @@ class DatabaseGeneratorTest {
 			   * @headcom
 			   */
 			
-			   --
-			   -- oddgen PL/SQL data types
-			   --
+			   /*
+			   * oddgen PL/SQL data types
+			   */
 			   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
 			   SUBTYPE param_type IS VARCHAR2(30 CHAR);
 			   TYPE t_string IS TABLE OF string_type;
@@ -315,6 +319,14 @@ class DatabaseGeneratorTest {
 			   * @returns parameters supported by the generator
 			   */
 			   FUNCTION get_params RETURN t_param;
+			   
+			  /**
+			   * Get all parameter names in the order to be displayed in the 
+			   * generate dialog.
+			   *
+			   * @returns ordered parameter names
+			   */
+			   FUNCTION get_ordered_params RETURN t_string;  
 			
 			   /**
 			   * Get a list of values per parameter, if such a LOV is applicable.
@@ -445,6 +457,20 @@ class DatabaseGeneratorTest {
 			      l_params(co_gen_iot) := 'Yes';
 			      RETURN l_params;
 			   END get_params;
+			   
+			   --
+			   -- get_ordered_params
+			   --
+			   FUNCTION get_ordered_params RETURN t_string IS
+			      l_ordered_params t_string;
+			   BEGIN
+			      l_ordered_params := NEW t_string();
+			      l_ordered_params.extend(3);
+			      l_ordered_params(1) := co_view_suffix;
+			      l_ordered_params(2) := co_table_suffix;
+			      l_ordered_params(3) := co_gen_iot;
+			      RETURN l_ordered_params;
+			   END get_ordered_params;
 			
 			   --
 			   -- get_lov

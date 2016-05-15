@@ -104,8 +104,43 @@ class DatabaseGeneratorDao {
 			}
 		}
 	}
+	
+	def private List<String>  getOrderedParams(DatabaseGenerator dbgen) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   l_ordered_params «dbgen.generatorOwner».«dbgen.generatorName».t_string;
+			   l_clob           CLOB;
+			BEGIN
+			   l_ordered_params := «dbgen.generatorOwner».«dbgen.generatorName».get_ordered_params();
+			   l_clob := '<values>';
+			   FOR i IN 1 .. l_ordered_params.count
+			   LOOP
+			      l_clob := l_clob || '<value>' || l_ordered_params(i) || '</value>';
+			   END LOOP;
+			   l_clob := l_clob || '</values>';
+			   ? := l_clob;
+			END;
+		'''
+		val orderedParams = new ArrayList<String>()
+		val doc = plsql.doc
+		if (doc != null) {
+			val values = doc.getElementsByTagName("value")
+			for (var i = 0; i < values.length; i++) {
+				val value = values.item(i) as Element
+				val type = value.textContent
+				orderedParams.add(type)
+			}
+		}
+		return orderedParams
+	}
 
 	def private setParams(DatabaseGenerator dbgen) {
+		// initialize Parameters in the requested order
+		dbgen.params = new LinkedHashMap<String, String>()
+		for (param : getOrderedParams(dbgen)) {
+			dbgen.params.put(param, "")
+		}
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -126,7 +161,6 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.params = new HashMap<String, String>()
 		val doc = plsql.doc
 		if (doc != null) {
 			val params = doc.getElementsByTagName("param")
@@ -187,7 +221,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.lovs = new LinkedHashMap<String, List<String>>()
+		dbgen.lovs = new HashMap<String, List<String>>()
 		val doc = plsql.doc
 		setLovs(dbgen, doc)
 	}

@@ -87,14 +87,8 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    -- get_ordered_params
    --
    FUNCTION get_ordered_params RETURN t_string IS
-      l_ordered_params t_string;
    BEGIN
-      l_ordered_params := NEW t_string();
-      l_ordered_params.extend(3);
-      l_ordered_params(1) := co_view_suffix;
-      l_ordered_params(2) := co_table_suffix;
-      l_ordered_params(3) := co_gen_iot;
-      RETURN l_ordered_params;
+      RETURN NEW t_string(co_view_suffix, co_table_suffix, co_gen_iot);
    END get_ordered_params;
 
    --

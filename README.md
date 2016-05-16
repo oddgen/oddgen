@@ -13,13 +13,12 @@ See <https://www.oddgen.org/> for more information about the product.
 Binary releases are published [here](https://github.com/oddgen/oddgen/releases).
 
 ## Issues
-Please file your bug reports, enhancement requests, questions and other support requests within Github's issue tracker [Issues](https://help.github.com/articles/about-issues/). The following links should help you to find similar issues:
+Please file your bug reports, enhancement requests, questions and other support requests within [Github's issue tracker](https://help.github.com/articles/about-issues/).
 
 * [Questions](https://github.com/oddgen/oddgen/issues?q=is%3Aissue+label%3Aquestion)
 * [Open enhancements](https://github.com/oddgen/oddgen/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement)
 * [Open bugs](https://github.com/oddgen/oddgen/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-
-[submit new issue](https://github.com/oddgen/oddgen/issues/new).
+* [Submit new issue](https://github.com/oddgen/oddgen/issues/new)
 
 ## How to Contribute
 
@@ -33,9 +32,16 @@ Please file your bug reports, enhancement requests, questions and other support 
 1. [Download](http://www.oracle.com/technetwork/developer-tools/sql-developer/downloads/index.html) and install SQL Developer 4.1.x
 2. [Download](https://maven.apache.org/download.cgi) and install Apache Maven 3.1.x
 3. Clone the oddgen repository
-4. Open a terminal window in the oddgen root folder and type ```cd sqldev```
-5. Run maven build by the following command ```mvn -Dsqldev.basedir=/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper  -DskipTests=true clean package``` - Amend the parameter sqldev.basedir to match the path of your SQL Developer installation. This folder is used to reference various Oracle jar files which are not available in public Maven repositories
-6. The resulting file oddgen_for_SQLDev_x.x.x-SNAPSHOT.zip may be installed within SQL Developer
+4. Open a terminal window in the oddgen root folder and type 
+
+		cd sqldev
+		
+5. Run maven build by the following command
+
+		mvn -Dsqldev.basedir=/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper -DskipTests=true clean package
+		
+	Amend the parameter sqldev.basedir to match the path of your SQL Developer installation. This folder is used to reference various Oracle jar files which are not available in public Maven repositories
+6. The resulting file ```oddgen_for_SQLDev_x.x.x-SNAPSHOT.zip``` may be installed within SQL Developer
 
 ## License
 

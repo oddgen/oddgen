@@ -1,4 +1,21 @@
--- see https://livesql.oracle.com/apex/livesql/file/content_C73WCRT0FK21A78LLMZJSDW2J.html
+/*
+* Copyright 2016 Steven Feuerstein <steven.feuerstein@oracle.com>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+-- original function on https://livesql.oracle.com/apex/livesql/file/content_C7VKBA85Q9PUS2XRAL1U8J3LG.html
+-- 1:1 from https://livesql.oracle.com/apex/livesql/file/content_C73WCRT0FK21A78LLMZJSDW2J.html
 CREATE OR REPLACE PACKAGE genwhen AUTHID CURRENT_USER IS
    FUNCTION generate(in_object_type IN VARCHAR2 DEFAULT 'TABLE',
                      in_object_name IN VARCHAR2) RETURN CLOB;

@@ -23,16 +23,21 @@ import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Insets
+import java.awt.KeyboardFocusManager
 import java.awt.Toolkit
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.WindowEvent
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.HashMap
 import java.util.List
 import javax.swing.BorderFactory
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComboBox
+import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -43,10 +48,9 @@ import javax.swing.SwingUtilities
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.DatabaseGenerator
 import org.oddgen.sqldev.resources.OddgenResources
-import javax.swing.JCheckBox
 
 @Loggable(value=LoggableConstants.DEBUG)
-class GenerateDialog extends JDialog implements ActionListener {
+class GenerateDialog extends JDialog implements ActionListener, PropertyChangeListener {
 	private List<DatabaseGenerator> dbgens
 
 	private JButton buttonGenerateToWorksheet
@@ -163,6 +167,7 @@ class GenerateDialog extends JDialog implements ActionListener {
 		pane.add(panelButtons, c);
 		pane.setPreferredSize(new Dimension(600, 375));
 		SwingUtilities.getRootPane(buttonGenerateToWorksheet).defaultButton = buttonGenerateToWorksheet
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(this)
 		refresh
 
 	}
@@ -375,6 +380,16 @@ class GenerateDialog extends JDialog implements ActionListener {
 			e.getSource instanceof JTextField) {
 			// do not use instanceof for JComboBox to avoid rawtypes warning
 			refresh()
+		}
+	}
+
+	override propertyChange(PropertyChangeEvent e) {
+		if (!(e.getNewValue instanceof JComponent)) {
+			return;
+		}
+		var focused = e.getNewValue() as JComponent
+		if (paneParams.isAncestorOf(focused)) {
+			paneParams.scrollRectToVisible(focused.getBounds)
 		}
 	}
 

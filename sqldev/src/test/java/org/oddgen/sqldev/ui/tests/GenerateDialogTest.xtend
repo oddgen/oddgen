@@ -27,7 +27,10 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.GenerateDialog
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.model.GeneratorSelection
+import org.oddgen.sqldev.model.ObjectName
+import org.oddgen.sqldev.model.ObjectType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
@@ -49,18 +52,29 @@ class GenerateDialogTest {
 		dataSource.password = p.getProperty("scott_password")
 		jdbcTemplate = new JdbcTemplate(dataSource)
 	}
+	
+	def getDatabaseSelection(DatabaseGenerator dbgen, String objectType, String objectName) {
+				val gensel = new GeneratorSelection()
+				val type = new ObjectType()
+				type.generator = dbgen
+				type.name = "TABLE"
+				val name = new ObjectName()
+				name.objectType = type
+				name.name = "EMP"
+				gensel.objectName = name
+				return gensel
+		
+	}
 
 	@Test
 	def void layoutTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen1 = dao.findAll.findFirst[it.generatorName == 'PLSQL_VIEW']
-		dbgen1.objectType = 'TABLE'
-		dbgen1.objectName = 'EMP'
-		val dbgen2 = dbgen1.copy
-		dbgen2.objectName = 'DEPT'
-		val dbgens = new ArrayList<DatabaseGenerator>()
-		dbgens.add(dbgen1)
-		dbgens.add(dbgen2)
+		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_VIEW']
+		val gensel1 = getDatabaseSelection(dbgen, "TABLE", "EMP")
+		val gensel2 = getDatabaseSelection(dbgen, "TABLE", "DEPT")
+		val gens = new ArrayList<GeneratorSelection>()
+		gens.add(gensel1)
+		gens.add(gensel2)
 		val frame = new JFrame("Main")
 		SwingUtilities.invokeAndWait(
 			new Runnable() {
@@ -76,7 +90,7 @@ class GenerateDialogTest {
 				}
 			});
 		// show gui end exit
-		GenerateDialog.createAndShow(frame, dbgens)
+		GenerateDialog.createAndShow(frame, gens, dataSource.connection)
 		Thread.sleep(4*1000)
 	}
 }

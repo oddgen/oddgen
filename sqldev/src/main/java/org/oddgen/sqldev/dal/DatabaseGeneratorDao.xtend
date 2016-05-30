@@ -26,7 +26,8 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
-import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.model.DatabaseGeneratorDto
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -49,7 +50,7 @@ class DatabaseGeneratorDao {
 		this.dalTools = new DalTools(conn)
 	}
 
-	def private setName(DatabaseGenerator dbgen) {
+	def private setName(DatabaseGeneratorDto dbgen) {
 		val plsql = '''
 			BEGIN
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
@@ -61,7 +62,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setDescription(DatabaseGenerator dbgen) {
+	def private setDescription(DatabaseGeneratorDto dbgen) {
 		val plsql = '''
 			BEGIN
 				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
@@ -73,7 +74,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setObjectTypes(DatabaseGenerator dbgen) {
+	def private setObjectTypes(DatabaseGeneratorDto dbgen) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -105,7 +106,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 	
-	def private List<String>  getOrderedParams(DatabaseGenerator dbgen) {
+	def private List<String>  getOrderedParams(DatabaseGeneratorDto dbgen) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -135,7 +136,7 @@ class DatabaseGeneratorDao {
 		return orderedParams
 	}
 
-	def private setParams(DatabaseGenerator dbgen) {
+	def private setParams(DatabaseGeneratorDto dbgen) {
 		// initialize Parameters in the requested order
 		dbgen.params = new LinkedHashMap<String, String>()
 		for (param : getOrderedParams(dbgen)) {
@@ -173,7 +174,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setLovs(DatabaseGenerator dbgen, Document doc) {
+	def private setLovs(DatabaseGeneratorDto dbgen, Document doc) {
 		dbgen.lovs.clear
 		if (doc != null) {
 			val lovs = doc.getElementsByTagName("lov")
@@ -194,7 +195,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setLovs(DatabaseGenerator dbgen) {
+	def private setLovs(DatabaseGeneratorDto dbgen) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -226,7 +227,7 @@ class DatabaseGeneratorDao {
 		setLovs(dbgen, doc)
 	}
 	
-	def private setParamStates(DatabaseGenerator dbgen) {
+	def private setParamStates(DatabaseGeneratorDto dbgen) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -265,7 +266,7 @@ class DatabaseGeneratorDao {
 	}
 	
 
-	def private setRefreshable(DatabaseGenerator dbgen) {
+	def private setRefreshable(DatabaseGeneratorDto dbgen) {
 		val sql = '''
 			SELECT COUNT(*)
 			  FROM (SELECT *
@@ -380,20 +381,23 @@ class DatabaseGeneratorDao {
 			 GROUP BY owner, object_name
 			 ORDER BY owner, object_name
 		'''
-		val dbgens = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGenerator>(DatabaseGenerator))
-		for (dbgen : dbgens) {
-			dbgen.setName
-			dbgen.setDescription
-			dbgen.setObjectTypes
-			dbgen.setRefreshable
-			dbgen.setParams
-			dbgen.setLovs
-			dbgen.setParamStates
+		val dtos = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGeneratorDto>(DatabaseGeneratorDto))
+		val dbgens = new ArrayList<DatabaseGenerator>()
+		for (dto : dtos) {
+			dto.setName
+			dto.setDescription
+			dto.setObjectTypes
+			dto.setRefreshable
+			dto.setParams
+			dto.setLovs
+			dto.setParamStates
+			val dbgen = new DatabaseGenerator(dto)
+			dbgens.add(dbgen)
 		}
 		return dbgens
 	}
 
-	def refresh(DatabaseGenerator dbgen) {
+	def refresh(DatabaseGeneratorDto dbgen, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		if (dbgen.isRefreshable) {
 			// convert PL/SQL associative array to XML
 			// pass current parameter values as PL/SQL code
@@ -405,12 +409,12 @@ class DatabaseGeneratorDao {
 				   l_lov    «dbgen.generatorOwner».«dbgen.generatorName».t_string;
 				   l_clob   CLOB;
 				BEGIN
-				   «FOR key : dbgen.params.keySet»
-				      l_params('«key»') := '«dbgen.params.get(key)»';
+				   «FOR key : params.keySet»
+				      l_params('«key»') := '«params.get(key)»';
 				   «ENDFOR»
 				   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».refresh_lov(
-				                in_object_type => '«dbgen.objectType»',
-				                in_object_name => '«dbgen.objectName»',
+				                in_object_type => '«objectType»',
+				                in_object_name => '«objectName»',
 				                in_params      => l_params
 				             );
 				   l_key  := l_lovs.first;
@@ -436,24 +440,24 @@ class DatabaseGeneratorDao {
 		dbgen.setParamStates
 	}	
 
-	def String generate(DatabaseGenerator dbgen) {
+	def String generate(DatabaseGeneratorDto dbgen, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		depth++
 		val plsql = '''
 			DECLARE
-			   «IF dbgen.hasParams»
+			   «IF params != null && params.size > 0»
 			      l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
-			   «IF dbgen.hasParams»
-			      «FOR key : dbgen.params.keySet»
-			         l_params('«key»') := '«dbgen.params.get(key)»';
+			   «IF params != null && params.size > 0»
+			      «FOR key : params.keySet»
+			         l_params('«key»') := '«params.get(key)»';
 			   	  «ENDFOR»
 			   «ENDIF»
 			   l_clob := «dbgen.generatorOwner».«dbgen.generatorName».generate(
-			                  in_object_type => '«dbgen.objectType»'
-			                , in_object_name => '«dbgen.objectName»'
-			                «IF dbgen.hasParams»
+			                  in_object_type => '«objectType»'
+			                , in_object_name => '«objectName»'
+			                «IF params != null && params.size > 0»
 			                   , in_params      => l_params
 			                «ENDIF»
 			             );
@@ -474,10 +478,9 @@ class DatabaseGeneratorDao {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded
 				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = dbgen.
-					generate
+				result = generate(dbgen, objectType, objectName, params)
 			} else {
-				result = '''Failed to generate code for «dbgen.objectType».«dbgen.objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
+				result = '''Failed to generate code for «objectType».«objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
 				Logger.error(this, plsql + result)
 			}
 		} finally {

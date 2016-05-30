@@ -15,16 +15,31 @@
  */
 package org.oddgen.sqldev.model
 
+import java.util.HashMap
+import java.util.LinkedHashMap
+import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class Generator extends AbstractModel {	
-	public static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]	
-	public static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]
-	
-	/** name of the generator */
-	String name
+class DatabaseGeneratorDto extends Generator{
+	/** list of valid object types */
+	List<String> objectTypes
 
-	/** description of the generator */
-	String description
+	/** parameters and their default values */
+	LinkedHashMap<String, String> params
+
+	/** list-of-values for params */
+	HashMap<String, List<String>> lovs
+	
+	/** parameter states (enable/disable parameters) */
+	HashMap<String, String> paramStates
+
+	/** indicates if the list-of-values are dependent on current params settings and a refresh is supported */
+	Boolean isRefreshable
+
+	/** PL/SQL package owner */
+	String generatorOwner
+	
+	/** name of the PL/SQL package*/
+	String generatorName
 }

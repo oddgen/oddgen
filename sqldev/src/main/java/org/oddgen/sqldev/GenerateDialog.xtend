@@ -30,6 +30,7 @@ import java.awt.event.ActionListener
 import java.awt.event.WindowEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.sql.Connection
 import java.util.HashMap
 import java.util.List
 import javax.swing.BorderFactory
@@ -45,13 +46,14 @@ import javax.swing.JScrollPane
 import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
-import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.model.Generator
+import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
 class GenerateDialog extends JDialog implements ActionListener, PropertyChangeListener {
-	private List<DatabaseGenerator> dbgens
+	private List<GeneratorSelection> gens
+	private Connection conn
 
 	private JButton buttonGenerateToWorksheet
 	private JButton buttonGenerateToClipboard
@@ -61,20 +63,18 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 	private int paramPos = -1;
 	private HashMap<String, Component> params = new HashMap<String, Component>()
 
-	private static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]
-	private static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]
-
-	def static createAndShow(Component parent, List<DatabaseGenerator> dbgens) {
+	def static createAndShow(Component parent, List<GeneratorSelection> gens, Connection conn) {
 		SwingUtilities.invokeLater(new Runnable() {
 			override run() {
-				GenerateDialog.createAndShowWithinEventThread(parent, dbgens);
+				GenerateDialog.createAndShowWithinEventThread(parent, gens, conn);
 			}
 		});
 	}
 
-	def private static createAndShowWithinEventThread(Component parent, List<DatabaseGenerator> dbgens) {
+	def private static createAndShowWithinEventThread(Component parent, List<GeneratorSelection> gens,
+		Connection conn) {
 		// create and layout the dialog
-		val dialog = new GenerateDialog(parent, dbgens)
+		val dialog = new GenerateDialog(parent, gens, conn)
 		dialog.pack
 		// center dialog
 		val dim = Toolkit.getDefaultToolkit().getScreenSize();
@@ -82,315 +82,330 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 		dialog.visible = true
 	}
 
-	new(Component parent, List<DatabaseGenerator> dbgens) {
+	new(Component parent, List<GeneratorSelection> gens, Connection conn) {
 		super(SwingUtilities.
-			windowForComponent(parent), '''«OddgenResources.getString("DIALOG_TITLE")» - «dbgens.get(0).name»''',
-			ModalityType.APPLICATION_MODAL)
-		this.dbgens = dbgens
-		val pane = this.getContentPane();
-		pane.setLayout(new GridBagLayout());
-		val c = new GridBagConstraints();
+			windowForComponent(
+				parent), '''«OddgenResources.getString("DIALOG_TITLE")» - «gens.get(0).objectName.objectType.generator.getName(conn)»''',
+				ModalityType.APPLICATION_MODAL)
+			this.conn = conn
+			this.gens = gens
+			val pane = this.getContentPane();
+			pane.setLayout(new GridBagLayout());
+			val c = new GridBagConstraints();
 
-		// description pane
-		val paneDescription = new JPanel(new BorderLayout());
-		val textDescription = new JLabel('''<html><p>«dbgens.get(0).description»</p></html>''')
-		paneDescription.add(textDescription, BorderLayout.NORTH);
-		c.gridx = 0;
-		c.gridy = 0;
-		c.gridwidth = 2;
-		c.insets = new Insets(10, 20, 0, 20); // top, left, bottom, right
-		c.anchor = GridBagConstraints.NORTH;
-		c.fill = GridBagConstraints.BOTH;
-		c.weightx = 0;
-		c.weighty = 0;
-		pane.add(paneDescription, c)
+			// description pane
+			val paneDescription = new JPanel(
+				new BorderLayout());
+			val textDescription = new JLabel('''<html><p>«gens.get(0).objectName.objectType.generator.getDescription(conn)»</p></html>''')
+			paneDescription.add(textDescription, BorderLayout.NORTH);
+			c.gridx = 0;
+			c.gridy = 0;
+			c.gridwidth = 2;
+			c.insets = new Insets(10, 20, 0, 20); // top, left, bottom, right
+			c.anchor = GridBagConstraints.NORTH;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 0;
+			c.weighty = 0;
+			pane.add(paneDescription, c)
 
-		// Parameters pane
-		paneParams = new JPanel(new GridBagLayout())
-		addParam(OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM"))
-		addParam(OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM"))
-		for (param : dbgens.get(0).params.keySet) {
-			param.addParam
-		}
-		val scrollPaneParameters = new JScrollPane(paneParams)
-		scrollPaneParameters.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-		scrollPaneParameters.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-		scrollPaneParameters.border = BorderFactory.createEmptyBorder;
-		c.gridx = 0;
-		c.gridy = 1;
-		c.gridwidth = 2;
-		c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
-		c.anchor = GridBagConstraints.NORTH;
-		c.fill = GridBagConstraints.BOTH;
-		c.weightx = 1;
-		c.weighty = 1;
-		pane.add(scrollPaneParameters, c)
-
-		// Buttons pane
-		val panelButtons = new JPanel(new GridBagLayout())
-		buttonGenerateToWorksheet = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_WORKSHEET_BUTTON"))
-		buttonGenerateToWorksheet.addActionListener(this);
-		c.gridx = 0;
-		c.gridy = 0;
-		c.gridwidth = 1;
-		c.insets = new Insets(0, 0, 0, 0); // top, left, bottom, right
-		c.fill = GridBagConstraints.NONE;
-		c.weightx = 0;
-		c.weighty = 0;
-		panelButtons.add(buttonGenerateToWorksheet, c);
-		buttonGenerateToClipboard = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_CLIPBOARD_BUTTON"));
-		buttonGenerateToClipboard.addActionListener(this);
-		c.gridx = 1;
-		c.insets = new Insets(0, 10, 0, 0); // top, left, bottom, right
-		c.fill = GridBagConstraints.NONE;
-		c.weightx = 0;
-		c.weighty = 0;
-		panelButtons.add(buttonGenerateToClipboard, c);
-		buttonCancel = new JButton(OddgenResources.getString("DIALOG_CANCEL_BUTTON"));
-		buttonCancel.addActionListener(this);
-		c.gridx = 2;
-		c.gridy = 0;
-		c.gridwidth = 1;
-		c.insets = new Insets(0, 10, 0, 0); // top, left, bottom, right
-		c.fill = GridBagConstraints.NONE;
-		c.weightx = 0;
-		c.weighty = 0;
-		panelButtons.add(buttonCancel, c);
-		c.gridx = 1;
-		c.gridy = 2;
-		c.gridwidth = 1;
-		c.insets = new Insets(30, 10, 10, 10); // top, left, bottom, right
-		c.anchor = GridBagConstraints.EAST
-		c.fill = GridBagConstraints.NONE
-		c.weightx = 0;
-		c.weighty = 0;
-		pane.add(panelButtons, c);
-		pane.setPreferredSize(new Dimension(600, 375));
-		SwingUtilities.getRootPane(buttonGenerateToWorksheet).defaultButton = buttonGenerateToWorksheet
-		KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(this)
-		refresh
-
-	}
-
-	def private isCheckBox(String name) {
-		val dbgen = dbgens.get(0)
-		val lovs = dbgen.lovs.get(name)
-		if (lovs != null && lovs.size > 0 && lovs.size < 3) {
-			val entry = lovs.get(0).toLowerCase
-			if (BOOLEAN_TRUE.findFirst[it == entry] != null || BOOLEAN_FALSE.findFirst[it == entry] != null) {
-				return true
+			// Parameters pane
+			paneParams = new JPanel(new GridBagLayout())
+			addParam(OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM"))
+			addParam(OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM"))
+			gens.get(0).params = gens.get(0).objectName.objectType.generator.getParams(conn,
+				gens.get(0).objectName.objectType.name, gens.get(0).objectName.name)
+			for (param : gens.get(0).params.keySet) {
+				param.addParam
 			}
-		}
-		return false
-	}
+			val scrollPaneParameters = new JScrollPane(paneParams)
+			scrollPaneParameters.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
+			scrollPaneParameters.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+			scrollPaneParameters.border = BorderFactory.createEmptyBorder;
+			c.gridx = 0;
+			c.gridy = 1;
+			c.gridwidth = 2;
+			c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
+			c.anchor = GridBagConstraints.NORTH;
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = 1;
+			c.weighty = 1;
+			pane.add(scrollPaneParameters, c)
 
-	def private addParam(String name) {
-		paramPos++
-		val c = new GridBagConstraints();
-		val label = new JLabel(name)
-		val dbgen = dbgens.get(0)
-		c.gridx = 0
-		c.gridy = paramPos
-		c.gridwidth = 1
-		c.insets = new Insets(10, 10, 0, 0) // top, left, bottom, right
-		c.anchor = GridBagConstraints.WEST
-		c.fill = GridBagConstraints.HORIZONTAL
-		c.weightx = 0
-		c.weighty = 0
-		paneParams.add(label, c);
-		c.gridx = 1
-		c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
-		c.weightx = 1
-		if (name == OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM")) {
-			val textObjectType = new JTextField(dbgen.objectType)
-			textObjectType.editable = false
-			textObjectType.enabled = false
-			paneParams.add(textObjectType, c);
-		} else if (name == OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM")) {
-			val textObjectName = new JTextField(if(dbgens.size > 1) "***" else dbgen.objectName)
-			textObjectName.editable = false
-			textObjectName.enabled = false
-			paneParams.add(textObjectName, c);
-		} else {
-			val lovs = dbgen.lovs.get(name)
-			if (name.isCheckBox) {
-				val checkBox = new JCheckBox("")
-				val entry = lovs.findFirst[it == dbgen.params.get(name)].toLowerCase
-				checkBox.selected = BOOLEAN_TRUE.findFirst[it == entry] != null
-				paneParams.add(checkBox, c)
-				params.put(name, checkBox)
-				checkBox.addActionListener(this)
-				if (dbgen.lovs.get(name).size == 1) {
-					checkBox.enabled = false
+			// Buttons pane
+			val panelButtons = new JPanel(new GridBagLayout())
+			buttonGenerateToWorksheet = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_WORKSHEET_BUTTON"))
+			buttonGenerateToWorksheet.addActionListener(this);
+			c.gridx = 0;
+			c.gridy = 0;
+			c.gridwidth = 1;
+			c.insets = new Insets(0, 0, 0, 0); // top, left, bottom, right
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.weighty = 0;
+			panelButtons.add(buttonGenerateToWorksheet, c);
+			buttonGenerateToClipboard = new JButton(OddgenResources.getString("DIALOG_GENERATE_TO_CLIPBOARD_BUTTON"));
+			buttonGenerateToClipboard.addActionListener(this);
+			c.gridx = 1;
+			c.insets = new Insets(0, 10, 0, 0); // top, left, bottom, right
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.weighty = 0;
+			panelButtons.add(buttonGenerateToClipboard, c);
+			buttonCancel = new JButton(OddgenResources.getString("DIALOG_CANCEL_BUTTON"));
+			buttonCancel.addActionListener(this);
+			c.gridx = 2;
+			c.gridy = 0;
+			c.gridwidth = 1;
+			c.insets = new Insets(0, 10, 0, 0); // top, left, bottom, right
+			c.fill = GridBagConstraints.NONE;
+			c.weightx = 0;
+			c.weighty = 0;
+			panelButtons.add(buttonCancel, c);
+			c.gridx = 1;
+			c.gridy = 2;
+			c.gridwidth = 1;
+			c.insets = new Insets(30, 10, 10, 10); // top, left, bottom, right
+			c.anchor = GridBagConstraints.EAST
+			c.fill = GridBagConstraints.NONE
+			c.weightx = 0;
+			c.weighty = 0;
+			pane.add(panelButtons, c);
+			pane.setPreferredSize(new Dimension(600, 375));
+			SwingUtilities.getRootPane(buttonGenerateToWorksheet).defaultButton = buttonGenerateToWorksheet
+			KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(this)
+			refresh
+
+		}
+
+		def private isCheckBox(String name) {
+			val gen = gens.get(0)
+			val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.objectType.name,
+				gen.objectName.name, gen.params).get(name)
+			if (lovs != null && lovs.size > 0 && lovs.size < 3) {
+				val entry = lovs.get(0).toLowerCase
+				if (Generator.BOOLEAN_TRUE.findFirst[it == entry] != null || Generator.BOOLEAN_FALSE.findFirst [
+					it == entry
+				] != null) {
+					return true
 				}
-			} else if (lovs != null && lovs.size > 0) {
-				val comboBoxModel = new DefaultComboBoxModel<String>();
-				for (lov : lovs) {
-					comboBoxModel.addElement(lov)
-				}
-				val comboBox = new JComboBox<String>(comboBoxModel)
-				comboBox.selectedItem = dbgen.params.get(name)
-				paneParams.add(comboBox, c)
-				params.put(name, comboBox)
-				comboBox.addActionListener(this)
-				if (dbgen.lovs.get(name).size == 1) {
-					comboBox.editable = false
-					comboBox.enabled = false
-				}
+			}
+			return false
+		}
+
+		def private addParam(String name) {
+			paramPos++
+			val c = new GridBagConstraints();
+			val label = new JLabel(name)
+			val gen = gens.get(0)
+			c.gridx = 0
+			c.gridy = paramPos
+			c.gridwidth = 1
+			c.insets = new Insets(10, 10, 0, 0) // top, left, bottom, right
+			c.anchor = GridBagConstraints.WEST
+			c.fill = GridBagConstraints.HORIZONTAL
+			c.weightx = 0
+			c.weighty = 0
+			paneParams.add(label, c);
+			c.gridx = 1
+			c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
+			c.weightx = 1
+			if (name == OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM")) {
+				val textObjectType = new JTextField(gen.objectName.objectType.name)
+				textObjectType.editable = false
+				textObjectType.enabled = false
+				paneParams.add(textObjectType, c);
+			} else if (name == OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM")) {
+				val textObjectName = new JTextField(if(gens.size > 1) "***" else gen.objectName.name)
+				textObjectName.editable = false
+				textObjectName.enabled = false
+				paneParams.add(textObjectName, c);
 			} else {
-				val textField = new JTextField(dbgen.params.get(name))
-				paneParams.add(textField, c);
-				params.put(name, textField)
-				textField.addActionListener(this)
-			}
-		}
-	}
-
-	def updateDatabaseGenerators(boolean first) {
-		for (dbgen : dbgens.filter[!first || it == dbgens.get(0)]) {
-			for (name : dbgen.params.keySet) {
-				val component = params.get(name)
-				var String value
-				if (component instanceof JTextField) {
-					value = component.text
-				} else if (component instanceof JCheckBox) {
-					val lovs = dbgens.get(0).lovs.get(name)
+				val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
+					gen.objectName.objectType.name, gen.params).get(name)
+				if (name.isCheckBox) {
+					val checkBox = new JCheckBox("")
+					val entry = lovs.findFirst[it == gen.params.get(name)].toLowerCase
+					checkBox.selected = Generator.BOOLEAN_TRUE.findFirst[it == entry] != null
+					paneParams.add(checkBox, c)
+					params.put(name, checkBox)
+					checkBox.addActionListener(this)
 					if (lovs.size == 1) {
-						value = lovs.get(0)
-					} else {
-						if (component.selected && BOOLEAN_TRUE.findFirst[it == lovs.get(0).toLowerCase] != null) {
-							value = lovs.get(0)
-						} else {
-							value = lovs.get(1)
-						}
-					}
-				} else {
-					value = (component as JComboBox<String>).selectedItem as String
-				}
-				dbgen.params.put(name, value)
-			}
-		}
-	}
-
-	def exit() {
-		this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-	}
-
-	def generateToWorksheet() {
-		updateDatabaseGenerators(false)
-		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-		OddgenNavigatorController.instance.generateToWorksheet(dbgens, conn)
-	}
-
-	def generateToClipboard() {
-		updateDatabaseGenerators(false)
-		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-		OddgenNavigatorController.instance.generateToClipboard(dbgens, conn)
-	}
-
-	def refresh() {
-		// do everything in the event thread to avoid strange UI behavior
-		updateDatabaseGenerators(true)
-		try {
-			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-			val dao = new DatabaseGeneratorDao(conn)
-			val dbgen = dbgens.get(0)
-			dao.refresh(dbgen)
-			for (name : params.keySet) {
-				val component = params.get(name)
-				if (component instanceof JCheckBox) {
-					val checkBox = component
-					val selected = checkBox.selected
-					Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name,
-						selected, checkBox.enabled)
-					var Boolean newSelected
-					if (dbgen.lovs.get(name).size == 1) {
-						newSelected = BOOLEAN_TRUE.findFirst[it == dbgen.lovs.get(name).get(0).toLowerCase] != null
 						checkBox.enabled = false
-					} else {
-						newSelected = selected
-						checkBox.enabled = true
 					}
-					checkBox.selected = newSelected
-					Logger.debug(this, "selected value for checkBox %1$s after change: %2$s (enabled: %3$s)", name,
-						checkBox.selected, checkBox.enabled)
-				} else if (component.class.name == "javax.swing.JComboBox") {
-					// do not use instanceof for JComboBox to avoid rawtypes warning
-					val comboBox = component as JComboBox<String>
-					comboBox.removeActionListener(this)
-					val model = comboBox.model as DefaultComboBoxModel<String>
-					val selected = model.selectedItem as String
-					Logger.debug(this, "selected value for comboBox %1$s before change: %2$s (enabled: %3$s)", name,
-						selected, comboBox.enabled)
-					model.removeAllElements
-					for (value : dbgen.lovs.get(name)) {
-						model.addElement(value)
+				} else if (lovs != null && lovs.size > 0) {
+					val comboBoxModel = new DefaultComboBoxModel<String>();
+					for (lov : lovs) {
+						comboBoxModel.addElement(lov)
 					}
-					var String newSelectedValue
-					if (selected == null || dbgen.lovs.get(name).findFirst[it == selected] == null) {
-						Logger.debug(this, "changing value, first value in list");
-						newSelectedValue = model.getElementAt(0)
-					} else {
-						Logger.debug(this, "keeping value");
-						newSelectedValue = selected
-					}
-					model.selectedItem = newSelectedValue
-					if (model.size > 1) {
-						comboBox.editable = true
-						comboBox.enabled = true
-					} else {
+					val comboBox = new JComboBox<String>(comboBoxModel)
+					comboBox.selectedItem = gen.params.get(name)
+					paneParams.add(comboBox, c)
+					params.put(name, comboBox)
+					comboBox.addActionListener(this)
+					if (lovs.size == 1) {
 						comboBox.editable = false
 						comboBox.enabled = false
 					}
-					Logger.debug(this, "selected value for comboBox %1$s after change: %2$s (enabled: %3$s)", name,
-						model.selectedItem, comboBox.enabled)
-					comboBox.addActionListener(this)
-				}
-			}
-			for (name : dbgen.paramStates.keySet) {
-				val component = params.get(name)
-				if (BOOLEAN_TRUE.findFirst[it == dbgen.paramStates.get(name).toLowerCase] != null) {
-					component.enabled = true
 				} else {
-					component.enabled = false
+					val textField = new JTextField(gen.params.get(name))
+					paneParams.add(textField, c);
+					params.put(name, textField)
+					textField.addActionListener(this)
 				}
 			}
-		} catch (ExceptionInInitializerError e) {
-			// ignore this error, expected during unit tests only
-			Logger.error(this, "refresh failed. OK during unit test.")
 		}
-	}
 
-	override actionPerformed(ActionEvent e) {
-		if (e.getSource == buttonCancel) {
-			exit
-		} else if (e.getSource == buttonGenerateToWorksheet) {
-			val Runnable runnable = [|generateToWorksheet]
-			val thread = new Thread(runnable)
-			thread.name = "oddgen Worksheet Generator"
-			thread.start
-			exit
-		} else if (e.getSource == buttonGenerateToClipboard) {
-			val Runnable runnable = [|generateToClipboard]
-			val thread = new Thread(runnable)
-			thread.name = "oddgen Clipboard Generator"
-			thread.start
-			exit
-		} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox ||
-			e.getSource instanceof JTextField) {
-			// do not use instanceof for JComboBox to avoid rawtypes warning
-			refresh()
+		def updateDatabaseGenerators(boolean first) {
+			for (gen : gens.filter[!first || it == gens.get(0)]) {
+				for (name : gen.params.keySet) {
+					val component = params.get(name)
+					var String value
+					if (component instanceof JTextField) {
+						value = component.text
+					} else if (component instanceof JCheckBox) {
+						val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
+							gen.objectName.objectType.name, gen.params).get(name)
+						if (lovs.size == 1) {
+							value = lovs.get(0)
+						} else {
+							if (component.selected &&
+								Generator.BOOLEAN_TRUE.findFirst[it == lovs.get(0).toLowerCase] != null) {
+								value = lovs.get(0)
+							} else {
+								value = lovs.get(1)
+							}
+						}
+					} else {
+						value = (component as JComboBox<String>).selectedItem as String
+					}
+					gen.params.put(name, value)
+				}
+			}
 		}
-	}
 
-	override propertyChange(PropertyChangeEvent e) {
-		if (!(e.getNewValue instanceof JComponent)) {
-			return;
+		def exit() {
+			this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 		}
-		var focused = e.getNewValue() as JComponent
-		if (paneParams.isAncestorOf(focused)) {
-			paneParams.scrollRectToVisible(focused.getBounds)
-		}
-	}
 
-}
+		def generateToWorksheet() {
+			updateDatabaseGenerators(false)
+			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+			OddgenNavigatorController.instance.generateToWorksheet(gens, conn)
+		}
+
+		def generateToClipboard() {
+			updateDatabaseGenerators(false)
+			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+			OddgenNavigatorController.instance.generateToClipboard(gens, conn)
+		}
+
+		def refresh() {
+			// do everything in the event thread to avoid strange UI behavior
+			updateDatabaseGenerators(true)
+			try {
+				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+				val gen = gens.get(0)
+				val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
+					gen.objectName.objectType.name, gen.params)
+				val states = gen.objectName.objectType.generator.getParamStates(conn, gen.objectName.name,
+					gen.objectName.objectType.name, gen.params)
+				for (name : params.keySet) {
+					val component = params.get(name)
+					if (component instanceof JCheckBox) {
+						val checkBox = component
+						val selected = checkBox.selected
+						Logger.debug(this, "selected value for checkBox %1$s before change: %2$s (enabled: %3$s)", name,
+							selected, checkBox.enabled)
+						var Boolean newSelected
+						if (lovs.get(name).size == 1) {
+							newSelected = Generator.BOOLEAN_TRUE.findFirst[it == lovs.get(name).get(0).toLowerCase] !=
+								null
+							checkBox.enabled = false
+						} else {
+							newSelected = selected
+							checkBox.enabled = true
+						}
+						checkBox.selected = newSelected
+						Logger.debug(this, "selected value for checkBox %1$s after change: %2$s (enabled: %3$s)", name,
+							checkBox.selected, checkBox.enabled)
+					} else if (component.class.name == "javax.swing.JComboBox") {
+						// do not use instanceof for JComboBox to avoid rawtypes warning
+						val comboBox = component as JComboBox<String>
+						comboBox.removeActionListener(this)
+						val model = comboBox.model as DefaultComboBoxModel<String>
+						val selected = model.selectedItem as String
+						Logger.debug(this, "selected value for comboBox %1$s before change: %2$s (enabled: %3$s)", name,
+							selected, comboBox.enabled)
+						model.removeAllElements
+						for (value : lovs.get(name)) {
+							model.addElement(value)
+						}
+						var String newSelectedValue
+						if (selected == null || lovs.get(name).findFirst[it == selected] == null) {
+							Logger.debug(this, "changing value, first value in list");
+							newSelectedValue = model.getElementAt(0)
+						} else {
+							Logger.debug(this, "keeping value");
+							newSelectedValue = selected
+						}
+						model.selectedItem = newSelectedValue
+						if (model.size > 1) {
+							comboBox.editable = true
+							comboBox.enabled = true
+						} else {
+							comboBox.editable = false
+							comboBox.enabled = false
+						}
+						Logger.debug(this, "selected value for comboBox %1$s after change: %2$s (enabled: %3$s)", name,
+							model.selectedItem, comboBox.enabled)
+						comboBox.addActionListener(this)
+					}
+				}
+				for (name : states.keySet) {
+					val component = params.get(name)
+					if (states.get(name)) {
+						component.enabled = true
+					} else {
+						component.enabled = false
+					}
+				}
+			} catch (ExceptionInInitializerError e) {
+				// ignore this error, expected during unit tests only
+				Logger.error(this, "refresh failed. OK during unit test.")
+			}
+		}
+
+		override actionPerformed(ActionEvent e) {
+			if (e.getSource == buttonCancel) {
+				exit
+			} else if (e.getSource == buttonGenerateToWorksheet) {
+				val Runnable runnable = [|generateToWorksheet]
+				val thread = new Thread(runnable)
+				thread.name = "oddgen Worksheet Generator"
+				thread.start
+				exit
+			} else if (e.getSource == buttonGenerateToClipboard) {
+				val Runnable runnable = [|generateToClipboard]
+				val thread = new Thread(runnable)
+				thread.name = "oddgen Clipboard Generator"
+				thread.start
+				exit
+			} else if (e.getSource.class.name == "javax.swing.JComboBox" || e.getSource instanceof JCheckBox ||
+				e.getSource instanceof JTextField) {
+				// do not use instanceof for JComboBox to avoid rawtypes warning
+				refresh()
+			}
+		}
+
+		override propertyChange(PropertyChangeEvent e) {
+			if (!(e.getNewValue instanceof JComponent)) {
+				return;
+			}
+			var focused = e.getNewValue() as JComponent
+			if (paneParams.isAncestorOf(focused)) {
+				paneParams.scrollRectToVisible(focused.getBounds)
+			}
+		}
+
+	}
+	

@@ -19,15 +19,15 @@ import java.net.URL
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
-import org.oddgen.sqldev.model.DatabaseGenerator
-import org.oddgen.sqldev.model.Generator
+import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator
 import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.resources.OddgenResources
 
 class GeneratorNode extends DefaultContainer {
-	private Generator generator
+	private OddgenGenerator generator
 
-	new(URL url, Generator generator) {
+	new(URL url, OddgenGenerator generator) {
 		super(url)
 		this.generator = generator
 	}
@@ -37,21 +37,25 @@ class GeneratorNode extends DefaultContainer {
 	}
 
 	override getLongLabel() {
-		return generator?.getDescription
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		return generator?.getDescription(conn)
 	}
 
 	override getShortLabel() {
-		return generator?.name
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		return generator?.getName(conn)
 	}
 
 	override getToolTipText() {
-		return generator?.getDescription
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		return generator?.getDescription(conn)
 	}
 
 	override openImpl() {
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		if (generator instanceof DatabaseGenerator) {
 			val gen = generator
-			for (name : gen.objectTypes) {
+			for (name : gen.getObjectTypes(conn)) {
 				val objectType = new ObjectType()
 				objectType.generator = generator
 				objectType.name = name

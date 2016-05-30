@@ -19,8 +19,8 @@ import java.net.URL
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
-import org.oddgen.sqldev.dal.ObjectNameDao
-import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -231,9 +231,10 @@ class ObjectTypeNode extends DefaultContainer {
 		if (objectType.generator instanceof DatabaseGenerator) {
 			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 			if (conn != null) {
-				val dao = new ObjectNameDao(conn)
-				val objectNames = dao.findObjectNames(objectType)
-				for (objectName : objectNames) {
+				for (name : objectType.generator.getObjectNames(conn, objectType.name)) {
+					val objectName = new ObjectName()
+					objectName.objectType = objectType
+					objectName.name = name
 					val node = new ObjectNameNode(URLFactory.newURL(this.URL, objectName.name), objectName)
 					this.add(node)
 				}

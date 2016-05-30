@@ -32,8 +32,7 @@ import oracle.ide.Ide
 import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
-import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.DatabaseGenerator
+import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -65,28 +64,28 @@ class OddgenNavigatorController extends ShowNavigatorController {
 	}
 
 	def selectedDatabaseGenerators(Context context) {
-		val dbgens = new ArrayList<DatabaseGenerator>()
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		val gens = new ArrayList<GeneratorSelection>
 		for (selection : context.selection) {
 			val node = selection as ObjectNameNode
 			val objectName = node.data as ObjectName
-			val dbgen = (objectName.objectType.generator as DatabaseGenerator).copy
-			dbgen.objectType = objectName.objectType.name
-			dbgen.objectName = objectName.name
-			dbgens.add(dbgen)
+		 	val sel = new GeneratorSelection()
+		 	sel.objectName = objectName
+		 	sel.params = objectName.objectType.generator.getParams(conn, objectName.objectType.name, objectName.name)
+			gens.add(sel)
 		}
-		return dbgens
+		return gens
 	}
 
-	def generateToString(List<DatabaseGenerator> dbgens, Connection conn) {
-		val dao = new DatabaseGeneratorDao(conn)
+	def generateToString(List<GeneratorSelection> gens, Connection conn) {
 		var String result;
 		val gui = OddgenNavigatorManager.instance.navigatorWindow.GUI
 		try {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
 			result = '''
-				«FOR dbgen : dbgens SEPARATOR '\n'»
-					«Logger.debug(this, "Generating %1$s.%2$s to string...", dbgen.objectType, dbgen.objectName)»
-					«dao.generate(dbgen)»
+				«FOR gen : gens SEPARATOR '\n'»
+					«Logger.debug(this, "Generating %1$s.%2$s to string...", gen.objectName.objectType.name, gen.objectName.name)»
+					«gen.objectName.objectType.generator.generate(conn, gen.objectName.objectType.name, gen.objectName.name, gen.params)»
 				«ENDFOR»
 			'''
 		} finally {
@@ -95,8 +94,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		return result
 	}
 
-	def generateToWorksheet(List<DatabaseGenerator> dbgens, Connection conn) {
-		val result = dbgens.generateToString(conn)
+	def generateToWorksheet(List<GeneratorSelection> gens, Connection conn) {
+		val result = gens.generateToString(conn)
 		SwingUtilities.invokeAndWait(new Runnable() {
 			override run() {
 				val worksheet = OpenWorksheetWizard.openNewTempWorksheet(OddgenResources.getString("WORKSHEET_TITLE"), result) as Worksheet
@@ -105,8 +104,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		});
 	}
 
-	def generateToClipboard(List<DatabaseGenerator> dbgens, Connection conn) {
-		val result = dbgens.generateToString(conn)
+	def generateToClipboard(List<GeneratorSelection> gens, Connection conn) {
+		val result = gens.generateToString(conn)
 		SwingUtilities.invokeAndWait(
 			new Runnable() {
 				override run() {
@@ -168,7 +167,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				return true
 			} else if (action.commandId == GENERATE_DIALOG_CMD_ID) {
 				val dbgens = selectedDatabaseGenerators(context)
-				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, dbgens)
+				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, dbgens, conn)
 				return true
 			}
 		}

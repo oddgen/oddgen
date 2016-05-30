@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.LinkedHashMap
 import java.util.Properties
 import org.junit.AfterClass
 import org.junit.Assert
@@ -34,59 +35,64 @@ class DatabaseGeneratorTest {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgens = dao.findAll
 		val plsqlView = dbgens.findFirst [
-			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"
+			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_VIEW"
 		]
-		Assert.assertTrue(plsqlView.hasParams)
-		Assert.assertEquals("1:1 View (PL/SQL)", plsqlView.name)
+		Assert.assertEquals("1:1 View (PL/SQL)", plsqlView.getName(dataSource.connection))
 		Assert.assertEquals(
 			"Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.",
-			plsqlView.description)
-		Assert.assertEquals(1, plsqlView.objectTypes.size)
-		Assert.assertEquals("TABLE", plsqlView.objectTypes.get(0))
-		Assert.assertEquals(4, plsqlView.params.size)
-		Assert.assertEquals("View suffix", plsqlView.params.keySet.get(0))
-		Assert.assertEquals("Table suffix to be replaced", plsqlView.params.keySet.get(1))
-		Assert.assertEquals("Generate instead-of-trigger?", plsqlView.params.keySet.get(2))
-		Assert.assertEquals("Instead-of-trigger suffix", plsqlView.params.keySet.get(3))
-		Assert.assertEquals("_V", plsqlView.params.get("View suffix"))
-		Assert.assertEquals("_T", plsqlView.params.get("Table suffix to be replaced"))
-		Assert.assertEquals("_TRG", plsqlView.params.get("Instead-of-trigger suffix"))
-		Assert.assertEquals("Yes", plsqlView.params.get("Generate instead-of-trigger?"))
-		Assert.assertEquals(2, plsqlView.lovs.get("Generate instead-of-trigger?").size)
-		Assert.assertEquals("Yes", plsqlView.lovs.get("Generate instead-of-trigger?").get(0))
-		Assert.assertEquals("No", plsqlView.lovs.get("Generate instead-of-trigger?").get(1))
-		Assert.assertEquals(1, plsqlView.paramStates.size)
-		Assert.assertEquals("1", plsqlView.paramStates.get("Instead-of-trigger suffix"))
-		Assert.assertFalse(plsqlView.isRefreshable)
+			plsqlView.getDescription(dataSource.connection))
+		Assert.assertEquals(1, plsqlView.getObjectTypes(dataSource.connection).size)
+		Assert.assertEquals("TABLE", plsqlView.getObjectTypes(dataSource.connection).get(0))
+		var params = plsqlView.getParams(dataSource.connection, "TABLE", "PLSQL_VIEW")
+		Assert.assertEquals(4, params.size)
+		Assert.assertEquals("View suffix", params.keySet.get(0))
+		Assert.assertEquals("Table suffix to be replaced", params.keySet.get(1))
+		Assert.assertEquals("Generate instead-of-trigger?", params.keySet.get(2))
+		Assert.assertEquals("Instead-of-trigger suffix", params.keySet.get(3))
+		Assert.assertEquals("_V", params.get("View suffix"))
+		Assert.assertEquals("_T", params.get("Table suffix to be replaced"))
+		Assert.assertEquals("_TRG", params.get("Instead-of-trigger suffix"))
+		Assert.assertEquals("Yes", params.get("Generate instead-of-trigger?"))
+		var lovs = plsqlView.getLovs(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
+		Assert.assertEquals(2, lovs.get("Generate instead-of-trigger?").size)
+		Assert.assertEquals("Yes", lovs.get("Generate instead-of-trigger?").get(0))
+		Assert.assertEquals("No", lovs.get("Generate instead-of-trigger?").get(1))
+		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
+		Assert.assertEquals(1, paramStates.size)
+		Assert.assertEquals(true, paramStates.get("Instead-of-trigger suffix"))
+		Assert.assertFalse(plsqlView.dto.isRefreshable)
 	}
 
 	@Test
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.isRefreshable)
-		Assert.assertEquals(2, dbgen.lovs.get("With grandchildren?").size)
-		Assert.assertEquals("Yes", dbgen.lovs.get("With grandchildren?").get(0))
-		Assert.assertEquals("No", dbgen.lovs.get("With grandchildren?").get(1))
-		dbgen.params.put('With children?', 'No')
-		dao.refresh(dbgen)
-		Assert.assertEquals(1, dbgen.lovs.get("With grandchildren?").size)
-		Assert.assertEquals("No", dbgen.lovs.get("With grandchildren?").get(0))
+		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
+		Assert.assertTrue(dbgen.dto.isRefreshable)
+		var params = dbgen.getParams(dataSource.connection, null, null)
+		var lovs = dbgen.getLovs(dataSource.connection, null, null, params)
+		Assert.assertEquals(2, lovs.get("With grandchildren?").size)
+		Assert.assertEquals("Yes", lovs.get("With grandchildren?").get(0))
+		Assert.assertEquals("No", lovs.get("With grandchildren?").get(1))
+		params.put('With children?', 'No')
+		lovs = dbgen.getLovs(dataSource.connection, null, null, params)
+		Assert.assertEquals(1, lovs.get("With grandchildren?").size)
+		Assert.assertEquals("No", lovs.get("With grandchildren?").get(0))
 	}
 
 	@Test
 	def generateTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.generatorName == 'PLSQL_DUMMY']
-		dbgen.objectType = 'TABLE'
-		dbgen.objectName = 'SOME_TABLE'
+		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
 		val expected = '''
 			Object type: TABLE
 			Object name: SOME_TABLE
 			With children: Yes
 			With grandchildren: Yes
 		'''
-		val generated = dao.generate(dbgen)
+	
+		val params = dbgen.getParams(dataSource.connection, null, null)
+		params.put("dummy","value")
+		val generated = dbgen.generate(dataSource.connection, "TABLE", "SOME_TABLE", params)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -94,17 +100,15 @@ class DatabaseGeneratorTest {
 	def generateHelloWorldTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD'
+			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == 'PLSQL_HELLO_WORLD'
 		]
-		dbgen.objectType = 'VIEW'
-		dbgen.objectName = 'EMP_V'
 		val expected = '''
 			BEGIN
 			   sys.dbms_output.put_line('Hello VIEW EMP_V!');
 			END;
 			/
 		'''
-		val generated = dao.generate(dbgen)
+		val generated = dbgen.generate(dataSource.connection, "VIEW", "EMP_V", null)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -112,43 +116,25 @@ class DatabaseGeneratorTest {
 	def generateErrorTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == 'PLSQL_HELLO_WORLD'
+			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == 'PLSQL_HELLO_WORLD'
 		]
-		dbgen.generatorName = 'NON_EXISTING_PACKAGE'
-		dbgen.objectType = 'TYPE'
-		dbgen.objectName = 'NAME'
+		dbgen.dto.generatorName = 'NON_EXISTING_PACKAGE'
 		val expected = '''
 			Failed to generate code for TYPE.NAME via ODDGEN.NON_EXISTING_PACKAGE. Got the following error: ORA-06550: line 4, column 14:
 			PLS-00201: identifier 'ODDGEN.NON_EXISTING_PACKAGE' must be declared
 			ORA-06550: line 4, column 4:
 			PL/SQL: Statement ignored
 		'''
-		val generated = dao.generate(dbgen)
+		val generated = dbgen.generate(dataSource.connection, "TYPE", "NAME", null)
 		Assert.assertEquals(expected.trim, generated?.trim)
-	}
-
-	@Test
-	def dbgenCloneTest() {
-		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgens = dao.findAll
-		val plsqlView = dbgens.findFirst [
-			it.generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_VIEW"
-		]
-		val clone = plsqlView.copy
-		Assert.assertEquals(plsqlView.hasParams, clone.hasParams)
-		Assert.assertEquals(plsqlView.name, clone.name)
-		Assert.assertEquals(plsqlView.description, clone.description)
-		Assert.assertEquals(plsqlView.objectTypes, clone.objectTypes)
-		Assert.assertEquals(plsqlView.params, clone.params)
-		Assert.assertEquals(plsqlView.lovs, clone.lovs)
-		Assert.assertEquals(plsqlView.isRefreshable, clone.isRefreshable)		
 	}
 
 	@BeforeClass
 	def static setup() {
 		// get properties
 		val p = new Properties()
-		p.load(DatabaseGeneratorTest.getClass().getResourceAsStream("/test.properties"))	
+		p.load(DatabaseGeneratorTest.getClass().getResourceAsStream(
+			"/test.properties"))
 		// create dataSource and jdbcTemplate
 		dataSource = new SingleConnectionDataSource()
 		dataSource.driverClassName = "oracle.jdbc.OracleDriver"

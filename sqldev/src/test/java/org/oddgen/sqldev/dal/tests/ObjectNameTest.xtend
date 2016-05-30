@@ -29,7 +29,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 class ObjectNameTest {
 	private static SingleConnectionDataSource dataSource
 	private static JdbcTemplate jdbcTemplate
-	
+
 	@Test
 	def findUserObjectNamesTest() {
 		val dao = new ObjectNameDao(dataSource.connection)
@@ -42,12 +42,14 @@ class ObjectNameTest {
 		Assert.assertEquals("EMP", result.get(2).name)
 		Assert.assertEquals("SALGRADE", result.get(3).name)
 	}
-	
+
 	@Test
 	def findObjectNamesTest() {
 		val gendao = new DatabaseGeneratorDao(dataSource.connection)
 		val namedao = new ObjectNameDao(dataSource.connection)
-		val dbgen = gendao.findAll.findFirst [it. generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_DUMMY"]
+		val dbgen = gendao.findAll.findFirst [
+			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_DUMMY"
+		]
 		val objectType = new ObjectType()
 		objectType.name = "TABLE"
 		objectType.generator = dbgen
@@ -62,7 +64,9 @@ class ObjectNameTest {
 	def findObjectNamesDefaultTest() {
 		val gendao = new DatabaseGeneratorDao(dataSource.connection)
 		val namedao = new ObjectNameDao(dataSource.connection)
-		val dbgen = gendao.findAll.findFirst [it. generatorOwner == dataSource.username.toUpperCase && it.generatorName == "PLSQL_DUMMY_DEFAULT"]
+		val dbgen = gendao.findAll.findFirst [
+			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_DUMMY_DEFAULT"
+		]
 		val objectType = new ObjectType()
 		objectType.name = "TABLE"
 		objectType.generator = dbgen
@@ -78,7 +82,8 @@ class ObjectNameTest {
 	def static void setup() {
 		// get properties
 		val p = new Properties()
-		p.load(ObjectNameTest.getClass().getResourceAsStream("/test.properties"))		
+		p.load(ObjectNameTest.getClass().getResourceAsStream(
+			"/test.properties"))
 		// create dataSource and jdbcTemplate
 		dataSource = new SingleConnectionDataSource()
 		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
@@ -91,13 +96,13 @@ class ObjectNameTest {
 		createPlsqlDummy
 		createPlsqlDummyDefault
 	}
-	
+
 	@AfterClass
 	def static tearDown() {
 		val jdbcTemplate = new JdbcTemplate(dataSource)
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy_default")
-	}	
+	}
 
 	def static createPlsqlDummy() {
 		// create package specification of dummy generator with get_object_names function
@@ -109,9 +114,9 @@ class ObjectNameTest {
 			   FUNCTION get_object_types RETURN t_string;
 			   
 			   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
-
+			
 			   FUNCTION generate(in_object_type IN VARCHAR2,
-			                     in_object_name IN VARCHAR2) RETURN CLOB;
+			                  in_object_name IN VARCHAR2) RETURN CLOB;
 			END plsql_dummy;
 		''')
 
@@ -123,10 +128,10 @@ class ObjectNameTest {
 			   BEGIN
 			      RETURN NEW t_string('dummy');
 			   END get_object_types; 
-
+			
 			   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string IS
 			   BEGIN
-			      RETURN NEW t_string('one', 'two', 'three');
+			   RETURN NEW t_string('one', 'two', 'three');
 			   END get_object_names;
 			
 			   FUNCTION generate(in_object_type IN VARCHAR2,
@@ -162,7 +167,5 @@ class ObjectNameTest {
 			END plsql_dummy_default;
 		''')
 	}
-
-
 
 }

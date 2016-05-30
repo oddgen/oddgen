@@ -62,6 +62,7 @@ class GenerateDialogTest {
 				name.objectType = type
 				name.name = "EMP"
 				gensel.objectName = name
+				gensel.params = dbgen.getParams(dataSource.connection, objectType, objectName)
 				return gensel
 		
 	}

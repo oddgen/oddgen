@@ -50,38 +50,38 @@ class DatabaseGeneratorDao {
 		this.dalTools = new DalTools(conn)
 	}
 
-	def private setName(DatabaseGeneratorDto dbgen) {
+	def private setName(DatabaseGeneratorDto dto) {
 		val plsql = '''
 			BEGIN
-				? := «dbgen.generatorOwner».«dbgen.generatorName».get_name();
+				? := «dto.generatorOwner».«dto.generatorName».get_name();
 			END;
 		'''
-		dbgen.name = plsql.string
-		if (dbgen.name == null) {
-			dbgen.name = '''«dbgen.generatorOwner».«dbgen.generatorName»'''
+		dto.name = plsql.string
+		if (dto.name == null) {
+			dto.name = '''«dto.generatorOwner».«dto.generatorName»'''
 		}
 	}
 
-	def private setDescription(DatabaseGeneratorDto dbgen) {
+	def private setDescription(DatabaseGeneratorDto dto) {
 		val plsql = '''
 			BEGIN
-				? := «dbgen.generatorOwner».«dbgen.generatorName».get_description();
+				? := «dto.generatorOwner».«dto.generatorName».get_description();
 			END;
 		'''
-		dbgen.description = plsql.string
-		if (dbgen.description == null) {
-			dbgen.description = dbgen.name
+		dto.description = plsql.string
+		if (dto.description == null) {
+			dto.description = dto.name
 		}
 	}
 
-	def private setObjectTypes(DatabaseGeneratorDto dbgen) {
+	def private setObjectTypes(DatabaseGeneratorDto dto) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_types «dbgen.generatorOwner».«dbgen.generatorName».t_string;
+			   l_types «dto.generatorOwner».«dto.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
-			   l_types := «dbgen.generatorOwner».«dbgen.generatorName».get_object_types();
+			   l_types := «dto.generatorOwner».«dto.generatorName».get_object_types();
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_types.count
 			   LOOP
@@ -91,29 +91,29 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.objectTypes = new ArrayList<String>()
+		dto.objectTypes = new ArrayList<String>()
 		val doc = plsql.doc
 		if (doc == null) {
-			dbgen.objectTypes.add("TABLE")
-			dbgen.objectTypes.add("VIEW")
+			dto.objectTypes.add("TABLE")
+			dto.objectTypes.add("VIEW")
 		} else {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
 				val type = value.textContent
-				dbgen.objectTypes.add(type)
+				dto.objectTypes.add(type)
 			}
 		}
 	}
-	
-	def private List<String>  getOrderedParams(DatabaseGeneratorDto dbgen) {
+
+	def private List<String> getOrderedParams(DatabaseGeneratorDto dto) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_ordered_params «dbgen.generatorOwner».«dbgen.generatorName».t_string;
+			   l_ordered_params «dto.generatorOwner».«dto.generatorName».t_string;
 			   l_clob           CLOB;
 			BEGIN
-			   l_ordered_params := «dbgen.generatorOwner».«dbgen.generatorName».get_ordered_params();
+			   l_ordered_params := «dto.generatorOwner».«dto.generatorName».get_ordered_params();
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_ordered_params.count
 			   LOOP
@@ -136,20 +136,20 @@ class DatabaseGeneratorDao {
 		return orderedParams
 	}
 
-	def private setParams(DatabaseGeneratorDto dbgen) {
+	def getParams(DatabaseGeneratorDto dto) {
 		// initialize Parameters in the requested order
-		dbgen.params = new LinkedHashMap<String, String>()
-		for (param : getOrderedParams(dbgen)) {
-			dbgen.params.put(param, "")
+		val params = new LinkedHashMap<String, String>()
+		for (param : getOrderedParams(dto)) {
+			params.put(param, "")
 		}
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
-			   l_key    «dbgen.generatorOwner».«dbgen.generatorName».param_type;
+			   l_params «dto.generatorOwner».«dto.generatorName».t_param;
+			   l_key    «dto.generatorOwner».«dto.generatorName».param_type;
 			   l_clob   CLOB;
 			BEGIN
-			   l_params := «dbgen.generatorOwner».«dbgen.generatorName».get_params();
+			   l_params := «dto.generatorOwner».«dto.generatorName».get_params();
 			   l_key    := l_params.first;
 			   l_clob   := '<params>';
 			   WHILE l_key IS NOT NULL
@@ -164,23 +164,24 @@ class DatabaseGeneratorDao {
 		'''
 		val doc = plsql.doc
 		if (doc != null) {
-			val params = doc.getElementsByTagName("param")
-			for (var i = 0; i < params.length; i++) {
-				val param = params.item(i) as Element
+			val xmlParams = doc.getElementsByTagName("param")
+			for (var i = 0; i < xmlParams.length; i++) {
+				val param = xmlParams.item(i) as Element
 				val key = param.getElementsByTagName("key").item(0).textContent
 				val value = param.getElementsByTagName("value").item(0).textContent
-				dbgen.params.put(key, value)
+				params.put(key, value)
 			}
 		}
+		return params
 	}
 
-	def private setLovs(DatabaseGeneratorDto dbgen, Document doc) {
-		dbgen.lovs.clear
+	def private getLovs(HashMap<String, List<String>> lovs, Document doc) {
+		lovs.clear
 		if (doc != null) {
-			val lovs = doc.getElementsByTagName("lov")
-			if (lovs.length > 0) {
-				for (var i = 0; i < lovs.length; i++) {
-					val lov = lovs.item(i) as Element
+			val xmlLovs = doc.getElementsByTagName("lov")
+			if (xmlLovs.length > 0) {
+				for (var i = 0; i < xmlLovs.length; i++) {
+					val lov = xmlLovs.item(i) as Element
 					val key = lov.getElementsByTagName("key").item(0).textContent
 					val values = lov.getElementsByTagName("value")
 					val value = new ArrayList<String>()
@@ -188,23 +189,24 @@ class DatabaseGeneratorDao {
 						val valueElement = values.item(j) as Element
 						value.add(valueElement.textContent)
 					}
-					dbgen.lovs.put(key, value)
+					lovs.put(key, value)
 				}
 			}
 
 		}
+		return lovs
 	}
 
-	def private setLovs(DatabaseGeneratorDto dbgen) {
+	def getLovs(DatabaseGeneratorDto dto) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_lovs «dbgen.generatorOwner».«dbgen.generatorName».t_lov;
-			   l_key  «dbgen.generatorOwner».«dbgen.generatorName».param_type;
-			   l_lov  «dbgen.generatorOwner».«dbgen.generatorName».t_string;
+			   l_lovs «dto.generatorOwner».«dto.generatorName».t_lov;
+			   l_key  «dto.generatorOwner».«dto.generatorName».param_type;
+			   l_lov  «dto.generatorOwner».«dto.generatorName».t_string;
 			   l_clob CLOB;
 			BEGIN
-			   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».get_lov();
+			   l_lovs := «dto.generatorOwner».«dto.generatorName».get_lov();
 			   l_key  := l_lovs.first;
 			   l_clob := '<lovs>';
 			   WHILE l_key IS NOT NULL
@@ -222,24 +224,70 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.lovs = new HashMap<String, List<String>>()
+		val lovs = new HashMap<String, List<String>>()
 		val doc = plsql.doc
-		setLovs(dbgen, doc)
+		return getLovs(lovs, doc)
 	}
-	
-	def private setParamStates(DatabaseGeneratorDto dbgen) {
+
+	def getLovs(DatabaseGeneratorDto dto, String objectType, String objectName, LinkedHashMap<String, String> params) {
+		// convert PL/SQL associative array to XML
+		// pass current parameter values as PL/SQL code
+		val plsql = '''
+			DECLARE
+			   l_params «dto.generatorOwner».«dto.generatorName».t_param;
+			   l_lovs   «dto.generatorOwner».«dto.generatorName».t_lov;
+			   l_key    «dto.generatorOwner».«dto.generatorName».param_type;
+			   l_lov    «dto.generatorOwner».«dto.generatorName».t_string;
+			   l_clob   CLOB;
+			BEGIN
+			   «FOR key : params.keySet»
+			   	l_params('«key»') := '«params.get(key)»';
+			   «ENDFOR»
+			   l_lovs := «dto.generatorOwner».«dto.generatorName».refresh_lov(
+			                in_object_type => '«objectType»',
+			                in_object_name => '«objectName»',
+			                in_params      => l_params
+			             );
+			   l_key  := l_lovs.first;
+			   l_clob := '<lovs>';
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      l_clob := l_clob || '<lov><key>' || l_key || '</key><values>';
+			      FOR i IN 1 .. l_lovs(l_key).count
+			      LOOP
+			         l_clob := l_clob || '<value>' || l_lovs(l_key) (i) || '</value>';
+			      END LOOP;
+			      l_clob := l_clob || '</values></lov>';
+			      l_lovs.delete(l_key);
+			      l_key := l_lovs.first;
+			   END LOOP;
+			   l_clob := l_clob || '</lovs>';
+			   ? := l_clob;
+			END;
+		'''
+		val doc = plsql.doc
+		val lovs = new HashMap<String, List<String>>()
+		return getLovs(lovs, doc)
+	}
+
+	def getParamStates(DatabaseGeneratorDto dto, String objectType, String objectName,
+		LinkedHashMap<String, String> params) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params       «dbgen.generatorOwner».«dbgen.generatorName».t_param;
-			   l_param_states «dbgen.generatorOwner».«dbgen.generatorName».t_param;
-			   l_key          «dbgen.generatorOwner».«dbgen.generatorName».param_type;
+			   l_params       «dto.generatorOwner».«dto.generatorName».t_param;
+			   l_param_states «dto.generatorOwner».«dto.generatorName».t_param;
+			   l_key          «dto.generatorOwner».«dto.generatorName».param_type;
 			   l_clob         CLOB;
 			BEGIN
-			   «FOR key : dbgen.params.keySet»
-			      l_params('«key»') := '«dbgen.params.get(key)»';
+			   «FOR key : params.keySet»
+			   	l_params('«key»') := '«params.get(key)»';
 			   «ENDFOR»
-			   l_param_states := «dbgen.generatorOwner».«dbgen.generatorName».refresh_param_states(in_params => l_params);
+			   l_param_states := «dto.generatorOwner».«dto.generatorName».refresh_param_states(
+			   			            in_object_type => '«objectType»',
+			   			            in_object_name => '«objectName»',
+			   			            in_params      => l_params
+			   			         );
 			   l_key          := l_param_states.first;
 			   l_clob         := '<paramStates>';
 			   WHILE l_key IS NOT NULL
@@ -252,39 +300,39 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dbgen.paramStates = new HashMap<String, String>()
+		val paramStates = new HashMap<String, String>()
 		val doc = plsql.doc
 		if (doc != null) {
-			val paramStates = doc.getElementsByTagName("paramState")
-			for (var i = 0; i < paramStates.length; i++) {
-				val paramState = paramStates.item(i) as Element
+			val xmlParamStates = doc.getElementsByTagName("paramState")
+			for (var i = 0; i < xmlParamStates.length; i++) {
+				val paramState = xmlParamStates.item(i) as Element
 				val key = paramState.getElementsByTagName("key").item(0).textContent
 				val value = paramState.getElementsByTagName("value").item(0).textContent
-				dbgen.paramStates.put(key, value)
+				paramStates.put(key, value)
 			}
 		}
+		return paramStates
 	}
-	
 
-	def private setRefreshable(DatabaseGeneratorDto dbgen) {
+	def private setHasRefreshLovs(DatabaseGeneratorDto dto) {
 		val sql = '''
 			SELECT COUNT(*)
 			  FROM (SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.generatorOwner»'
-			               AND package_name = '«dbgen.generatorName»'
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 0
 			               AND in_out = 'OUT'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dbgen.generatorOwner»'
-			               AND type_name = '«dbgen.generatorName»'
+			               AND type_owner = '«dto.generatorOwner»'
+			               AND type_name = '«dto.generatorName»'
 			               AND type_subname = 'T_LOV'
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.generatorOwner»'
-			               AND package_name = '«dbgen.generatorName»'
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 1
 			               AND in_out = 'IN'
@@ -293,8 +341,8 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.generatorOwner»'
-			               AND package_name = '«dbgen.generatorName»'
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 2
 			               AND in_out = 'IN'
@@ -303,22 +351,78 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dbgen.generatorOwner»'
-			               AND package_name = '«dbgen.generatorName»'
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 3
 			               AND in_out = 'IN'
 			               AND argument_name = 'IN_PARAMS'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dbgen.generatorOwner»'
-			               AND type_name = '«dbgen.generatorName»'
+			               AND type_owner = '«dto.generatorOwner»'
+			               AND type_name = '«dto.generatorName»'
 			               AND type_subname = 'T_PARAM')
 		'''
 		val count = jdbcTemplate.queryForObject(sql, Integer)
 		if (count == 4) {
-			dbgen.isRefreshable = true
+			dto.hasRefreshLovs = true
 		} else {
-			dbgen.isRefreshable = false
+			dto.hasRefreshLovs = false
+		}
+	}
+
+	def private setHasRefreshParamStates(DatabaseGeneratorDto dto) {
+		val sql = '''
+			SELECT COUNT(*)
+			  FROM (SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
+			               AND object_name = 'REFRESH_PARAM_STATES'
+			               AND position = 0
+			               AND in_out = 'OUT'
+			               AND data_type = 'PL/SQL TABLE'
+			               AND type_owner = '«dto.generatorOwner»'
+			               AND type_name = '«dto.generatorName»'
+			               AND type_subname = 'T_PARAM'
+			        UNION ALL
+			        SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
+			               AND object_name = 'REFRESH_PARAM_STATES'
+			               AND position = 1
+			               AND in_out = 'IN'
+			               AND argument_name = 'IN_OBJECT_TYPE'
+			               AND data_type = 'VARCHAR2'
+			        UNION ALL
+			        SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
+			               AND object_name = 'REFRESH_PARAM_STATES'
+			               AND position = 2
+			               AND in_out = 'IN'
+			               AND argument_name = 'IN_OBJECT_NAME'
+			               AND data_type = 'VARCHAR2'
+			        UNION ALL
+			        SELECT *
+			          FROM all_arguments
+			         WHERE owner = '«dto.generatorOwner»'
+			               AND package_name = '«dto.generatorName»'
+			               AND object_name = 'REFRESH_PARAM_STATES'
+			               AND position = 3
+			               AND in_out = 'IN'
+			               AND argument_name = 'IN_PARAMS'
+			               AND data_type = 'PL/SQL TABLE'
+			               AND type_owner = '«dto.generatorOwner»'
+			               AND type_name = '«dto.generatorName»'
+			               AND type_subname = 'T_PARAM')
+		'''
+		val count = jdbcTemplate.queryForObject(sql, Integer)
+		if (count == 4) {
+			dto.hasRefreshParamStates = true
+		} else {
+			dto.hasRefreshParamStates = false
 		}
 	}
 
@@ -387,78 +491,34 @@ class DatabaseGeneratorDao {
 			dto.setName
 			dto.setDescription
 			dto.setObjectTypes
-			dto.setRefreshable
-			dto.setParams
-			dto.setLovs
-			dto.setParamStates
+			dto.setHasRefreshLovs
+			dto.setHasRefreshParamStates
 			val dbgen = new DatabaseGenerator(dto)
 			dbgens.add(dbgen)
 		}
 		return dbgens
 	}
 
-	def refresh(DatabaseGeneratorDto dbgen, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		if (dbgen.isRefreshable) {
-			// convert PL/SQL associative array to XML
-			// pass current parameter values as PL/SQL code
-			val plsql = '''
-				DECLARE
-				   l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
-				   l_lovs   «dbgen.generatorOwner».«dbgen.generatorName».t_lov;
-				   l_key    «dbgen.generatorOwner».«dbgen.generatorName».param_type;
-				   l_lov    «dbgen.generatorOwner».«dbgen.generatorName».t_string;
-				   l_clob   CLOB;
-				BEGIN
-				   «FOR key : params.keySet»
-				      l_params('«key»') := '«params.get(key)»';
-				   «ENDFOR»
-				   l_lovs := «dbgen.generatorOwner».«dbgen.generatorName».refresh_lov(
-				                in_object_type => '«objectType»',
-				                in_object_name => '«objectName»',
-				                in_params      => l_params
-				             );
-				   l_key  := l_lovs.first;
-				   l_clob := '<lovs>';
-				   WHILE l_key IS NOT NULL
-				   LOOP
-				      l_clob := l_clob || '<lov><key>' || l_key || '</key><values>';
-				      FOR i IN 1 .. l_lovs(l_key).count
-				      LOOP
-				         l_clob := l_clob || '<value>' || l_lovs(l_key) (i) || '</value>';
-				      END LOOP;
-				      l_clob := l_clob || '</values></lov>';
-				      l_lovs.delete(l_key);
-				      l_key := l_lovs.first;
-				   END LOOP;
-				   l_clob := l_clob || '</lovs>';
-				   ? := l_clob;
-				END;
-			'''
-			val doc = plsql.doc
-			setLovs(dbgen, doc)
-		}
-		dbgen.setParamStates
-	}	
-
-	def String generate(DatabaseGeneratorDto dbgen, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	def String generate(DatabaseGeneratorDto dto, String objectType, String objectName,
+		LinkedHashMap<String, String> params) {
 		depth++
 		val plsql = '''
 			DECLARE
 			   «IF params != null && params.size > 0»
-			      l_params «dbgen.generatorOwner».«dbgen.generatorName».t_param;
+			   	l_params «dto.generatorOwner».«dto.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
 			   «IF params != null && params.size > 0»
-			      «FOR key : params.keySet»
-			         l_params('«key»') := '«params.get(key)»';
-			   	  «ENDFOR»
+			   	«FOR key : params.keySet»
+			   		l_params('«key»') := '«params.get(key)»';
+			   	«ENDFOR»
 			   «ENDIF»
-			   l_clob := «dbgen.generatorOwner».«dbgen.generatorName».generate(
+			   l_clob := «dto.generatorOwner».«dto.generatorName».generate(
 			                  in_object_type => '«objectType»'
 			                , in_object_name => '«objectName»'
 			                «IF params != null && params.size > 0»
-			                   , in_params      => l_params
+			                	, in_params      => l_params
 			                «ENDIF»
 			             );
 			   ? := l_clob;
@@ -478,9 +538,10 @@ class DatabaseGeneratorDao {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded
 				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = generate(dbgen, objectType, objectName, params)
+				result = generate(dto, objectType, objectName,
+					params)
 			} else {
-				result = '''Failed to generate code for «objectType».«objectName» via «dbgen.generatorOwner».«dbgen.generatorName». Got the following error: «e.cause?.message»'''
+				result = '''Failed to generate code for «objectType».«objectName» via «dto.generatorOwner».«dto.generatorName». Got the following error: «e.cause?.message»'''
 				Logger.error(this, plsql + result)
 			}
 		} finally {

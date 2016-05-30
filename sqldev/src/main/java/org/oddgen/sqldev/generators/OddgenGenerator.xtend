@@ -25,6 +25,9 @@ import java.util.List
  * window of oddgen for SQL Developer.
  */
 interface OddgenGenerator {
+	public static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]	
+	public static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]
+	
 	/** 
 	 * get name of the generator
 	 * called by oddgen after establishing/refreshing a connection

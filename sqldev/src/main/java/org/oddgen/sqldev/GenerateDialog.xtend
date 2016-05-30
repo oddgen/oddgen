@@ -46,7 +46,7 @@ import javax.swing.JScrollPane
 import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
-import org.oddgen.sqldev.model.Generator
+import org.oddgen.sqldev.generators.OddgenGenerator
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -62,6 +62,8 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 	private JPanel paneParams;
 	private int paramPos = -1;
 	private HashMap<String, Component> params = new HashMap<String, Component>()
+	private HashMap<String, List<String>> lovs;
+	private HashMap<String, Boolean> paramStates;
 
 	def static createAndShow(Component parent, List<GeneratorSelection> gens, Connection conn) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -89,6 +91,8 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				ModalityType.APPLICATION_MODAL)
 			this.conn = conn
 			this.gens = gens
+			loadLovs
+			loadParamStates
 			val pane = this.getContentPane();
 			pane.setLayout(new GridBagLayout());
 			val c = new GridBagConstraints();
@@ -178,14 +182,13 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 		}
 
 		def private isCheckBox(String name) {
-			val gen = gens.get(0)
-			val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.objectType.name,
-				gen.objectName.name, gen.params).get(name)
+			val lovs = this.lovs?.get(name)
 			if (lovs != null && lovs.size > 0 && lovs.size < 3) {
 				val entry = lovs.get(0).toLowerCase
-				if (Generator.BOOLEAN_TRUE.findFirst[it == entry] != null || Generator.BOOLEAN_FALSE.findFirst [
-					it == entry
-				] != null) {
+				if (OddgenGenerator.BOOLEAN_TRUE.findFirst[it == entry] != null ||
+					OddgenGenerator.BOOLEAN_FALSE.findFirst [
+						it == entry
+					] != null) {
 					return true
 				}
 			}
@@ -220,12 +223,11 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				textObjectName.enabled = false
 				paneParams.add(textObjectName, c);
 			} else {
-				val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
-					gen.objectName.objectType.name, gen.params).get(name)
+				val lovs = this.lovs?.get(name)
 				if (name.isCheckBox) {
 					val checkBox = new JCheckBox("")
 					val entry = lovs.findFirst[it == gen.params.get(name)].toLowerCase
-					checkBox.selected = Generator.BOOLEAN_TRUE.findFirst[it == entry] != null
+					checkBox.selected = OddgenGenerator.BOOLEAN_TRUE.findFirst[it == entry] != null
 					paneParams.add(checkBox, c)
 					params.put(name, checkBox)
 					checkBox.addActionListener(this)
@@ -263,13 +265,13 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 					if (component instanceof JTextField) {
 						value = component.text
 					} else if (component instanceof JCheckBox) {
-						val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
-							gen.objectName.objectType.name, gen.params).get(name)
+						val lovs = this.lovs?.get(name)
 						if (lovs.size == 1) {
 							value = lovs.get(0)
 						} else {
-							if (component.selected &&
-								Generator.BOOLEAN_TRUE.findFirst[it == lovs.get(0).toLowerCase] != null) {
+							if (component.selected && OddgenGenerator.BOOLEAN_TRUE.findFirst [
+								it == lovs.get(0).toLowerCase
+							] != null) {
 								value = lovs.get(0)
 							} else {
 								value = lovs.get(1)
@@ -299,16 +301,23 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			OddgenNavigatorController.instance.generateToClipboard(gens, conn)
 		}
 
+		def loadLovs() {
+			val gen = gens.get(0)
+			this.lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
+				gen.objectName.objectType.name, gen.params)
+		}
+
+		def loadParamStates() {
+			val gen = gens.get(0)
+			this.paramStates = gen.objectName.objectType.generator.getParamStates(conn, gen.objectName.name,
+				gen.objectName.objectType.name, gen.params)
+		}
+
 		def refresh() {
 			// do everything in the event thread to avoid strange UI behavior
 			updateDatabaseGenerators(true)
 			try {
-				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				val gen = gens.get(0)
-				val lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
-					gen.objectName.objectType.name, gen.params)
-				val states = gen.objectName.objectType.generator.getParamStates(conn, gen.objectName.name,
-					gen.objectName.objectType.name, gen.params)
+				loadLovs
 				for (name : params.keySet) {
 					val component = params.get(name)
 					if (component instanceof JCheckBox) {
@@ -318,8 +327,9 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 							selected, checkBox.enabled)
 						var Boolean newSelected
 						if (lovs.get(name).size == 1) {
-							newSelected = Generator.BOOLEAN_TRUE.findFirst[it == lovs.get(name).get(0).toLowerCase] !=
-								null
+							newSelected = OddgenGenerator.BOOLEAN_TRUE.findFirst [
+								it == lovs.get(name).get(0).toLowerCase
+							] != null
 							checkBox.enabled = false
 						} else {
 							newSelected = selected
@@ -361,17 +371,17 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 						comboBox.addActionListener(this)
 					}
 				}
-				for (name : states.keySet) {
+				loadParamStates
+				for (name : paramStates.keySet) {
 					val component = params.get(name)
-					if (states.get(name)) {
+					if (paramStates.get(name)) {
 						component.enabled = true
 					} else {
 						component.enabled = false
 					}
 				}
 			} catch (ExceptionInInitializerError e) {
-				// ignore this error, expected during unit tests only
-				Logger.error(this, "refresh failed. OK during unit test.")
+				Logger.error(this, "refresh failed.")
 			}
 		}
 
@@ -406,6 +416,5 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				paneParams.scrollRectToVisible(focused.getBounds)
 			}
 		}
-
 	}
 	

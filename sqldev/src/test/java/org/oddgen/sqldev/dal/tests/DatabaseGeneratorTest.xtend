@@ -15,7 +15,6 @@
  */
 package org.oddgen.sqldev.dal.tests
 
-import java.util.LinkedHashMap
 import java.util.Properties
 import org.junit.AfterClass
 import org.junit.Assert
@@ -57,17 +56,18 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(2, lovs.get("Generate instead-of-trigger?").size)
 		Assert.assertEquals("Yes", lovs.get("Generate instead-of-trigger?").get(0))
 		Assert.assertEquals("No", lovs.get("Generate instead-of-trigger?").get(1))
+		Assert.assertEquals(true, plsqlView.dto.hasRefreshParamStates)
 		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Instead-of-trigger suffix"))
-		Assert.assertFalse(plsqlView.dto.isRefreshable)
+		Assert.assertFalse(plsqlView.dto.hasRefreshLovs)
 	}
 
 	@Test
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.dto.isRefreshable)
+		Assert.assertTrue(dbgen.dto.hasRefreshLovs)
 		var params = dbgen.getParams(dataSource.connection, null, null)
 		var lovs = dbgen.getLovs(dataSource.connection, null, null, params)
 		Assert.assertEquals(2, lovs.get("With grandchildren?").size)
@@ -324,10 +324,16 @@ class DatabaseGeneratorTest {
 			   /**
 			   * Enables/disables co_iot_suffix based on co_gen_iot
 			   *
+			   * @param in_object_type object type to configure the behavior of the generator
+			   * @param in_object_name object_name to configure the behavior of the generator
 			   * @param in_params parameters to configure the behavior of the generator
 			   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+			   *
+			   * @since v0.2
 			   */
-			   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param;
+			   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
+			                                 in_object_name IN VARCHAR2,
+			                                 in_params      IN t_param) RETURN t_param;
 			
 			   /**
 			   * Generates the result.
@@ -448,14 +454,8 @@ class DatabaseGeneratorTest {
 			   -- get_ordered_params
 			   --
 			   FUNCTION get_ordered_params RETURN t_string IS
-			      l_ordered_params t_string;
 			   BEGIN
-			      l_ordered_params := NEW t_string();
-			      l_ordered_params.extend(3);
-			      l_ordered_params(1) := co_view_suffix;
-			      l_ordered_params(2) := co_table_suffix;
-			      l_ordered_params(3) := co_gen_iot;
-			      RETURN l_ordered_params;
+			      RETURN NEW t_string(co_view_suffix, co_table_suffix, co_gen_iot);
 			   END get_ordered_params;
 			
 			   --
@@ -471,8 +471,9 @@ class DatabaseGeneratorTest {
 			   --
 			   -- refresh_param_states
 			   --
-			   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param IS
-			   
+			   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
+			                                 in_object_name IN VARCHAR2,
+			                                 in_params      IN t_param) RETURN t_param IS
 			      l_param_states t_param;
 			   BEGIN
 			      IF in_params(co_gen_iot) = 'Yes' THEN

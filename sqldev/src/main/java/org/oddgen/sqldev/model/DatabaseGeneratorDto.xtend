@@ -15,31 +15,29 @@
  */
 package org.oddgen.sqldev.model
 
-import java.util.HashMap
-import java.util.LinkedHashMap
 import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class DatabaseGeneratorDto extends Generator{
-	/** list of valid object types */
-	List<String> objectTypes
-
-	/** parameters and their default values */
-	LinkedHashMap<String, String> params
-
-	/** list-of-values for params */
-	HashMap<String, List<String>> lovs
-	
-	/** parameter states (enable/disable parameters) */
-	HashMap<String, String> paramStates
-
-	/** indicates if the list-of-values are dependent on current params settings and a refresh is supported */
-	Boolean isRefreshable
-
+class DatabaseGeneratorDto extends AbstractModel {
 	/** PL/SQL package owner */
 	String generatorOwner
 	
-	/** name of the PL/SQL package*/
+	/** PL/SQL package name*/
 	String generatorName
+
+	/** name of the generator */
+	String name
+
+	/** description of the generator */
+	String description
+
+	/** list of valid object types */
+	List<String> objectTypes
+	
+	/** indicates if the generator packages has a refresh_lovs function */
+	Boolean hasRefreshLovs
+	
+	/** indicates if the generator packages has a refresh_param_states function */
+	Boolean hasRefreshParamStates
 }

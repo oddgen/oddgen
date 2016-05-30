@@ -84,10 +84,16 @@ CREATE OR REPLACE PACKAGE teplsql_view IS
    /**
    * Enables/disables co_iot_suffix based on co_gen_iot
    *
+   * @param in_object_type object type to configure the behavior of the generator
+   * @param in_object_name object_name to configure the behavior of the generator
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   *
+   * @since v0.2
    */
-   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param;
+   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
+                                 in_object_name IN VARCHAR2,
+                                 in_params      IN t_param) RETURN t_param;
 
    /**
    * Generates the result.

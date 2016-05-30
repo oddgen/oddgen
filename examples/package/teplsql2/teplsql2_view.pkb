@@ -215,8 +215,9 @@ $end
    --
    -- refresh_param_states
    --
-   FUNCTION refresh_param_states(in_params IN t_param) RETURN t_param IS
-   
+   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
+                                 in_object_name IN VARCHAR2,
+                                 in_params      IN t_param) RETURN t_param IS
       l_param_states t_param;
    BEGIN
       IF in_params(co_gen_iot) = 'Yes' THEN

@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * oddgen PL/SQL data types
    */
    SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-   SUBTYPE param_type IS VARCHAR2(30 CHAR);
+   SUBTYPE param_type IS VARCHAR2(60 CHAR);
    TYPE t_string IS TABLE OF string_type;
    TYPE t_param IS TABLE OF string_type INDEX BY param_type;
    TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
@@ -79,78 +79,55 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * Get all parameters supported by the generator including default values.
    * If this function is not implemented, no parameters will be used.
    *
+   * @param in_object_type bject type to determine default parameter values
+   * @param in_object_name object name to determine default parameter values
    * @returns parameters supported by the generator
    *
-   * @since v0.1
+   * @since v0.2
    */
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param;
 
    /**
    * Get all parameter names in the order to be displayed in the 
    * generate dialog.
    * If this function is not implemented, the parameters are ordered 
-   * implicitly by name. Parameter names returend by this function 
+   * implicitly by name. Parameter names returned by this function 
    * are taking precedence. Remaining parameters are ordered by name.
    *
+   * @param in_object_type object type to determine parameter order
+   * @param in_object_name object name to determine parameter order
    * @returns ordered parameter names
    *
    * @since v0.2
    */
-   FUNCTION get_ordered_params RETURN t_string;
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string;
 
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
+   * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @returns parameters with their list-of-values
-   *
-   * @since v0.1
-   */
-   FUNCTION get_lov RETURN t_lov;
-
-   /**
-   * Updates the list of values per parameter.
-   * This function is called after a parameter change in the GUI.
-   * Do not implement this function, unless you really need it.
-   *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
+   * @param in_object_type object type to determine list of values
+   * @param in_object_name object_name to determine list of values
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their list-of-values
-   *
-   * @since v0.1
-   */
-   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
-                        in_object_name IN VARCHAR2,
-                        in_params      IN t_param) RETURN t_lov;
-
-   /**
-   * Sets/updates the editable state of a parameter. 
-   * This function is called after a parameter change in the GUI.
-   * Call this function to enable/disable a parameter based on other values.
-   * Parameters with a assigned list-of-values are enabled/disabled automatically.
-   * If this function is not implemented, all parameters are enabled.
-   * Do not implement this function, unless you really need it.
-   *
-   * @param in_object_type object type to configure the behavior of the generator
-   * @param in_object_name object_name to configure the behavior of the generator
-   * @param in_params parameters to configure the behavior of the generator
-   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
    *
    * @since v0.2
    */
-   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
-                                 in_object_name IN VARCHAR2,
-                                 in_params      IN t_param) RETURN t_param;
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov;
 
    /**
    * Generates the result.
    * Complete signature. 
    * Either this signature or the simplified signature or both must be implemented.
    *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_object_type object type to generate code for
+   * @param in_object_name object_name of in_object_type to generate code for
+   * @param in_params parameters to customize the code generation
    * @returns generator output
    *
    * @since v0.1

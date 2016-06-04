@@ -19,7 +19,7 @@ import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
-class DatabaseGeneratorDto extends AbstractModel {
+class DatabaseGeneratorMetaData extends AbstractModel {
 	/** PL/SQL package owner */
 	String generatorOwner
 	

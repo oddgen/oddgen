@@ -34,7 +34,7 @@ class DatabaseGeneratorTest {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgens = dao.findAll
 		val plsqlView = dbgens.findFirst [
-			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_VIEW"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_VIEW"
 		]
 		Assert.assertEquals("1:1 View (PL/SQL)", plsqlView.getName(dataSource.connection))
 		Assert.assertEquals(
@@ -56,18 +56,18 @@ class DatabaseGeneratorTest {
 		Assert.assertEquals(2, lovs.get("Generate instead-of-trigger?").size)
 		Assert.assertEquals("Yes", lovs.get("Generate instead-of-trigger?").get(0))
 		Assert.assertEquals("No", lovs.get("Generate instead-of-trigger?").get(1))
-		Assert.assertEquals(true, plsqlView.dto.hasRefreshParamStates)
+		Assert.assertEquals(true, plsqlView.getMetaData.hasRefreshParamStates)
 		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Instead-of-trigger suffix"))
-		Assert.assertFalse(plsqlView.dto.hasRefreshLovs)
+		Assert.assertFalse(plsqlView.getMetaData.hasRefreshLovs)
 	}
 
 	@Test
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.dto.hasRefreshLovs)
+		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_DUMMY']
+		Assert.assertTrue(dbgen.getMetaData.hasRefreshLovs)
 		var params = dbgen.getParams(dataSource.connection, null, null)
 		var lovs = dbgen.getLovs(dataSource.connection, null, null, params)
 		Assert.assertEquals(2, lovs.get("With grandchildren?").size)
@@ -82,7 +82,7 @@ class DatabaseGeneratorTest {
 	@Test
 	def generateTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
+		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_DUMMY']
 		val expected = '''
 			Object type: TABLE
 			Object name: SOME_TABLE
@@ -100,7 +100,7 @@ class DatabaseGeneratorTest {
 	def generateHelloWorldTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == 'PLSQL_HELLO_WORLD'
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == 'PLSQL_HELLO_WORLD'
 		]
 		val expected = '''
 			BEGIN
@@ -116,9 +116,9 @@ class DatabaseGeneratorTest {
 	def generateErrorTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == 'PLSQL_HELLO_WORLD'
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == 'PLSQL_HELLO_WORLD'
 		]
-		dbgen.dto.generatorName = 'NON_EXISTING_PACKAGE'
+		dbgen.getMetaData.generatorName = 'NON_EXISTING_PACKAGE'
 		val expected = '''
 			Failed to generate code for TYPE.NAME via ODDGEN.NON_EXISTING_PACKAGE. Got the following error: ORA-06550: line 4, column 14:
 			PLS-00201: identifier 'ODDGEN.NON_EXISTING_PACKAGE' must be declared

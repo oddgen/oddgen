@@ -27,7 +27,6 @@ import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.sqldev.generators.DatabaseGenerator
-import org.oddgen.sqldev.model.DatabaseGeneratorDto
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -35,6 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 
 @Loggable
 class DatabaseGeneratorDao {
@@ -50,38 +50,38 @@ class DatabaseGeneratorDao {
 		this.dalTools = new DalTools(conn)
 	}
 
-	def private setName(DatabaseGeneratorDto dto) {
+	def private setName(DatabaseGeneratorMetaData metaData) {
 		val plsql = '''
 			BEGIN
-				? := «dto.generatorOwner».«dto.generatorName».get_name();
+				? := «metaData.generatorOwner».«metaData.generatorName».get_name();
 			END;
 		'''
-		dto.name = plsql.string
-		if (dto.name == null) {
-			dto.name = '''«dto.generatorOwner».«dto.generatorName»'''
+		metaData.name = plsql.string
+		if (metaData.name == null) {
+			metaData.name = '''«metaData.generatorOwner».«metaData.generatorName»'''
 		}
 	}
 
-	def private setDescription(DatabaseGeneratorDto dto) {
+	def private setDescription(DatabaseGeneratorMetaData metaData) {
 		val plsql = '''
 			BEGIN
-				? := «dto.generatorOwner».«dto.generatorName».get_description();
+				? := «metaData.generatorOwner».«metaData.generatorName».get_description();
 			END;
 		'''
-		dto.description = plsql.string
-		if (dto.description == null) {
-			dto.description = dto.name
+		metaData.description = plsql.string
+		if (metaData.description == null) {
+			metaData.description = metaData.name
 		}
 	}
 
-	def private setObjectTypes(DatabaseGeneratorDto dto) {
+	def private setObjectTypes(DatabaseGeneratorMetaData metaData) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_types «dto.generatorOwner».«dto.generatorName».t_string;
+			   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
-			   l_types := «dto.generatorOwner».«dto.generatorName».get_object_types();
+			   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_types.count
 			   LOOP
@@ -91,29 +91,29 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		dto.objectTypes = new ArrayList<String>()
+		metaData.objectTypes = new ArrayList<String>()
 		val doc = plsql.doc
 		if (doc == null) {
-			dto.objectTypes.add("TABLE")
-			dto.objectTypes.add("VIEW")
+			metaData.objectTypes.add("TABLE")
+			metaData.objectTypes.add("VIEW")
 		} else {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
 				val type = value.textContent
-				dto.objectTypes.add(type)
+				metaData.objectTypes.add(type)
 			}
 		}
 	}
 
-	def private List<String> getOrderedParams(DatabaseGeneratorDto dto) {
+	def private List<String> getOrderedParams(DatabaseGeneratorMetaData metaData) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_ordered_params «dto.generatorOwner».«dto.generatorName».t_string;
+			   l_ordered_params «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob           CLOB;
 			BEGIN
-			   l_ordered_params := «dto.generatorOwner».«dto.generatorName».get_ordered_params();
+			   l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_ordered_params.count
 			   LOOP
@@ -136,20 +136,20 @@ class DatabaseGeneratorDao {
 		return orderedParams
 	}
 
-	def getParams(DatabaseGeneratorDto dto) {
+	def getParams(DatabaseGeneratorMetaData metaData) {
 		// initialize Parameters in the requested order
 		val params = new LinkedHashMap<String, String>()
-		for (param : getOrderedParams(dto)) {
+		for (param : getOrderedParams(metaData)) {
 			params.put(param, "")
 		}
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params «dto.generatorOwner».«dto.generatorName».t_param;
-			   l_key    «dto.generatorOwner».«dto.generatorName».param_type;
+			   l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   l_key    «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   l_clob   CLOB;
 			BEGIN
-			   l_params := «dto.generatorOwner».«dto.generatorName».get_params();
+			   l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   l_key    := l_params.first;
 			   l_clob   := '<params>';
 			   WHILE l_key IS NOT NULL
@@ -197,16 +197,16 @@ class DatabaseGeneratorDao {
 		return lovs
 	}
 
-	def getLovs(DatabaseGeneratorDto dto) {
+	def getLovs(DatabaseGeneratorMetaData metaData) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_lovs «dto.generatorOwner».«dto.generatorName».t_lov;
-			   l_key  «dto.generatorOwner».«dto.generatorName».param_type;
-			   l_lov  «dto.generatorOwner».«dto.generatorName».t_string;
+			   l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
+			   l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob CLOB;
 			BEGIN
-			   l_lovs := «dto.generatorOwner».«dto.generatorName».get_lov();
+			   l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   l_key  := l_lovs.first;
 			   l_clob := '<lovs>';
 			   WHILE l_key IS NOT NULL
@@ -229,21 +229,21 @@ class DatabaseGeneratorDao {
 		return getLovs(lovs, doc)
 	}
 
-	def getLovs(DatabaseGeneratorDto dto, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	def getLovs(DatabaseGeneratorMetaData metaData, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		// convert PL/SQL associative array to XML
 		// pass current parameter values as PL/SQL code
 		val plsql = '''
 			DECLARE
-			   l_params «dto.generatorOwner».«dto.generatorName».t_param;
-			   l_lovs   «dto.generatorOwner».«dto.generatorName».t_lov;
-			   l_key    «dto.generatorOwner».«dto.generatorName».param_type;
-			   l_lov    «dto.generatorOwner».«dto.generatorName».t_string;
+			   l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   l_lovs   «metaData.generatorOwner».«metaData.generatorName».t_lov;
+			   l_key    «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   l_lov    «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
 			   «FOR key : params.keySet»
 			   	l_params('«key»') := '«params.get(key)»';
 			   «ENDFOR»
-			   l_lovs := «dto.generatorOwner».«dto.generatorName».refresh_lov(
+			   l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(
 			                in_object_type => '«objectType»',
 			                in_object_name => '«objectName»',
 			                in_params      => l_params
@@ -270,20 +270,20 @@ class DatabaseGeneratorDao {
 		return getLovs(lovs, doc)
 	}
 
-	def getParamStates(DatabaseGeneratorDto dto, String objectType, String objectName,
+	def getParamStates(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params       «dto.generatorOwner».«dto.generatorName».t_param;
-			   l_param_states «dto.generatorOwner».«dto.generatorName».t_param;
-			   l_key          «dto.generatorOwner».«dto.generatorName».param_type;
+			   l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   l_clob         CLOB;
 			BEGIN
 			   «FOR key : params.keySet»
 			   	l_params('«key»') := '«params.get(key)»';
 			   «ENDFOR»
-			   l_param_states := «dto.generatorOwner».«dto.generatorName».refresh_param_states(
+			   l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
 			   			            in_object_type => '«objectType»',
 			   			            in_object_name => '«objectName»',
 			   			            in_params      => l_params
@@ -314,25 +314,25 @@ class DatabaseGeneratorDao {
 		return paramStates
 	}
 
-	def private setHasRefreshLovs(DatabaseGeneratorDto dto) {
+	def private setHasRefreshLovs(DatabaseGeneratorMetaData metaData) {
 		val sql = '''
 			SELECT COUNT(*)
 			  FROM (SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 0
 			               AND in_out = 'OUT'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dto.generatorOwner»'
-			               AND type_name = '«dto.generatorName»'
+			               AND type_owner = '«metaData.generatorOwner»'
+			               AND type_name = '«metaData.generatorName»'
 			               AND type_subname = 'T_LOV'
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 1
 			               AND in_out = 'IN'
@@ -341,8 +341,8 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 2
 			               AND in_out = 'IN'
@@ -351,44 +351,44 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_LOV'
 			               AND position = 3
 			               AND in_out = 'IN'
 			               AND argument_name = 'IN_PARAMS'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dto.generatorOwner»'
-			               AND type_name = '«dto.generatorName»'
+			               AND type_owner = '«metaData.generatorOwner»'
+			               AND type_name = '«metaData.generatorName»'
 			               AND type_subname = 'T_PARAM')
 		'''
 		val count = jdbcTemplate.queryForObject(sql, Integer)
 		if (count == 4) {
-			dto.hasRefreshLovs = true
+			metaData.hasRefreshLovs = true
 		} else {
-			dto.hasRefreshLovs = false
+			metaData.hasRefreshLovs = false
 		}
 	}
 
-	def private setHasRefreshParamStates(DatabaseGeneratorDto dto) {
+	def private setHasRefreshParamStates(DatabaseGeneratorMetaData metaData) {
 		val sql = '''
 			SELECT COUNT(*)
 			  FROM (SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_PARAM_STATES'
 			               AND position = 0
 			               AND in_out = 'OUT'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dto.generatorOwner»'
-			               AND type_name = '«dto.generatorName»'
+			               AND type_owner = '«metaData.generatorOwner»'
+			               AND type_name = '«metaData.generatorName»'
 			               AND type_subname = 'T_PARAM'
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_PARAM_STATES'
 			               AND position = 1
 			               AND in_out = 'IN'
@@ -397,8 +397,8 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_PARAM_STATES'
 			               AND position = 2
 			               AND in_out = 'IN'
@@ -407,22 +407,22 @@ class DatabaseGeneratorDao {
 			        UNION ALL
 			        SELECT *
 			          FROM all_arguments
-			         WHERE owner = '«dto.generatorOwner»'
-			               AND package_name = '«dto.generatorName»'
+			         WHERE owner = '«metaData.generatorOwner»'
+			               AND package_name = '«metaData.generatorName»'
 			               AND object_name = 'REFRESH_PARAM_STATES'
 			               AND position = 3
 			               AND in_out = 'IN'
 			               AND argument_name = 'IN_PARAMS'
 			               AND data_type = 'PL/SQL TABLE'
-			               AND type_owner = '«dto.generatorOwner»'
-			               AND type_name = '«dto.generatorName»'
+			               AND type_owner = '«metaData.generatorOwner»'
+			               AND type_name = '«metaData.generatorName»'
 			               AND type_subname = 'T_PARAM')
 		'''
 		val count = jdbcTemplate.queryForObject(sql, Integer)
 		if (count == 4) {
-			dto.hasRefreshParamStates = true
+			metaData.hasRefreshParamStates = true
 		} else {
-			dto.hasRefreshParamStates = false
+			metaData.hasRefreshParamStates = false
 		}
 	}
 
@@ -485,27 +485,27 @@ class DatabaseGeneratorDao {
 			 GROUP BY owner, object_name
 			 ORDER BY owner, object_name
 		'''
-		val dtos = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGeneratorDto>(DatabaseGeneratorDto))
+		val metaDatas = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGeneratorMetaData>(org.oddgen.sqldev.model.DatabaseGeneratorMetaData))
 		val dbgens = new ArrayList<DatabaseGenerator>()
-		for (dto : dtos) {
-			dto.setName
-			dto.setDescription
-			dto.setObjectTypes
-			dto.setHasRefreshLovs
-			dto.setHasRefreshParamStates
-			val dbgen = new DatabaseGenerator(dto)
+		for (metaData : metaDatas) {
+			metaData.setName
+			metaData.setDescription
+			metaData.setObjectTypes
+			metaData.setHasRefreshLovs
+			metaData.setHasRefreshParamStates
+			val dbgen = new DatabaseGenerator(metaData)
 			dbgens.add(dbgen)
 		}
 		return dbgens
 	}
 
-	def String generate(DatabaseGeneratorDto dto, String objectType, String objectName,
+	def String generate(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		depth++
 		val plsql = '''
 			DECLARE
 			   «IF params != null && params.size > 0»
-			   	l_params «dto.generatorOwner».«dto.generatorName».t_param;
+			   	l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
@@ -514,7 +514,7 @@ class DatabaseGeneratorDao {
 			   		l_params('«key»') := '«params.get(key)»';
 			   	«ENDFOR»
 			   «ENDIF»
-			   l_clob := «dto.generatorOwner».«dto.generatorName».generate(
+			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
 			                  in_object_type => '«objectType»'
 			                , in_object_name => '«objectName»'
 			                «IF params != null && params.size > 0»
@@ -538,10 +538,10 @@ class DatabaseGeneratorDao {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded
 				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = generate(dto, objectType, objectName,
+				result = generate(metaData, objectType, objectName,
 					params)
 			} else {
-				result = '''Failed to generate code for «objectType».«objectName» via «dto.generatorOwner».«dto.generatorName». Got the following error: «e.cause?.message»'''
+				result = '''Failed to generate code for «objectType».«objectName» via «metaData.generatorOwner».«metaData.generatorName». Got the following error: «e.cause?.message»'''
 				Logger.error(this, plsql + result)
 			}
 		} finally {

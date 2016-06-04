@@ -22,30 +22,30 @@ import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.ObjectNameDao
-import org.oddgen.sqldev.model.DatabaseGeneratorDto
 import org.oddgen.sqldev.model.ObjectType
+import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 
 class DatabaseGenerator implements OddgenGenerator {
-	var DatabaseGeneratorDto dto
+	var DatabaseGeneratorMetaData metaData
 
-	new(DatabaseGeneratorDto dto) {
-		this.dto = dto
+	new(DatabaseGeneratorMetaData metaData) {
+		this.metaData = metaData
 	}
 
-	def getDto() {
-		return dto
+	def getMetaData() {
+		return metaData
 	}
 
 	override getName(Connection conn) {
-		return dto.name
+		return metaData.name
 	}
 
 	override getDescription(Connection conn) {
-		return dto.description
+		return metaData.description
 	}
 
 	override getObjectTypes(Connection conn) {
-		return dto.objectTypes
+		return metaData.objectTypes
 	}
 
 	override getObjectNames(Connection conn, String objectType) {
@@ -62,16 +62,16 @@ class DatabaseGenerator implements OddgenGenerator {
 
 	override getParams(Connection conn, String objectType, String objectName) {
 		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getParams(dto)
+		return dao.getParams(metaData)
 	}
 
 	override getLovs(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
 		var HashMap<String, List<String>> lovs
-		if (dto.hasRefreshLovs) {
-			lovs = dao.getLovs(dto, objectType, objectName, params)
+		if (metaData.hasRefreshLovs) {
+			lovs = dao.getLovs(metaData, objectType, objectName, params)
 		} else {
-			lovs = dao.getLovs(dto)
+			lovs = dao.getLovs(metaData)
 		}
 		return lovs
 	}
@@ -79,7 +79,7 @@ class DatabaseGenerator implements OddgenGenerator {
 	override getParamStates(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
-		val HashMap<String, String> paramStates = if(dto.hasRefreshParamStates) dao.getParamStates(dto, objectType,
+		val HashMap<String, String> paramStates = if(metaData.hasRefreshParamStates) dao.getParamStates(metaData, objectType,
 				objectName, params) else new HashMap<String, String>()
 		val result = new HashMap<String, Boolean>()
 		for (p : paramStates.keySet) {
@@ -90,6 +90,6 @@ class DatabaseGenerator implements OddgenGenerator {
 
 	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generate(dto, objectType, objectName, params)
+		return dao.generate(metaData, objectType, objectName, params)
 	}
 }

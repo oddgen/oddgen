@@ -62,10 +62,10 @@ class ObjectNameDao {
 		// convert PL/SQL nested table XML
 		val plsql = '''
 			DECLARE
-			   l_names «dbgen.dto.generatorOwner».«dbgen.dto.generatorName».t_string;
+			   l_names «dbgen.getMetaData.generatorOwner».«dbgen.getMetaData.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
-			   l_names := «dbgen.dto.generatorOwner».«dbgen.dto.generatorName».get_object_names(in_object_type => '«objectType.name»');
+			   l_names := «dbgen.getMetaData.generatorOwner».«dbgen.getMetaData.generatorName».get_object_names(in_object_type => '«objectType.name»');
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_names.count
 			   LOOP

@@ -48,7 +48,7 @@ class ObjectNameTest {
 		val gendao = new DatabaseGeneratorDao(dataSource.connection)
 		val namedao = new ObjectNameDao(dataSource.connection)
 		val dbgen = gendao.findAll.findFirst [
-			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_DUMMY"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
 		]
 		val objectType = new ObjectType()
 		objectType.name = "TABLE"
@@ -65,7 +65,7 @@ class ObjectNameTest {
 		val gendao = new DatabaseGeneratorDao(dataSource.connection)
 		val namedao = new ObjectNameDao(dataSource.connection)
 		val dbgen = gendao.findAll.findFirst [
-			it.dto.generatorOwner == dataSource.username.toUpperCase && it.dto.generatorName == "PLSQL_DUMMY_DEFAULT"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
 		val objectType = new ObjectType()
 		objectType.name = "TABLE"

@@ -62,7 +62,7 @@ class GenerateDialogRefreshLovTest {
 			@Test
 			def void refreshLovTest() {
 				val dao = new DatabaseGeneratorDao(dataSource.connection)
-				val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_DUMMY']
+				val dbgen = dao.findAll.findFirst[it.metaData.generatorName == 'PLSQL_DUMMY']
 				val gensel = new GeneratorSelection()
 				val type = new ObjectType()
 				type.generator = dbgen

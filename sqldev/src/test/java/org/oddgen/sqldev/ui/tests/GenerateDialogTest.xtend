@@ -70,7 +70,7 @@ class GenerateDialogTest {
 	@Test
 	def void layoutTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val dbgen = dao.findAll.findFirst[it.dto.generatorName == 'PLSQL_VIEW']
+		val dbgen = dao.findAll.findFirst[it.metaData.generatorName == 'PLSQL_VIEW']
 		val gensel1 = getDatabaseSelection(dbgen, "TABLE", "EMP")
 		val gensel2 = getDatabaseSelection(dbgen, "TABLE", "DEPT")
 		val gens = new ArrayList<GeneratorSelection>()

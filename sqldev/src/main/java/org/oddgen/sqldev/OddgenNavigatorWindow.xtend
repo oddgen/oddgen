@@ -155,17 +155,11 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		try {
 			val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
 			val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)
-			Logger.debug(this, "connectionInfo %s.", connectionInfo)
-			Logger.debug(this, "isConnectionOpen %s.", alreadyOpen)
 			val connName = connectionInfo.getProperty("ConnName")
 			if (alreadyOpen) {
-				Logger.debug(this, "connection %s is already open.", connName)
 				conn = Connections.instance.getConnection(connectionName)
 				Logger.debug(this, "connection %s reused.", connName)
 			} else {
-				Logger.debug(this, "connection %s is closed", connName)
-				Logger.debug(this, "opening connection to %s, will prompt for password if password is not stored...",
-					connName)
 				conn = Connections.instance.getConnection(connectionName)
 				Logger.debug(this, "connected to %s.", connName)
 			}

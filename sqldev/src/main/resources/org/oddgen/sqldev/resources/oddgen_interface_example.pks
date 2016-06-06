@@ -119,6 +119,22 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    FUNCTION get_lov(in_object_type IN VARCHAR2,
                     in_object_name IN VARCHAR2,
                     in_params      IN t_param) RETURN t_lov;
+                    
+  /**
+   * Get parameter states (enabled/disabled)
+   * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
+   * This function is called when showing the generate dialog and after updating a parameter.
+   *
+   * @param in_object_type object type to determine parameter state
+   * @param in_object_name object_name to determine parameter state
+   * @param in_params parameters to configure the behavior of the generator
+   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   *
+   * @since v0.2
+   */
+   FUNCTION get_param_states(in_object_type IN VARCHAR2,
+                             in_object_name IN VARCHAR2,
+                             in_params      IN t_param) RETURN t_param;                   
 
    /**
    * Generates the result.

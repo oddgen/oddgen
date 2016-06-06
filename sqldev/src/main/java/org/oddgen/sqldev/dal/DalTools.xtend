@@ -17,6 +17,7 @@ package org.oddgen.sqldev.dal
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
+import java.io.StringReader
 import java.sql.CallableStatement
 import java.sql.Clob
 import java.sql.Connection
@@ -85,7 +86,7 @@ class DalTools {
 		depth++
 		var Document doc = null
 		try {
-			val paramsClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
+			val resultClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
 				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
 					cs.registerOutParameter(1, Types.CLOB);
 					cs.execute
@@ -93,7 +94,8 @@ class DalTools {
 				}
 			})
 			val docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
-			doc = docBuilder.parse(new InputSource(paramsClob.characterStream))
+			val resultString = resultClob.getSubString(1, resultClob.length as int)
+			doc = docBuilder.parse(new InputSource(new StringReader(resultString)))
 		} catch (BadSqlGrammarException e) {
 			if (e.cause.message.contains("PLS-00302")) {
 				// catch component must be declared error

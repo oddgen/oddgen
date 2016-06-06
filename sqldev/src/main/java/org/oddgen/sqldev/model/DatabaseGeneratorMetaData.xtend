@@ -15,7 +15,6 @@
  */
 package org.oddgen.sqldev.model
 
-import java.util.List
 import org.eclipse.xtend.lib.annotations.Accessors
 
 @Accessors
@@ -31,10 +30,49 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 
 	/** description of the generator */
 	String description
-
-	/** indicates if the generator packages has a refresh_lovs function */
-	Boolean hasRefreshLovs
 	
-	/** indicates if the generator packages has a refresh_param_states function */
+	/** indicates if the generator package has a generate function with all 3 input parameters */
+	Boolean hasGenerate1
+
+	/** indicates if the generator package has a generate function with all 2 input parameters */
+	Boolean hasGenerate2
+
+	/** indicates if the generator package has a get_name function */
+	Boolean hasGetName
+	
+	/** indicates if the generator package has a get_description function */
+	Boolean hasGetDescription
+
+	/** indicates if the generator package has a get_objectTypes function */
+	Boolean hasGetObjectTypes
+
+	/** indicates if the generator package has a get_objectNames function */
+	Boolean hasGetObjectNames
+
+	/** indicates if the generator package has a get_params function without input parameters */
+	Boolean hasGetParams1
+
+	/** indicates if the generator package has a get_params function with 2 input parameters */
+	Boolean hasGetParams2
+
+	/** indicates if the generator package has a get_ordered_params function without parameters */
+	Boolean hasGetOrderedParams1
+
+	/** indicates if the generator package has a get_ordered_params function with 2 input parameters */
+	Boolean hasGetOrderedParams2
+
+	/** indicates if the generator package has a get_lov function without parameters */
+	Boolean hasGetLov1
+
+	/** indicates if the generator package has a get_lov function with 3 input parameters */
+	Boolean hasGetLov2
+
+	/** indicates if the generator package has a refresh_lov function */
+	Boolean hasRefreshLov
+	
+	/** indicates if the generator package has a get_param_states function */
+	Boolean hasGetParamStates
+	
+	/** indicates if the generator package has a refresh_param_states function */
 	Boolean hasRefreshParamStates
 }

@@ -20,7 +20,6 @@ import java.sql.Connection
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
-import java.util.List
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.ObjectNameDao
@@ -66,18 +65,12 @@ class DatabaseGenerator implements OddgenGenerator {
 
 	override getParams(Connection conn, String objectType, String objectName) {
 		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getParams(metaData)
+		return dao.getParams(metaData, objectType, objectName)
 	}
 
 	override getLovs(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
-		var HashMap<String, List<String>> lovs
-		if (metaData.hasRefreshLovs) {
-			lovs = dao.getLovs(metaData, objectType, objectName, params)
-		} else {
-			lovs = dao.getLovs(metaData)
-		}
-		return lovs
+		return dao.getLovs(metaData, objectType, objectName, params)
 	}
 
 	override getParamStates(Connection conn, String objectType, String objectName,

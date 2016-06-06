@@ -60,14 +60,14 @@ class DatabaseGeneratorTest {
 		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Instead-of-trigger suffix"))
-		Assert.assertFalse(plsqlView.getMetaData.hasRefreshLovs)
+		Assert.assertFalse(plsqlView.getMetaData.hasRefreshLov)
 	}
 
 	@Test
 	def refreshLovTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_DUMMY']
-		Assert.assertTrue(dbgen.getMetaData.hasRefreshLovs)
+		Assert.assertTrue(dbgen.getMetaData.hasRefreshLov)
 		var params = dbgen.getParams(dataSource.connection, null, null)
 		var lovs = dbgen.getLovs(dataSource.connection, null, null, params)
 		Assert.assertEquals(2, lovs.get("With grandchildren?").size)

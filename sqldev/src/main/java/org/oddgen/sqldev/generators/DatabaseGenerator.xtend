@@ -45,7 +45,8 @@ class DatabaseGenerator implements OddgenGenerator {
 	}
 
 	override getObjectTypes(Connection conn) {
-		return metaData.objectTypes
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getObjectTypes(metaData)
 	}
 
 	override getObjectNames(Connection conn, String objectType) {

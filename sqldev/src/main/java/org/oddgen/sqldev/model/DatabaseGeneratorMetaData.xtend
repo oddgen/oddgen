@@ -32,9 +32,6 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	/** description of the generator */
 	String description
 
-	/** list of valid object types */
-	List<String> objectTypes
-	
 	/** indicates if the generator packages has a refresh_lovs function */
 	Boolean hasRefreshLovs
 	

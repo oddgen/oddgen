@@ -74,7 +74,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
-	def private setObjectTypes(DatabaseGeneratorMetaData metaData) {
+	def getObjectTypes(DatabaseGeneratorMetaData metaData) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -91,19 +91,20 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		metaData.objectTypes = new ArrayList<String>()
+		val objectTypes = new ArrayList<String>()
 		val doc = plsql.doc
 		if (doc == null) {
-			metaData.objectTypes.add("TABLE")
-			metaData.objectTypes.add("VIEW")
+			objectTypes.add("TABLE")
+			objectTypes.add("VIEW")
 		} else {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
 				val type = value.textContent
-				metaData.objectTypes.add(type)
+				objectTypes.add(type)
 			}
 		}
+		return objectTypes
 	}
 
 	def private List<String> getOrderedParams(DatabaseGeneratorMetaData metaData) {
@@ -490,7 +491,6 @@ class DatabaseGeneratorDao {
 		for (metaData : metaDatas) {
 			metaData.setName
 			metaData.setDescription
-			metaData.setObjectTypes
 			metaData.setHasRefreshLovs
 			metaData.setHasRefreshParamStates
 			val dbgen = new DatabaseGenerator(metaData)

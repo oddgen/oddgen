@@ -23,7 +23,7 @@ import oracle.ide.docking.DockableFactory
 import oracle.ide.docking.DockingParam
 import oracle.ide.layout.ViewId
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class OddgenDockableFactory implements DockableFactory {
 
 	private OddgenNavigatorWindow dockable

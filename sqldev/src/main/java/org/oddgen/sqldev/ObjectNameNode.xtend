@@ -15,11 +15,13 @@
  */
 package org.oddgen.sqldev
 
+import com.jcabi.aspects.Loggable
 import java.net.URL
 import oracle.ide.model.DefaultContainer
 import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.resources.OddgenResources
 
+@Loggable(LoggableConstants.DEBUG)
 class ObjectNameNode extends DefaultContainer {
 	private ObjectName objectName
 	private String displayName

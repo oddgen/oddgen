@@ -77,6 +77,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		return gens
 	}
 
+	@Loggable
 	def generateToString(List<GeneratorSelection> gens, Connection conn) {
 		var String result;
 		val gui = OddgenNavigatorManager.instance.navigatorWindow.GUI

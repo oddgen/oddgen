@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev
 
+import com.jcabi.aspects.Loggable
 import java.net.URL
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
@@ -24,6 +25,7 @@ import org.oddgen.sqldev.generators.OddgenGenerator
 import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.resources.OddgenResources
 
+@Loggable(LoggableConstants.DEBUG)
 class GeneratorNode extends DefaultContainer {
 	private OddgenGenerator generator
 

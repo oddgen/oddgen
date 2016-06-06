@@ -28,7 +28,7 @@ import oracle.ide.layout.ViewId
 import oracle.ideri.navigator.DefaultNavigatorManager
 import oracle.ideri.navigator.DefaultNavigatorWindow
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class OddgenNavigatorManager extends DefaultNavigatorManager {
 	public static final String NAVIGATOR_WINDOW_ID = "ODDGEN_NAVIGATOR_WINDOW"
 
@@ -44,7 +44,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	def static OddgenNavigatorManager getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new OddgenNavigatorManager
-			Logger.info(DefaultNavigatorManager, "OddgenNavigatorManager initialized")
+			Logger.debug(DefaultNavigatorManager, "OddgenNavigatorManager initialized")
 		}
 		return INSTANCE
 	}

@@ -18,6 +18,7 @@ package org.oddgen.sqldev.dal
 import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
+import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
@@ -25,7 +26,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Element
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class ObjectNameDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate

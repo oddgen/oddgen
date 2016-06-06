@@ -24,7 +24,7 @@ import java.util.Arrays
 import java.util.LinkedList
 import javax.swing.JTree
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class TreeUtils {
 	def static immatateDblClick(Component paramComponent) {
 		immatateDblClick(findTree(paramComponent))

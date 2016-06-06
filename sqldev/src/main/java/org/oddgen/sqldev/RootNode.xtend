@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev
 
+import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.io.IOException
 import javax.swing.JTree
@@ -28,6 +29,7 @@ import oracle.ideimpl.explorer.ExplorerNode
 import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
+@Loggable(LoggableConstants.DEBUG)
 class RootNode extends DefaultContainer {
 	private static String ROOT_NODE_NAME = OddgenResources.getString("ROOT_NODE_LONG_LABEL")
 	private static String CLIENT_GEN_NAME = OddgenResources.getString("CLIENT_GEN_NODE_LONG_LABEL")

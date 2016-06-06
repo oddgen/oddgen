@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev
 
+import com.jcabi.aspects.Loggable
 import java.net.URL
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
@@ -24,6 +25,7 @@ import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.resources.OddgenResources
 
+@Loggable(LoggableConstants.DEBUG)
 class ObjectTypeNode extends DefaultContainer {
 	private ObjectType objectType
 	private String displayName

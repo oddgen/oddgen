@@ -21,7 +21,7 @@ import oracle.ide.Context
 import oracle.ide.controller.ContextMenu
 import oracle.ide.controller.ContextMenuListener
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class OddgenNavigatorContextMenu implements ContextMenuListener {
 
 	private static OddgenNavigatorContextMenu INSTANCE

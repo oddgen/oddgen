@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev
 
+import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.net.URL
 import javax.swing.tree.TreePath
@@ -26,6 +27,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
+@Loggable(LoggableConstants.DEBUG)
 class GeneratorFolderNode extends DefaultContainer {
 	GeneratorFolder folder;
 
@@ -54,6 +56,7 @@ class GeneratorFolderNode extends DefaultContainer {
 		return folder
 	}
 
+	@Loggable
 	def void openBackground() {
 		if (this == RootNode.instance.dbServerGenerators) {
 			val folder = RootNode.instance.dbServerGenerators
@@ -62,7 +65,7 @@ class GeneratorFolderNode extends DefaultContainer {
 			if (conn != null) {
 				val dao = new DatabaseGeneratorDao(conn)
 				val dbgens = dao.findAll
-				Logger.debug(this, "discovered %d database generators", dbgens.size)
+				Logger.info(this, "discovered %d database generators", dbgens.size)
 				for (dbgen : dbgens) {
 					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
 					folder.add(node)

@@ -26,7 +26,9 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -34,9 +36,8 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class DatabaseGeneratorDao {
 	private static int MAX_DEPTH = 2
 	private int depth = 0
@@ -427,6 +428,7 @@ class DatabaseGeneratorDao {
 		}
 	}
 
+	@Loggable
 	def findAll() {
 		// uses Oracle dictionary structure as of 9.2.0.8
 		val sql = '''
@@ -486,7 +488,7 @@ class DatabaseGeneratorDao {
 			 GROUP BY owner, object_name
 			 ORDER BY owner, object_name
 		'''
-		val metaDatas = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGeneratorMetaData>(org.oddgen.sqldev.model.DatabaseGeneratorMetaData))
+		val metaDatas = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DatabaseGeneratorMetaData>(DatabaseGeneratorMetaData))
 		val dbgens = new ArrayList<DatabaseGenerator>()
 		for (metaData : metaDatas) {
 			metaData.setName

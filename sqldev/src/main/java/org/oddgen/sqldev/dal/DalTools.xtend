@@ -23,6 +23,7 @@ import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Types
 import javax.xml.parsers.DocumentBuilderFactory
+import org.oddgen.sqldev.LoggableConstants
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.BadSqlGrammarException
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -31,7 +32,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class DalTools {
 	private static int MAX_DEPTH = 2
 	private int depth = 0

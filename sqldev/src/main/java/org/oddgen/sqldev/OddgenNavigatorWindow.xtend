@@ -39,7 +39,7 @@ import oracle.javatools.ui.table.ToolbarButton
 import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionListener, ConnectionDisconnectListener {
 	private Component gui
 	private ContextMenu contextMenu
@@ -152,19 +152,21 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 
 	def getConnection() {
 		var Connection conn = null
-		try {
-			val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
-			val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)
-			val connName = connectionInfo.getProperty("ConnName")
-			if (alreadyOpen) {
-				conn = Connections.instance.getConnection(connectionName)
-				Logger.debug(this, "connection %s reused.", connName)
-			} else {
-				conn = Connections.instance.getConnection(connectionName)
-				Logger.debug(this, "connected to %s.", connName)
+		if (connectionName != null) {
+			try {
+				val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
+				val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)
+				val connName = connectionInfo.getProperty("ConnName")
+				if (alreadyOpen) {
+					conn = Connections.instance.getConnection(connectionName)
+					Logger.debug(this, "connection %s reused.", connName)
+				} else {
+					conn = Connections.instance.getConnection(connectionName)
+					Logger.debug(this, "connected to %s.", connName)
+				}
+			} catch (Exception e) {
+				Logger.error(this, "Cannot open/refresh connection to %1$s. Got error %2$s.", connectionName, e.message)
 			}
-		} catch (Exception e) {
-			Logger.error(this, "Cannot open/refresh connection to %1$s. Got error %2$s.", connectionName, e.message)
 		}
 		return conn
 	}

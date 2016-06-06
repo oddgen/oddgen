@@ -15,16 +15,19 @@
  */
 package org.oddgen.sqldev.generators
 
+import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.ObjectNameDao
-import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
+import org.oddgen.sqldev.model.ObjectType
 
+@Loggable(LoggableConstants.DEBUG)
 class DatabaseGenerator implements OddgenGenerator {
 	var DatabaseGeneratorMetaData metaData
 

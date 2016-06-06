@@ -24,7 +24,7 @@ import oracle.javatools.ui.layout.FieldLayoutBuilder
 import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
 
-@Loggable
+@Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
 	final JCheckBox discoverPlsqlGeneratorsCheckBox = new JCheckBox()
 

@@ -92,6 +92,7 @@ class DatabaseGeneratorTest {
 	
 		val params = dbgen.getParams(dataSource.connection, null, null)
 		params.put("dummy","value")
+		// ignore "ORA-01403: no data found" caused by missing params 
 		val generated = dbgen.generate(dataSource.connection, "TABLE", "SOME_TABLE", params)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}

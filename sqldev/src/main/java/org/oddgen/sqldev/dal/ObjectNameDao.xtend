@@ -72,7 +72,7 @@ class ObjectNameDao {
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_names.count
 			   LOOP
-			      l_clob := l_clob || '<value>' || l_names(i) || '</value>';
+			      l_clob := l_clob || '<value><![CDATA[' || l_names(i) || ']]></value>';
 			   END LOOP;
 			   l_clob := l_clob || '</values>';
 			   ? := l_clob;

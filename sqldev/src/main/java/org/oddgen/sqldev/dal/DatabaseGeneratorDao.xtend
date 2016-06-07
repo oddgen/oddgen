@@ -61,7 +61,7 @@ class DatabaseGeneratorDao {
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_types.count
 			   LOOP
-			      l_clob := l_clob || '<value>' || l_types(i) || '</value>';
+			      l_clob := l_clob || '<value><![CDATA[' || l_types(i) || ']]></value>';
 			   END LOOP;
 			   l_clob := l_clob || '</values>';
 			   ? := l_clob;
@@ -87,7 +87,7 @@ class DatabaseGeneratorDao {
 		return objectTypes
 	}
 
-	def private List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType,
+	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType,
 		String objectName) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
@@ -103,7 +103,7 @@ class DatabaseGeneratorDao {
 			   l_clob := '<values>';
 			   FOR i IN 1 .. l_ordered_params.count
 			   LOOP
-			      l_clob := l_clob || '<value>' || l_ordered_params(i) || '</value>';
+			      l_clob := l_clob || '<value><![CDATA[' || l_ordered_params(i) || ']]></value>';
 			   END LOOP;
 			   l_clob := l_clob || '</values>';
 			   ? := l_clob;
@@ -147,7 +147,7 @@ class DatabaseGeneratorDao {
 			   l_clob   := '<params>';
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<param><key>' || l_key || '</key><value>' || l_params(l_key) || '</value></param>';
+			      l_clob := l_clob || '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_params(l_key) || ']]></value></param>';
 			      l_params.delete(l_key);
 			      l_key := l_params.first;
 			   END LOOP;
@@ -200,10 +200,10 @@ class DatabaseGeneratorDao {
 			   l_clob := '<lovs>';
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<lov><key>' || l_key || '</key><values>';
+			      l_clob := l_clob || '<lov><key><![CDATA[' || l_key || ']]></key><values>';
 			      FOR i IN 1 .. l_lovs(l_key).count
 			      LOOP
-			         l_clob := l_clob || '<value>' || l_lovs(l_key) (i) || '</value>';
+			         l_clob := l_clob || '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>';
 			      END LOOP;
 			      l_clob := l_clob || '</values></lov>';
 			      l_lovs.delete(l_key);
@@ -264,7 +264,7 @@ class DatabaseGeneratorDao {
 			   l_clob         := '<paramStates>';
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<paramState><key>' || l_key || '</key><value>' || l_param_states(l_key) || '</value></paramState>';
+			      l_clob := l_clob || '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>';
 			      l_param_states.delete(l_key);
 			      l_key := l_param_states.first;
 			   END LOOP;
@@ -586,7 +586,7 @@ class DatabaseGeneratorDao {
 			   PROCEDURE add_node(in_node IN VARCHAR2, in_value IN VARCHAR2) IS
 			   BEGIN
 			      sys.dbms_lob.append(l_result,
-			                          '<' || in_node || '>' || in_value || '</' || in_node || '>');
+			                          '<' || in_node || '><![CDATA[' || in_value || ']]></' || in_node || '>');
 			   END add_node;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_result, TRUE);

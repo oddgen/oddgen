@@ -24,6 +24,7 @@ import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 
 @Loggable(LoggableConstants.DEBUG)
@@ -41,17 +42,17 @@ class ObjectNameDao {
 	def findUserObjectNames(ObjectType objectType) {
 		// ignore generated objects, such as IOT overflow tables
 		val sql = '''
-			 SELECT object_name
-			   FROM user_objects
-			  WHERE object_type = ?
-			    AND generated = 'N'
-			 ORDER BY object_name
+			SELECT object_name
+			  FROM user_objects
+			 WHERE object_type = ?
+			   AND generated = 'N'
+			ORDER BY object_name
 		'''
 		val names = jdbcTemplate.queryForList(sql, String, objectType.name)
 		val objectNames = new ArrayList<ObjectName>()
 		for (name : names) {
 			val objectName = new ObjectName()
-			objectName.name = name 
+			objectName.name = name
 			objectName.objectType = objectType
 			objectNames.add(objectName)
 		}
@@ -59,7 +60,8 @@ class ObjectNameDao {
 	}
 
 	def findObjectNames(ObjectType objectType) {
-		val dbgen = objectType.generator as DatabaseGenerator
+		val dbgen = objectType.
+			generator as DatabaseGenerator
 		// convert PL/SQL nested table XML
 		val plsql = '''
 			DECLARE
@@ -76,7 +78,10 @@ class ObjectNameDao {
 			   ? := l_clob;
 			END;
 		'''
-		val doc = plsql.doc
+		var Document doc
+		if (dbgen.metaData.hasGetObjectNames) {
+			doc = plsql.doc
+		}
 		if (doc != null) {
 			val objectNames = new ArrayList<ObjectName>()
 			val values = doc.getElementsByTagName("value")

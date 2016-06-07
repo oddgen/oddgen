@@ -139,9 +139,9 @@ class DatabaseGeneratorDao {
 			   l_clob   CLOB;
 			BEGIN
 			   «IF metaData.hasGetParams2»
-			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
+			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
 			   «ELSE»
-			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
+			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   «ENDIF»
 			   l_key    := l_params.first;
 			   l_clob   := '<params>';
@@ -171,12 +171,13 @@ class DatabaseGeneratorDao {
 		return params
 	}
 
-	def getLovs(DatabaseGeneratorMetaData metaData, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	def getLovs(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
+		LinkedHashMap<String, String> params) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
-			      l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
+			   	l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
 			   «ENDIF»
 			   l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
 			   l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
@@ -184,16 +185,16 @@ class DatabaseGeneratorDao {
 			   l_clob CLOB;
 			BEGIN
 			   «IF params != null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
-			      «FOR key : params.keySet»
-			         l_params('«key»') := '«params.get(key)»';
-			   	  «ENDFOR»
+			   	«FOR key : params.keySet»
+			   		l_params('«key»') := '«params.get(key)»';
+			   	«ENDFOR»
 			   «ENDIF»
 			   «IF metaData.hasGetLov2»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
 			   «ELSEIF metaData.hasRefreshLov»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
 			   «ELSEIF metaData.hasGetLov1»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   «ENDIF»
 			   l_key  := l_lovs.first;
 			   l_clob := '<lovs>';
@@ -250,10 +251,14 @@ class DatabaseGeneratorDao {
 			   «FOR key : params.keySet»
 			   	l_params('«key»') := '«params.get(key)»';
 			   «ENDFOR»
-			   l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
-			   			            in_object_type => '«objectType»',
-			   			            in_object_name => '«objectName»',
-			   			            in_params      => l_params
+			   «IF metaData.hasGetParamStates»
+			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
+			   «ELSE»
+			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
+			   «ENDIF»
+			   in_object_type => '«objectType»',
+			   in_object_name => '«objectName»',
+			   in_params      => l_params
 			   			         );
 			   l_key          := l_param_states.first;
 			   l_clob         := '<paramStates>';
@@ -268,7 +273,10 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		val paramStates = new HashMap<String, String>()
-		val doc = plsql.doc
+		var Document doc
+		if (metaData.hasGetParamStates || metaData.hasRefreshParamStates) {
+			doc = plsql.doc
+		}
 		if (doc != null) {
 			val xmlParamStates = doc.getElementsByTagName("paramState")
 			for (var i = 0; i < xmlParamStates.length; i++) {
@@ -664,14 +672,14 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGenerate1»
-			      l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   	l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
 			   «IF metaData.hasGenerate1»
-			      «FOR key : params.keySet»
-			         l_params('«key»') := '«params.get(key)»';
-			      «ENDFOR»
+			   	«FOR key : params.keySet»
+			   		l_params('«key»') := '«params.get(key)»';
+			   	«ENDFOR»
 			   «ENDIF»
 			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
 			                  in_object_type => '«objectType»'

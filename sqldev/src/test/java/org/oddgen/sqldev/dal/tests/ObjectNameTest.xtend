@@ -21,7 +21,6 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.dal.ObjectNameDao
 import org.oddgen.sqldev.model.ObjectType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
@@ -31,51 +30,36 @@ class ObjectNameTest {
 	private static JdbcTemplate jdbcTemplate
 
 	@Test
-	def findUserObjectNamesTest() {
-		val dao = new ObjectNameDao(dataSource.connection)
-		val objectType = new ObjectType()
-		objectType.name = "TABLE"
-		val result = dao.findUserObjectNames(objectType)
+	def getUserObjectNamesTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val result = dao.getUserObjectNames("TABLE")
 		Assert.assertEquals(4, result.size)
-		Assert.assertEquals("BONUS", result.get(0).name)
-		Assert.assertEquals("DEPT", result.get(1).name)
-		Assert.assertEquals("EMP", result.get(2).name)
-		Assert.assertEquals("SALGRADE", result.get(3).name)
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], result)
 	}
 
 	@Test
-	def findObjectNamesTest() {
-		val gendao = new DatabaseGeneratorDao(dataSource.connection)
-		val namedao = new ObjectNameDao(dataSource.connection)
-		val dbgen = gendao.findAll.findFirst [
+	def getObjectNamesTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
 		]
 		val objectType = new ObjectType()
 		objectType.name = "TABLE"
 		objectType.generator = dbgen
-		val result = namedao.findObjectNames(objectType)
+		val result = dao.getObjectNames(dbgen.metaData, "TABLE")
 		Assert.assertEquals(3, result.size)
-		Assert.assertEquals("one", result.get(0).name)
-		Assert.assertEquals("two", result.get(1).name)
-		Assert.assertEquals("three", result.get(2).name)
+		Assert.assertEquals(#["one", "two", "three"], result)
 	}
 
 	@Test
-	def findObjectNamesDefaultTest() {
-		val gendao = new DatabaseGeneratorDao(dataSource.connection)
-		val namedao = new ObjectNameDao(dataSource.connection)
-		val dbgen = gendao.findAll.findFirst [
+	def getObjectNamesDefaultTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val objectType = new ObjectType()
-		objectType.name = "TABLE"
-		objectType.generator = dbgen
-		val result = namedao.findObjectNames(objectType)
+		val result = dao.getObjectNames(dbgen.metaData, "TABLE")
 		Assert.assertEquals(4, result.size)
-		Assert.assertEquals("BONUS", result.get(0).name)
-		Assert.assertEquals("DEPT", result.get(1).name)
-		Assert.assertEquals("EMP", result.get(2).name)
-		Assert.assertEquals("SALGRADE", result.get(3).name)
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], result)
 	}
 
 	@BeforeClass

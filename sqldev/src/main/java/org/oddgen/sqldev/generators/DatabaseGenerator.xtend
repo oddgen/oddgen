@@ -17,14 +17,11 @@ package org.oddgen.sqldev.generators
 
 import com.jcabi.aspects.Loggable
 import java.sql.Connection
-import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.dal.ObjectNameDao
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
-import org.oddgen.sqldev.model.ObjectType
 
 @Loggable(LoggableConstants.DEBUG)
 class DatabaseGenerator implements OddgenGenerator {
@@ -52,15 +49,8 @@ class DatabaseGenerator implements OddgenGenerator {
 	}
 
 	override getObjectNames(Connection conn, String objectType) {
-		val dao = new ObjectNameDao(conn)
-		val type = new ObjectType()
-		type.generator = this
-		type.name = objectType
-		val result = new ArrayList<String>()
-		for (r : dao.findObjectNames(type)) {
-			result.add(r.name)
-		}
-		return result
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getObjectNames(metaData, objectType)
 	}
 
 	override getParams(Connection conn, String objectType, String objectName) {

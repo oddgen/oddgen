@@ -86,6 +86,54 @@ class DatabaseGeneratorDao {
 		}
 		return objectTypes
 	}
+	
+	def getUserObjectNames(String objectType) {
+		// ignore generated objects, such as IOT overflow tables
+		val sql = '''
+			SELECT object_name
+			  FROM user_objects
+			 WHERE object_type = ?
+			   AND generated = 'N'
+			ORDER BY object_name
+		'''
+		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
+		return objectNames
+	}
+
+	def getObjectNames(DatabaseGeneratorMetaData metaData, String objectType) {
+		// convert PL/SQL nested table XML
+		val plsql = '''
+			DECLARE
+			   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
+			   l_clob   CLOB;
+			BEGIN
+			   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«objectType»');
+			   l_clob := '<values>';
+			   FOR i IN 1 .. l_names.count
+			   LOOP
+			      l_clob := l_clob || '<value><![CDATA[' || l_names(i) || ']]></value>';
+			   END LOOP;
+			   l_clob := l_clob || '</values>';
+			   ? := l_clob;
+			END;
+		'''
+		var Document doc
+		if (metaData.hasGetObjectNames) {
+			doc = plsql.doc
+		}
+		if (doc != null) {
+			val objectNames = new ArrayList<String>()
+			val values = doc.getElementsByTagName("value")
+			for (var i = 0; i < values.length; i++) {
+				val value = values.item(i) as Element
+				val objectName = value.textContent
+				objectNames.add(objectName)
+			}
+			return objectNames
+		} else {
+			return getUserObjectNames(objectType)
+		}
+	}	
 
 	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType,
 		String objectName) {

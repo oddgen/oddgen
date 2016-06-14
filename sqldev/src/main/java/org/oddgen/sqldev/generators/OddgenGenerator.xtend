@@ -80,7 +80,7 @@ interface OddgenGenerator {
 	 * @param params parameters with active values to determine list of values
 	 * @return the list of values per parameter
 	 */
-	def HashMap<String, List<String>> getLovs(Connection conn, String objectType, String objectName,
+	def HashMap<String, List<String>> getLov(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params)
 
 	/** 

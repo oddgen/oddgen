@@ -19,52 +19,32 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.util.ArrayList
-import java.util.Properties
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
-import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.GenerateDialog
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.model.ObjectType
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
-class GenerateDialogTest {
+class GenerateDialogTest extends AbstractJdbcTest {
 
-	private static SingleConnectionDataSource dataSource
-	private static JdbcTemplate jdbcTemplate
-
-	@BeforeClass
-	def static void setup() {
-		// get properties
-		val p = new Properties()
-		p.load(GenerateDialogTest.getClass().getResourceAsStream("/test.properties"))		
-		// create dataSource and jdbcTemplate
-		dataSource = new SingleConnectionDataSource()
-		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
-		dataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
-		dataSource.username = p.getProperty("scott_username")
-		dataSource.password = p.getProperty("scott_password")
-		jdbcTemplate = new JdbcTemplate(dataSource)
-	}
-	
 	def getDatabaseSelection(DatabaseGenerator dbgen, String objectType, String objectName) {
-				val gensel = new GeneratorSelection()
-				val type = new ObjectType()
-				type.generator = dbgen
-				type.name = "TABLE"
-				val name = new ObjectName()
-				name.objectType = type
-				name.name = "EMP"
-				gensel.objectName = name
-				gensel.params = dbgen.getParams(dataSource.connection, objectType, objectName)
-				return gensel
-		
+		val gensel = new GeneratorSelection()
+		val type = new ObjectType()
+		type.generator = dbgen
+		type.name = "TABLE"
+		val name = new ObjectName()
+		name.objectType = type
+		name.name = "EMP"
+		gensel.objectName = name
+		gensel.params = dbgen.getParams(dataSource.connection, objectType, objectName)
+		return gensel
+
 	}
 
 	@Test
@@ -92,6 +72,6 @@ class GenerateDialogTest {
 			});
 		// show gui end exit
 		GenerateDialog.createAndShow(frame, gens, dataSource.connection)
-		Thread.sleep(4*1000)
+		Thread.sleep(2 * 1000)
 	}
 }

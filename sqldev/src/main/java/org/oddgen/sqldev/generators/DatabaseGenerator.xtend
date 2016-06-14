@@ -58,16 +58,15 @@ class DatabaseGenerator implements OddgenGenerator {
 		return dao.getParams(metaData, objectType, objectName)
 	}
 
-	override getLovs(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getLovs(metaData, objectType, objectName, params)
+		return dao.getLov(metaData, objectType, objectName, params)
 	}
 
 	override getParamStates(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
-		val HashMap<String, String> paramStates = if(metaData.hasRefreshParamStates) dao.getParamStates(metaData, objectType,
-				objectName, params) else new HashMap<String, String>()
+		val HashMap<String, String> paramStates = dao.getParamStates(metaData, objectType, objectName, params);
 		val result = new HashMap<String, Boolean>()
 		for (p : paramStates.keySet) {
 			result.put(p, if(OddgenGenerator.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] != null) true else false)

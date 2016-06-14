@@ -91,8 +91,6 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				ModalityType.APPLICATION_MODAL)
 			this.conn = conn
 			this.gens = gens
-			loadLovs
-			loadParamStates
 			val pane = this.getContentPane();
 			pane.setLayout(new GridBagLayout());
 			val c = new GridBagConstraints();
@@ -118,6 +116,8 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			addParam(OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM"))
 			gens.get(0).params = gens.get(0).objectName.objectType.generator.getParams(conn,
 				gens.get(0).objectName.objectType.name, gens.get(0).objectName.name)
+			loadLov
+			loadParamStates
 			for (param : gens.get(0).params.keySet) {
 				param.addParam
 			}
@@ -301,9 +301,9 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			OddgenNavigatorController.instance.generateToClipboard(gens, conn)
 		}
 
-		def loadLovs() {
+		def loadLov() {
 			val gen = gens.get(0)
-			this.lovs = gen.objectName.objectType.generator.getLovs(conn, gen.objectName.name,
+			this.lovs = gen.objectName.objectType.generator.getLov(conn, gen.objectName.name,
 				gen.objectName.objectType.name, gen.params)
 		}
 
@@ -317,7 +317,7 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			// do everything in the event thread to avoid strange UI behavior
 			updateDatabaseGenerators(true)
 			try {
-				loadLovs
+				loadLov
 				for (name : params.keySet) {
 					val component = params.get(name)
 					if (component instanceof JCheckBox) {

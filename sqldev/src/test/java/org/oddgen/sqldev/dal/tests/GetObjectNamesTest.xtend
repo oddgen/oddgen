@@ -15,19 +15,13 @@
  */
 package org.oddgen.sqldev.dal.tests
 
-import java.util.Properties
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.model.ObjectType
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
-class ObjectNameTest {
-	private static SingleConnectionDataSource dataSource
-	private static JdbcTemplate jdbcTemplate
+class GetObjectNamesTest extends AbstractJdbcTest {
 
 	@Test
 	def getUserObjectNamesTest() {
@@ -43,10 +37,7 @@ class ObjectNameTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
 		]
-		val objectType = new ObjectType()
-		objectType.name = "TABLE"
-		objectType.generator = dbgen
-		val result = dao.getObjectNames(dbgen.metaData, "TABLE")
+		val result = dbgen.getObjectNames(dataSource.connection, "TABLE")
 		Assert.assertEquals(3, result.size)
 		Assert.assertEquals(#["one", "two", "three"], result)
 	}
@@ -57,39 +48,22 @@ class ObjectNameTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val result = dao.getObjectNames(dbgen.metaData, "TABLE")
+		val result = dbgen.getObjectNames(dataSource.connection, "TABLE")
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], result)
 	}
 
 	@BeforeClass
 	def static void setup() {
-		// get properties
-		val p = new Properties()
-		p.load(ObjectNameTest.getClass().getResourceAsStream(
-			"/test.properties"))
-		// create dataSource and jdbcTemplate
-		dataSource = new SingleConnectionDataSource()
-		dataSource.driverClassName = "oracle.jdbc.OracleDriver"
-		dataSource.url = '''jdbc:oracle:thin:@«p.getProperty("host")»:«p.getProperty("port")»/«p.getProperty("service")»'''
-		dataSource.username = p.getProperty("scott_username")
-		dataSource.password = p.getProperty("scott_password")
-		jdbcTemplate = new JdbcTemplate(dataSource)
-
-		// deploy PL/SQL packages 
 		createPlsqlDummy
-		createPlsqlDummyDefault
 	}
 
 	@AfterClass
 	def static tearDown() {
-		val jdbcTemplate = new JdbcTemplate(dataSource)
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy")
-		jdbcTemplate.execute("DROP PACKAGE plsql_dummy_default")
 	}
 
 	def static createPlsqlDummy() {
-		// create package specification of dummy generator with get_object_names function
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE plsql_dummy IS
 			   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
@@ -103,8 +77,6 @@ class ObjectNameTest {
 			                  in_object_name IN VARCHAR2) RETURN CLOB;
 			END plsql_dummy;
 		''')
-
-		// create package body of dummy generator with get_object_names function
 		jdbcTemplate.execute('''
 			CREATE OR REPLACE PACKAGE BODY plsql_dummy IS
 			
@@ -120,36 +92,10 @@ class ObjectNameTest {
 			
 			   FUNCTION generate(in_object_type IN VARCHAR2,
 			                     in_object_name IN VARCHAR2) RETURN CLOB IS
-			      l_result CLOB;
 			   BEGIN
-			      l_result := in_object_type || '.' || in_object_name;
-			      RETURN l_result;
+			      RETURN NULL;
 			   END generate;
 			END plsql_dummy;
 		''')
 	}
-
-	def static createPlsqlDummyDefault() {
-		// create package specification of dummy generator without get_object_names function
-		jdbcTemplate.execute('''
-			CREATE OR REPLACE PACKAGE plsql_dummy_default IS
-			   FUNCTION generate(in_object_type IN VARCHAR2,
-			                     in_object_name IN VARCHAR2) RETURN CLOB;
-			END plsql_dummy_default;
-		''')
-
-		// create package body of dummy generator without get_object_names function
-		jdbcTemplate.execute('''
-			CREATE OR REPLACE PACKAGE BODY plsql_dummy_default IS
-			   FUNCTION generate(in_object_type IN VARCHAR2,
-			                     in_object_name IN VARCHAR2) RETURN CLOB IS
-			      l_result CLOB;
-			   BEGIN
-			      l_result := in_object_type || '.' || in_object_name;
-			      RETURN l_result;
-			   END generate;
-			END plsql_dummy_default;
-		''')
-	}
-
 }

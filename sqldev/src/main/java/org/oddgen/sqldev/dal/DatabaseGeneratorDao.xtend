@@ -219,7 +219,7 @@ class DatabaseGeneratorDao {
 		return params
 	}
 
-	def getLovs(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
+	def getLov(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
@@ -304,10 +304,10 @@ class DatabaseGeneratorDao {
 			   «ELSE»
 			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
 			   «ENDIF»
-			   in_object_type => '«objectType»',
-			   in_object_name => '«objectName»',
-			   in_params      => l_params
-			   			         );
+			                        in_object_type => '«objectType»',
+			                        in_object_name => '«objectName»',
+			                        in_params      => l_params
+			                     );
 			   l_key          := l_param_states.first;
 			   l_clob         := '<paramStates>';
 			   WHILE l_key IS NOT NULL

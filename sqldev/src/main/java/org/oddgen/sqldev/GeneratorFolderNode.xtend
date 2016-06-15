@@ -25,6 +25,7 @@ import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.GeneratorFolder
+import org.oddgen.sqldev.plugin.PluginUtils
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
@@ -74,6 +75,26 @@ class GeneratorFolderNode extends DefaultContainer {
 			UpdateMessage.fireStructureChanged(folder)
 			folder.expandNode
 			folder.markDirty(false)
+		} else if (this == RootNode.instance.clientGenerators) {
+			val folder = RootNode.instance.clientGenerators
+			folder.removeAll
+			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+			if (conn != null) {
+				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars)
+				Logger.info(this, "discovered %d client generators", cgens.size)
+				for (cgen : cgens) {
+					try {
+						val gen = cgen.newInstance
+						val node = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
+						folder.add(node)
+					} catch (Exception e) {
+						Logger.error(this, "Cannot populate client generator %s1 node due to %s2", cgen.name, e.message)
+					}
+				}
+			}
+			UpdateMessage.fireStructureChanged(folder)
+			folder.expandNode
+			folder.markDirty(false)			
 		}
 	}
 

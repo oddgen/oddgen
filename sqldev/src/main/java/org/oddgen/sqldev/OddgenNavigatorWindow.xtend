@@ -71,6 +71,8 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			tb.dispose
 			RootNode.instance.dbServerGenerators.removeAll(true)
 			RootNode.instance.dbServerGenerators.markDirty(false)
+			RootNode.instance.clientGenerators.removeAll(true)
+			RootNode.instance.clientGenerators.markDirty(false)
 		}
 		connComboBox = new ConnComboBox()
 		refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
@@ -182,6 +184,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			UpdateMessage.fireStructureChanged(folder)
 			folder.markDirty(false)
 		}
+		RootNode.instance.clientGenerators.openImpl
 	}
 
 	def repopulateConnections() {

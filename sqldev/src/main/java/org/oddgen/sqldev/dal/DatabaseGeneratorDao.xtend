@@ -57,13 +57,14 @@ class DatabaseGeneratorDao {
 			   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
-			   l_clob := '<values>';
+			   sys.dbms_lob.append(l_clob, '<values>');
 			   FOR i IN 1 .. l_types.count
 			   LOOP
-			      l_clob := l_clob || '<value><![CDATA[' || l_types(i) || ']]></value>';
+			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_types(i) || ']]></value>');
 			   END LOOP;
-			   l_clob := l_clob || '</values>';
+			   sys.dbms_lob.append(l_clob, '</values>');
 			   ? := l_clob;
 			END;
 		'''
@@ -107,13 +108,14 @@ class DatabaseGeneratorDao {
 			   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob   CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«objectType»');
-			   l_clob := '<values>';
+			   sys.dbms_lob.append(l_clob, '<values>');
 			   FOR i IN 1 .. l_names.count
 			   LOOP
-			      l_clob := l_clob || '<value><![CDATA[' || l_names(i) || ']]></value>';
+			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_names(i) || ']]></value>');
 			   END LOOP;
-			   l_clob := l_clob || '</values>';
+			   sys.dbms_lob.append(l_clob, '</values>');
 			   ? := l_clob;
 			END;
 		'''
@@ -143,17 +145,18 @@ class DatabaseGeneratorDao {
 			   l_ordered_params «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob           CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetOrderedParams2»
 			   	l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
 			   «ELSE»
 			   	l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
 			   «ENDIF»
-			   l_clob := '<values>';
+			   sys.dbms_lob.append(l_clob, '<values>');
 			   FOR i IN 1 .. l_ordered_params.count
 			   LOOP
-			      l_clob := l_clob || '<value><![CDATA[' || l_ordered_params(i) || ']]></value>';
+			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_ordered_params(i) || ']]></value>');
 			   END LOOP;
-			   l_clob := l_clob || '</values>';
+			   sys.dbms_lob.append(l_clob, '</values>');
 			   ? := l_clob;
 			END;
 		'''
@@ -186,20 +189,21 @@ class DatabaseGeneratorDao {
 			   l_key    «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   l_clob   CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetParams2»
 			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
 			   «ELSE»
 			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   «ENDIF»
 			   l_key    := l_params.first;
-			   l_clob   := '<params>';
+			   sys.dbms_lob.append(l_clob, '<params>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_params(l_key) || ']]></value></param>';
+			      sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_params(l_key) || ']]></value></param>');
 			      l_params.delete(l_key);
 			      l_key := l_params.first;
 			   END LOOP;
-			   l_clob := l_clob || '</params>';
+			   sys.dbms_lob.append(l_clob, '</params>');
 			   ? := l_clob;
 			END;
 		'''
@@ -232,6 +236,7 @@ class DatabaseGeneratorDao {
 			   l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF params != null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
 			   	«FOR key : params.keySet»
 			   		l_params('«key»') := '«params.get(key)»';
@@ -245,19 +250,19 @@ class DatabaseGeneratorDao {
 			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   «ENDIF»
 			   l_key  := l_lovs.first;
-			   l_clob := '<lovs>';
+			   sys.dbms_lob.append(l_clob, '<lovs>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<lov><key><![CDATA[' || l_key || ']]></key><values>';
+			      sys.dbms_lob.append(l_clob, '<lov><key><![CDATA[' || l_key || ']]></key><values>');
 			      FOR i IN 1 .. l_lovs(l_key).count
 			      LOOP
-			         l_clob := l_clob || '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>';
+			         sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>');
 			      END LOOP;
-			      l_clob := l_clob || '</values></lov>';
+			      sys.dbms_lob.append(l_clob, '</values></lov>');
 			      l_lovs.delete(l_key);
 			      l_key := l_lovs.first;
 			   END LOOP;
-			   l_clob := l_clob || '</lovs>';
+			   sys.dbms_lob.append(l_clob, '</lovs>');
 			   ? := l_clob;
 			END;
 		'''
@@ -296,6 +301,7 @@ class DatabaseGeneratorDao {
 			   l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   l_clob         CLOB;
 			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «FOR key : params.keySet»
 			   	l_params('«key»') := '«params.get(key)»';
 			   «ENDFOR»
@@ -309,14 +315,14 @@ class DatabaseGeneratorDao {
 			                        in_params      => l_params
 			                     );
 			   l_key          := l_param_states.first;
-			   l_clob         := '<paramStates>';
+			   sys.dbms_lob.append(l_clob, '<paramStates>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      l_clob := l_clob || '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>';
+			      sys.dbms_lob.append(l_clob, '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>');
 			      l_param_states.delete(l_key);
 			      l_key := l_param_states.first;
 			   END LOOP;
-			   l_clob := l_clob || '</paramStates>';
+			   sys.dbms_lob.append(l_clob, '</paramStates>');
 			   ? := l_clob;
 			END;
 		'''

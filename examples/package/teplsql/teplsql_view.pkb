@@ -26,8 +26,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    --
    -- other constants
    --
-   co_max_obj_len  CONSTANT pls_integer := 30;
-   co_oddgen_error CONSTANT pls_integer := -20501;
+   co_max_obj_len  CONSTANT PLS_INTEGER := 30;
+   co_oddgen_error CONSTANT PLS_INTEGER := -20501;
 
    --
    -- get_name
@@ -64,8 +64,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
         INTO l_object_names
         FROM dba_objects
        WHERE object_type = in_object_type
-         AND owner = USER
-         AND generated = 'N'
+             AND owner = USER
+             AND generated = 'N'
        ORDER BY object_name;
       RETURN l_object_names;
    END get_object_names;
@@ -73,7 +73,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    --
    -- get_params
    --
-   FUNCTION get_params RETURN t_param IS
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param IS
       l_params t_param;
    BEGIN
       l_params(co_view_suffix) := '_V';
@@ -82,11 +83,12 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
       l_params(co_gen_iot) := 'Yes';
       RETURN l_params;
    END get_params;
-   
+
    --
    -- get_ordered_params
    --
-   FUNCTION get_ordered_params RETURN t_string IS
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string IS
    BEGIN
       RETURN NEW t_string(co_view_suffix, co_table_suffix, co_gen_iot);
    END get_ordered_params;
@@ -94,7 +96,9 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    --
    -- get_lov
    --
-   FUNCTION get_lov RETURN t_lov IS
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov IS
       l_lov t_lov;
    BEGIN
       l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
@@ -102,11 +106,11 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
    END get_lov;
 
    --
-   -- refresh_param_states
+   -- get_param_states
    --
-   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
-                                 in_object_name IN VARCHAR2,
-                                 in_params      IN t_param) RETURN t_param IS
+   FUNCTION get_param_states(in_object_type IN VARCHAR2,
+                             in_object_name IN VARCHAR2,
+                             in_params      IN t_param) RETURN t_param IS
       l_param_states t_param;
    BEGIN
       IF in_params(co_gen_iot) = 'Yes' THEN
@@ -115,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
          l_param_states(co_iot_suffix) := '0'; -- disable
       END IF;
       RETURN l_param_states;
-   END refresh_param_states;
+   END get_param_states;
 
    --
    -- generate (1)
@@ -173,11 +177,10 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
            INTO l_found
            FROM dba_tables
           WHERE table_name = in_object_name
-            AND owner = USER;
+                AND owner = USER;
          IF l_found = 0 THEN
             raise_application_error(co_oddgen_error,
-                                    'Table ' || in_object_name ||
-                                    ' not found.');
+                                    'Table ' || in_object_name || ' not found.');
          END IF;
          IF get_view_name = in_object_name THEN
             raise_application_error(co_oddgen_error,
@@ -186,14 +189,12 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
          END IF;
          IF l_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
             raise_application_error(co_oddgen_error,
-                                    'Invalid value <' ||
-                                    l_params(co_gen_iot) ||
+                                    'Invalid value <' || l_params(co_gen_iot) ||
                                     '> for parameter <' || co_gen_iot ||
                                     '>. Valid are Yes and No.');
          END IF;
          IF l_params(co_gen_iot) = 'Yes' THEN
-            IF get_iot_name = get_view_name OR
-               get_iot_name = in_object_name THEN
+            IF get_iot_name = get_view_name OR get_iot_name = in_object_name THEN
                raise_application_error(co_oddgen_error,
                                        'Change <' || co_iot_suffix ||
                                        '>. The target instead-of-trigger must be named differently than its base view and base table.');
@@ -206,8 +207,7 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
                    AND owner = USER;
             IF l_found = 0 THEN
                raise_application_error(co_oddgen_error,
-                                       'No primary key found in table ' ||
-                                       in_object_name ||
+                                       'No primary key found in table ' || in_object_name ||
                                        '. Cannot generate instead-of-trigger.');
             END IF;
          END IF;
@@ -216,7 +216,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
       PROCEDURE init_params IS
          i string_type;
       BEGIN
-         l_params := get_params;
+         l_params := get_params(in_object_type => in_object_type,
+                                in_object_name => in_object_name);
          IF in_params.count() > 0 THEN
             i := in_params.first();
             <<input_params>>
@@ -227,8 +228,7 @@ CREATE OR REPLACE PACKAGE BODY teplsql_view IS
                   i := in_params.next(i);
                ELSE
                   raise_application_error(co_oddgen_error,
-                                          'Parameter <' || i ||
-                                          '> is not known.');
+                                          'Parameter <' || i || '> is not known.');
                END IF;
             END LOOP input_params;
          END IF;
@@ -360,8 +360,7 @@ END;
          l_vars('view_name') := get_view_name;
          l_vars('iot_name') := get_iot_name;
          l_vars('gen_iot') := l_params(co_gen_iot);
-         l_result := teplsql.render(p_vars     => l_vars,
-                                    p_template => get_template);
+         l_result := teplsql.render(p_vars => l_vars, p_template => get_template);
       ELSE
          raise_application_error(co_oddgen_error,
                                  '<' || in_object_type ||
@@ -373,8 +372,7 @@ END;
    --
    -- generate (2)
    --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB IS
+   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB IS
       l_params t_param;
    BEGIN
       RETURN generate(in_object_type => in_object_type,

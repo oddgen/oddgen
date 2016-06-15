@@ -184,7 +184,8 @@ $end
    --
    -- get_params
    --
-   FUNCTION get_params RETURN t_param IS
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param IS
       l_params t_param;
    BEGIN
       l_params(co_view_suffix) := '_V';
@@ -197,7 +198,8 @@ $end
    --
    -- get_ordered_params
    --
-   FUNCTION get_ordered_params RETURN t_string IS
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string IS
    BEGIN
       RETURN NEW t_string(co_view_suffix, co_table_suffix, co_gen_iot);
    END get_ordered_params;
@@ -205,7 +207,9 @@ $end
    --
    -- get_lov
    --
-   FUNCTION get_lov RETURN t_lov IS
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov IS
       l_lov t_lov;
    BEGIN
       l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
@@ -213,11 +217,11 @@ $end
    END get_lov;
 
    --
-   -- refresh_param_states
+   -- get_param_states
    --
-   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
-                                 in_object_name IN VARCHAR2,
-                                 in_params      IN t_param) RETURN t_param IS
+   FUNCTION get_param_states(in_object_type IN VARCHAR2,
+                             in_object_name IN VARCHAR2,
+                             in_params      IN t_param) RETURN t_param IS
       l_param_states t_param;
    BEGIN
       IF in_params(co_gen_iot) = 'Yes' THEN
@@ -226,7 +230,7 @@ $end
          l_param_states(co_iot_suffix) := '0'; -- disable
       END IF;
       RETURN l_param_states;
-   END refresh_param_states;
+   END get_param_states;
 
    --
    -- generate (1)
@@ -327,7 +331,8 @@ $end
       PROCEDURE init_params IS
          i string_type;
       BEGIN
-         l_params := get_params;
+         l_params := get_params(in_object_type => in_object_type,
+                                in_object_name => in_object_name);
          IF in_params.count() > 0 THEN
             i := in_params.first();
             <<input_params>>
@@ -338,8 +343,7 @@ $end
                   i := in_params.next(i);
                ELSE
                   raise_application_error(co_oddgen_error,
-                                          'Parameter <' || i ||
-                                          '> is not known.');
+                                          'Parameter <' || i || '> is not known.');
                END IF;
             END LOOP input_params;
          END IF;

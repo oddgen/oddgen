@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE ftldb_view IS
    * oddgen PL/SQL data types
    */
    SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-   SUBTYPE param_type IS VARCHAR2(30 CHAR);
+   SUBTYPE param_type IS VARCHAR2(60 CHAR);
    TYPE t_string IS TABLE OF string_type;
    TYPE t_param IS TABLE OF string_type INDEX BY param_type;
    TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
@@ -62,24 +62,35 @@ CREATE OR REPLACE PACKAGE ftldb_view IS
    /**
    * Get all parameters supported by the generator including default values.
    *
+   * @param in_object_type bject type to determine default parameter values
+   * @param in_object_name object name to determine default parameter values
    * @returns parameters supported by the generator
    */
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param;
    
   /**
    * Get all parameter names in the order to be displayed in the 
    * generate dialog.
    *
+   * @param in_object_type object type to determine parameter order
+   * @param in_object_name object name to determine parameter order
    * @returns ordered parameter names
    */
-   FUNCTION get_ordered_params RETURN t_string;  
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string;
 
    /**
    * Get a list of values per parameter, if such a LOV is applicable.
    *
+   * @param in_object_type object type to determine list of values
+   * @param in_object_name object_name to determine list of values
+   * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their list-of-values
    */
-   FUNCTION get_lov RETURN t_lov;
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov;
 
    /**
    * Enables/disables co_iot_suffix based on co_gen_iot
@@ -88,12 +99,10 @@ CREATE OR REPLACE PACKAGE ftldb_view IS
    * @param in_object_name object_name to configure the behavior of the generator
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
-   *
-   * @since v0.2
    */
-   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
-                                 in_object_name IN VARCHAR2,
-                                 in_params      IN t_param) RETURN t_param;
+   FUNCTION get_param_states(in_object_type IN VARCHAR2,
+                             in_object_name IN VARCHAR2,
+                             in_params      IN t_param) RETURN t_param;
 
    /**
    * Generates the result.

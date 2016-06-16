@@ -59,11 +59,11 @@ class GeneratorFolderNode extends DefaultContainer {
 
 	@Loggable
 	def void openBackground() {
-		if (this == RootNode.instance.dbServerGenerators) {
-			val folder = RootNode.instance.dbServerGenerators
-			folder.removeAll
-			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-			if (conn != null) {
+		val folder = this
+		folder.removeAll
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		if (conn != null) {
+			if (folder == RootNode.instance.dbServerGenerators) {
 				val dao = new DatabaseGeneratorDao(conn)
 				val dbgens = dao.findAll
 				Logger.info(this, "discovered %d database generators", dbgens.size)
@@ -71,15 +71,7 @@ class GeneratorFolderNode extends DefaultContainer {
 					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
 					folder.add(node)
 				}
-			}
-			UpdateMessage.fireStructureChanged(folder)
-			folder.expandNode
-			folder.markDirty(false)
-		} else if (this == RootNode.instance.clientGenerators) {
-			val folder = RootNode.instance.clientGenerators
-			folder.removeAll
-			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-			if (conn != null) {
+			} else if (folder == RootNode.instance.clientGenerators) {
 				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars)
 				Logger.info(this, "discovered %d client generators", cgens.size)
 				for (cgen : cgens) {
@@ -92,12 +84,13 @@ class GeneratorFolderNode extends DefaultContainer {
 					}
 				}
 			}
-			UpdateMessage.fireStructureChanged(folder)
-			folder.expandNode
-			folder.markDirty(false)			
 		}
+		UpdateMessage.fireStructureChanged(folder)
+		folder.expandNode
+		folder.markDirty(false)
 	}
 
+	@Loggable(LoggableConstants.DEBUG)
 	override openImpl() {
 		val Runnable runnable = [|openBackground]
 		val thread = new Thread(runnable)

@@ -26,7 +26,8 @@ import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
-	final JCheckBox discoverPlsqlGeneratorsCheckBox = new JCheckBox()
+	final JCheckBox discoverDbServerGeneratorsCheckBox = new JCheckBox()
+	final JCheckBox showClientGeneratorExamplesCheckBox = new JCheckBox()
 
 	new() {
 		layoutControls()
@@ -36,22 +37,29 @@ class PreferencePanel extends DefaultTraversablePanel {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
 		builder.add(
-			builder.field.label.withText(OddgenResources.getString("PREF_DISCOVER_PLSQL_GENERATORS_LABEL")).component(
-				discoverPlsqlGeneratorsCheckBox).withHint(
-				OddgenResources.getString("PREF_DISCOVER_PLSQL_GENERATORS_HINT")
+			builder.field.label.withText(OddgenResources.getString("PREF_DISCOVER_DB_SERVER_GENERATORS_LABEL")).component(
+				discoverDbServerGeneratorsCheckBox).withHint(
+				OddgenResources.getString("PREF_DISCOVER_DB_SERVER_GENERATORS_HINT")
+			))
+		builder.add(
+			builder.field.label.withText(OddgenResources.getString("PREF_SHOW_CLIENT_GENERATOR_EXAMPLES_LABEL")).component(
+				showClientGeneratorExamplesCheckBox).withHint(
+				OddgenResources.getString("PREF_SHOW_CLIENT_GENERATOR_EXAMPLES_HINT")
 			))
 		builder.addVerticalSpring
 	}
 
 	override onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = traversableContext.userInformation
-		discoverPlsqlGeneratorsCheckBox.selected = info.isDiscoverPlsqlGenerators
+		discoverDbServerGeneratorsCheckBox.selected = info.isDiscoverDbServerGenerators
+		showClientGeneratorExamplesCheckBox.selected = info.isShowClientGeneratorExamples
 		super.onEntry(traversableContext)
 	}
 
 	override onExit(TraversableContext traversableContext) throws TraversalException {
 		var PreferenceModel info = traversableContext.userInformation
-		info.discoverPlsqlGenerators = discoverPlsqlGeneratorsCheckBox.selected
+		info.discoverDbServerGenerators = discoverDbServerGeneratorsCheckBox.selected
+		info.showClientGeneratorExamples = showClientGeneratorExamplesCheckBox.selected
 		super.onExit(traversableContext)
 	}
 

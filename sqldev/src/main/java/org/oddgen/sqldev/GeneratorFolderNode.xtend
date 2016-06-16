@@ -19,12 +19,14 @@ import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
 import java.net.URL
 import javax.swing.tree.TreePath
+import oracle.ide.config.Preferences
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.GeneratorFolder
+import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.plugin.PluginUtils
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -74,51 +76,58 @@ class GeneratorFolderNode extends DefaultContainer {
 			} else if (folder == RootNode.instance.clientGenerators) {
 				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars)
 				Logger.info(this, "discovered %d client generators", cgens.size)
+				val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 				for (cgen : cgens) {
-					try {
-						val gen = cgen.newInstance
-						val node = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
-						folder.add(node)
-					} catch (Exception e) {
-						Logger.error(this, "Cannot populate client generator %s1 node due to %s2", cgen.name, e.message)
+					if (preferences.showClientGeneratorExamples &&
+						cgen.name != "org.oddgen.sqldev.generators.DatabaseGenerator" ||
+						cgen.name != "org.oddgen.sqldev.plugin.HelloWorldClientGenerator" &&
+							cgen.name != "org.oddgen.sqldev.plugin.ViewClientGenerator")
+								try {
+									val gen = cgen.newInstance
+									val node = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
+									folder.add(node)
+								} catch (Exception e) {
+									Logger.error(this, "Cannot populate client generator %s1 node due to %s2",
+										cgen.name, e.message)
+								}
+						}
 					}
 				}
+				UpdateMessage.fireStructureChanged(folder)
+				folder.expandNode
+				folder.markDirty(false)
 			}
-		}
-		UpdateMessage.fireStructureChanged(folder)
-		folder.expandNode
-		folder.markDirty(false)
-	}
 
-	@Loggable(LoggableConstants.DEBUG)
-	override openImpl() {
-		val Runnable runnable = [|openBackground]
-		val thread = new Thread(runnable)
-		thread.name = "oddgen Open Generator Folder"
-		thread.start
-	}
-
-	def expandNode() {
-		val tree = TreeUtils.findTree(OddgenNavigatorManager.instance.navigatorWindow.GUI)
-		Logger.debug(this, "tree is %s", tree)
-		val root = tree.model.root as ExplorerNode;
-		Logger.debug(this, "root is %1$s, class is %2$s", root, root.class.name)
-		val nodes = root.childTNodes
-		var ExplorerNode child
-		while (nodes.hasMoreElements) {
-			val node = nodes.nextElement as ExplorerNode
-			if (node.data == this) {
-				child = node
+			@Loggable(LoggableConstants.DEBUG)
+			override openImpl() {
+				val Runnable runnable = [|openBackground]
+				val thread = new Thread(runnable)
+				thread.name = "oddgen Open Generator Folder"
+				thread.start
 			}
-		}
-		if (child != null) {
-			val rootPath = new TreePath(root)
-			Logger.debug(this, "rootPath is %s", rootPath)
-			val childPath = rootPath.pathByAddingChild(child)
-			Logger.debug(this, "childPath is %s", childPath)
-			tree.expandPath(childPath)
-			Logger.debug(this, "expanded")
-		}
-	}
 
-}
+			def expandNode() {
+				val tree = TreeUtils.findTree(OddgenNavigatorManager.instance.navigatorWindow.GUI)
+				Logger.debug(this, "tree is %s", tree)
+				val root = tree.model.root as ExplorerNode;
+				Logger.debug(this, "root is %1$s, class is %2$s", root, root.class.name)
+				val nodes = root.childTNodes
+				var ExplorerNode child
+				while (nodes.hasMoreElements) {
+					val node = nodes.nextElement as ExplorerNode
+					if (node.data == this) {
+						child = node
+					}
+				}
+				if (child != null) {
+					val rootPath = new TreePath(root)
+					Logger.debug(this, "rootPath is %s", rootPath)
+					val childPath = rootPath.pathByAddingChild(child)
+					Logger.debug(this, "childPath is %s", childPath)
+					tree.expandPath(childPath)
+					Logger.debug(this, "expanded")
+				}
+			}
+
+		}
+		

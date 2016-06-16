@@ -32,20 +32,32 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	/** 
-	 * enabled/disable automatic discovery of PL/SQL Generations when opening an oddgen node
+	 * enabled/disable automatic discovery of database server generators when opening an oddgen node
 	 */
-	static final String KEY_DISCOVER_PLSQL_GENERATORS = "discoverPlsqlGenerators"
+	static final String KEY_DISCOVER_DB_SERVER_GENERATORS = "discoverDbServerGenerators"
+	
+	/**
+	 * enable/disable client generator examples
+	 */
+	static final String KEY_SHOW_CLIENT_GENERATOR_EXAMPLES = "showClientGeneratorExamples"
 
-	def isDiscoverPlsqlGenerators() {
-		return getHashStructure.getBoolean(KEY_DISCOVER_PLSQL_GENERATORS, true)
+	def isDiscoverDbServerGenerators() {
+		return getHashStructure.getBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_DISCOVER_DB_SERVER_GENERATORS, true)
 	}
 
-	def setDiscoverPlsqlGenerators(boolean discoverPlsqlGenerators) {
-		getHashStructure.putBoolean(KEY_DISCOVER_PLSQL_GENERATORS, discoverPlsqlGenerators)
+	def setDiscoverDbServerGenerators(boolean discoverDbServerGenerators) {
+		getHashStructure.putBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_DISCOVER_DB_SERVER_GENERATORS, discoverDbServerGenerators)
+	}
+	
+	def isShowClientGeneratorExamples() {
+		return getHashStructure.getBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_SHOW_CLIENT_GENERATOR_EXAMPLES, true)
+	}
+	
+	def setShowClientGeneratorExamples(boolean showClientGeneratorExamples) {
+		getHashStructure.putBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_SHOW_CLIENT_GENERATOR_EXAMPLES, showClientGeneratorExamples)
 	}
 
 	override toString() {
 		new ToStringBuilder(this).addAllFields.toString
 	}
-
 }

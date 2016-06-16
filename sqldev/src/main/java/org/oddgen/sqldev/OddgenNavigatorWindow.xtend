@@ -180,7 +180,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	def refreshConnection() {
 		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 		RootNode.instance.clientGenerators.openImpl
-		if (preferences.discoverPlsqlGenerators) {
+		if (preferences.discoverDbServerGenerators) {
 			RootNode.instance.dbServerGenerators.openImpl
 		} else {
 			val folder = RootNode.instance.dbServerGenerators

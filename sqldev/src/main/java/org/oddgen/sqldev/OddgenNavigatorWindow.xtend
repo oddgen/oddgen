@@ -69,10 +69,10 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		if (tb != null) {
 			tb.removeAll
 			tb.dispose
-			RootNode.instance.dbServerGenerators.removeAll(true)
-			RootNode.instance.dbServerGenerators.markDirty(false)
 			RootNode.instance.clientGenerators.removeAll(true)
+			RootNode.instance.dbServerGenerators.removeAll(true)
 			RootNode.instance.clientGenerators.markDirty(false)
+			RootNode.instance.dbServerGenerators.markDirty(false)
 		}
 		connComboBox = new ConnComboBox()
 		refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
@@ -125,11 +125,14 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		super.loadLayout(p)
 	}
 
+	@Loggable(LoggableConstants.DEBUG)
 	override actionPerformed(ActionEvent e) {
 		if (e.source == connComboBox.JComboBox) {
 			val selection = connComboBox.JComboBox.selectedItem as String
 			connComboBox.currentConnection = selection
-			refreshConnection
+			if (selection != null) {
+				refreshConnection
+			}
 		} else if (e.source == refreshButton) {
 			repopulateConnections
 			refreshConnection
@@ -141,6 +144,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	override checkDisconnect(ConnectionDetails connectionDetails) throws DisconnectVetoException {
 	}
 
+	@Loggable(LoggableConstants.DEBUG)
 	override connectionDisconnected(ConnectionDetails connectionDetails) {
 		if (connectionDetails.qualifiedConnectionName == connComboBox.JComboBox.model.selectedItem as String) {
 			connComboBox.currentConnection = null
@@ -175,6 +179,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 
 	def refreshConnection() {
 		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+		RootNode.instance.clientGenerators.openImpl
 		if (preferences.discoverPlsqlGenerators) {
 			RootNode.instance.dbServerGenerators.openImpl
 		} else {
@@ -184,7 +189,6 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			UpdateMessage.fireStructureChanged(folder)
 			folder.markDirty(false)
 		}
-		RootNode.instance.clientGenerators.openImpl
 	}
 
 	def repopulateConnections() {

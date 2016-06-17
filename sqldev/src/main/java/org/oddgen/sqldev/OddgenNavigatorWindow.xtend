@@ -70,8 +70,8 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			tb.removeAll
 			tb.dispose
 			RootNode.instance.clientGenerators.removeAll(true)
-			RootNode.instance.dbServerGenerators.removeAll(true)
 			RootNode.instance.clientGenerators.markDirty(false)
+			RootNode.instance.dbServerGenerators.removeAll(true)
 			RootNode.instance.dbServerGenerators.markDirty(false)
 		}
 		connComboBox = new ConnComboBox()

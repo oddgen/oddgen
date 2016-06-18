@@ -4,8 +4,8 @@
 
 	<!-- The Basics -->
 	<groupId>org.oddgen</groupId>
-	<artifactId>sqldev</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<artifactId>org.oddgen.sqldev</artifactId>
+	<version>0.2.0</version>
 	<packaging>bundle</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -331,6 +331,27 @@
 							<goal>parse-version</goal>
 						</goals>
 					</execution>
+					<!--
+					<execution>
+                       <id>attach-artifacts</id>
+                       <phase>package</phase>
+                       <goals>
+                           <goal>attach-artifact</goal>
+                       </goals>
+                       <configuration>
+                           <artifacts>
+                               <artifact>
+                                   <file>${project.basedir}/target/${project.name}.jar</file>
+                                   <type>jar</type>
+                               </artifact>                               
+                               <artifact>
+                                   <file>${project.basedir}/target/${project.name}-${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}.pom</file>
+                                   <type>pom</type>
+                               </artifact>                               
+                           </artifacts>
+                       </configuration>
+                   </execution>
+                   -->
 				</executions>
 			</plugin>
 			<plugin>
@@ -509,8 +530,8 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- inspect https://oss.sonatype.org/content/groups/staging/org/oddgen/sqldev/ -->
-			<!-- afterwards either run mvn nexus-staging:release or mvn nexus-staging:drop -->
+			<!-- inspect https://oss.sonatype.org/#stagingRepositories -->
+			<!-- close, release and drop staging repositories via GUI -->
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -519,6 +540,8 @@
 				<configuration>
 					<serverId>ossrh</serverId>
 					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<skipLocalStaging>true</skipLocalStaging>
+					<skipStagingRepositoryClose>true</skipStagingRepositoryClose>
 					<autoReleaseAfterClose>false</autoReleaseAfterClose>
 				</configuration>
 			</plugin>

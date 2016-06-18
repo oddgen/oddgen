@@ -59,7 +59,7 @@
 			</menu-hook>
 			<settings-ui-hook>
 				<page id="oddgen.PREFERENCES_PAGE" parent-idref="/preferences">
-					<label>${EXTENSION_NAME}</label>
+					<label>oddgen</label>
 					<traversable-class>org.oddgen.sqldev.PreferencePanel
 					</traversable-class>
 				</page>

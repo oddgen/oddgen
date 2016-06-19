@@ -77,7 +77,7 @@ class PluginUtils {
 	}
 	
 	static def hasDefaultConstructor(Class<?> clazz) {
-		return clazz.constructors.filter[parameterCount == 0].toList.size == 1
+		return clazz.constructors.filter[parameterTypes.size == 0].toList.size == 1
 	}
 	
 	static def findOddgenGenerators(URL[] jars) {

@@ -65,35 +65,33 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
    --
    -- get_params - configure additional parameters beside object_type and object_name
    --
-   FUNCTION get_params RETURN t_param IS
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param IS
       l_params t_param;
    BEGIN
-      l_params(co_select_star)   := 'No';
-      l_params(co_view_suffix)   := '_v';
+      l_params(co_select_star) := 'No';
+      l_params(co_view_suffix) := '_v';
       l_params(co_order_columns) := 'No';
       RETURN l_params;
    END get_params;
 
    --
-   -- get_lov
+   -- get_ordered_params - override default sort order (by name)
    --
-   FUNCTION get_lov RETURN t_lov IS
-      l_lov t_lov;
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string IS
    BEGIN
-      l_lov(co_select_star) := NEW t_string('Yes', 'No');
-      l_lov(co_order_columns) := NEW t_string('Yes', 'No');
-      RETURN l_lov;
-   END get_lov;
+      RETURN NEW t_string(co_select_star, co_view_suffix, co_order_columns);
+   END get_ordered_params;
 
    --
-   -- refresh_lov
+   -- get_lov
    --
-   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
-                        in_object_name IN VARCHAR2,
-                        in_params      IN t_param) RETURN t_lov IS
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov IS
       l_lov t_lov;
    BEGIN
-      l_lov := get_lov;
       IF in_params(co_select_star) = 'Yes' THEN
          l_lov(co_order_columns) := NEW t_string('No');
       ELSE
@@ -105,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
          l_lov(co_select_star) := NEW t_string('Yes', 'No');
       END IF;
       RETURN l_lov;
-   END refresh_lov;
+   END get_lov;
 
    --
    -- generate - signature used by oddgen for SQL Developer

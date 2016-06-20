@@ -13,7 +13,10 @@ CREATE OR REPLACE PACKAGE extended_view AUTHID CURRENT_USER AS
 
    FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
 
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_param;
 
    FUNCTION generate (
       in_object_type IN VARCHAR2,
@@ -57,11 +60,14 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
       RETURN l_object_names;
    END get_object_names;
 
-   FUNCTION get_params RETURN t_param IS
+   FUNCTION get_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_param IS
       l_params t_param;
    BEGIN
-      l_params(co_select_star)   := 'No';
-      l_params(co_view_suffix)   := '_v';
+      l_params(co_select_star) := 'No';
+      l_params(co_view_suffix) := '_v';
       l_params(co_order_columns) := 'No';
       RETURN l_params;
    END get_params;

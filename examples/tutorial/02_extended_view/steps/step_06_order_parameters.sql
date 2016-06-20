@@ -4,7 +4,6 @@ CREATE OR REPLACE PACKAGE extended_view AUTHID CURRENT_USER AS
    TYPE t_string IS TABLE OF string_type;
    SUBTYPE param_type IS VARCHAR2(30 CHAR);
    TYPE t_param IS TABLE OF string_type INDEX BY param_type;
-   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
 
    FUNCTION get_name RETURN VARCHAR2;
 
@@ -14,14 +13,19 @@ CREATE OR REPLACE PACKAGE extended_view AUTHID CURRENT_USER AS
 
    FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
 
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_param;
+   
+   FUNCTION get_ordered_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_string;
 
-   FUNCTION get_lov RETURN t_lov;
-
-   FUNCTION generate(
+   FUNCTION generate (
       in_object_type IN VARCHAR2,
-      in_object_name IN VARCHAR2,
-      in_params      IN t_param
+      in_object_name IN VARCHAR2
    ) RETURN CLOB;
 END extended_view;
 /
@@ -61,27 +65,29 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
       RETURN l_object_names;
    END get_object_names;
 
-   FUNCTION get_params RETURN t_param IS
+   FUNCTION get_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_param IS
       l_params t_param;
    BEGIN
-      l_params(co_select_star)   := 'No';
-      l_params(co_view_suffix)   := '_v';
+      l_params(co_select_star) := 'No';
+      l_params(co_view_suffix) := '_v';
       l_params(co_order_columns) := 'No';
       RETURN l_params;
    END get_params;
-
-   FUNCTION get_lov RETURN t_lov IS
-      l_lov t_lov;
+   
+   FUNCTION get_ordered_params (
+      in_object_type IN VARCHAR2, 
+      in_object_name IN VARCHAR2
+   ) RETURN t_string IS
    BEGIN
-      l_lov(co_select_star) := NEW t_string('Yes', 'No');
-      l_lov(co_order_columns) := NEW t_string('Yes', 'No');
-      RETURN l_lov;
-   END get_lov;
+      RETURN NEW t_string(co_select_star, co_view_suffix, co_order_columns);
+   END get_ordered_params;
 
-   FUNCTION generate(
+   FUNCTION generate (
       in_object_type IN VARCHAR2,
-      in_object_name IN VARCHAR2,
-      in_params      IN t_param
+      in_object_name IN VARCHAR2
    ) RETURN CLOB IS
       l_templ        CLOB := 
 'CREATE OR REPLACE VIEW ${view_name} AS
@@ -92,30 +98,10 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
       l_column_names string_type;
       l_table_name   string_type;
    BEGIN
-      -- prepare placeholder column_names
-      IF in_params(co_select_star) = 'Yes' THEN
-         l_column_names := '*';
-      ELSE
-         FOR l_rec IN (
-            SELECT column_name
-              FROM user_tab_columns
-             WHERE table_name = upper(in_object_name)
-             ORDER BY CASE
-                         WHEN in_params(co_order_columns) = 'Yes' THEN
-                            column_name
-                         ELSE
-                            to_char(column_id, '99999')
-                      END)
-         LOOP
-            IF l_column_names IS NOT NULL THEN
-               l_column_names := l_column_names || ', ';
-            END IF;
-            l_column_names := l_column_names || lower(l_rec.column_name);
-         END LOOP;
-      END IF;
-      -- prepare other placeholders
+      -- prepare placeholders
+      l_column_names := '*';
       l_table_name := lower(in_object_name);
-      l_view_name := l_table_name || lower(in_params(co_view_suffix));
+      l_view_name := l_table_name || '_v';
       -- produce final clob, replace placeholder in template
       l_clob := REPLACE(l_templ, '${column_names}', l_column_names);
       l_clob := REPLACE(l_clob, '${view_name}', l_view_name);

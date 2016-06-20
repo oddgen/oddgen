@@ -27,7 +27,7 @@ CREATE OR REPLACE PACKAGE extended_view AUTHID CURRENT_USER AS
    --
    SUBTYPE string_type IS VARCHAR2(1000 CHAR);
    TYPE t_string IS TABLE OF string_type;
-   SUBTYPE param_type IS VARCHAR2(30 CHAR);
+   SUBTYPE param_type IS VARCHAR2(60 CHAR);
    TYPE t_param IS TABLE OF string_type INDEX BY param_type;
    TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
 
@@ -63,31 +63,35 @@ CREATE OR REPLACE PACKAGE extended_view AUTHID CURRENT_USER AS
    /**
    * Get all parameters supported by the generator including default values.
    *
-   * @returns list of parameters supported by the generator
+   * @param in_object_type bject type to determine default parameter values
+   * @param in_object_name object name to determine default parameter values
+   * @returns parameters supported by the generator
    */
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_param;
+
+  /**
+   * Get all parameter names in the order to be displayed in the 
+   * generate dialog.
+   *
+   * @param in_object_type object type to determine parameter order
+   * @param in_object_name object name to determine parameter order
+   * @returns ordered parameter names
+   */
+   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
+      RETURN t_string;
 
    /**
    * Get the list of values per parameter.
-   * Parameters with a list-of-value are shown as combo box
-   * in the generator dialog.
    *
-   * @returns parameters with their list-of-values
-   */
-   FUNCTION get_lov RETURN t_lov;
-   
-   /**
-   * Updates the list of values per parameter.
-   * This function is called after a parameter change in the GUI.
-   *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
+   * @param in_object_type object type to determine list of values
+   * @param in_object_name object_name to determine list of values
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their list-of-values
    */
-   FUNCTION refresh_lov(in_object_type IN VARCHAR2,
-                        in_object_name IN VARCHAR2,
-                        in_params      IN t_param) RETURN t_lov;
+   FUNCTION get_lov(in_object_type IN VARCHAR2,
+                    in_object_name IN VARCHAR2,
+                    in_params      IN t_param) RETURN t_lov;
 
    /**
    * Generates the result.

@@ -80,8 +80,8 @@ class GeneratorFolderNode extends DefaultContainer {
 				for (cgen : cgens) {
 					if (preferences.showClientGeneratorExamples &&
 						cgen.name != "org.oddgen.sqldev.generators.DatabaseGenerator" ||
-						cgen.name != "org.oddgen.sqldev.plugin.HelloWorldClientGenerator" &&
-							cgen.name != "org.oddgen.sqldev.plugin.ViewClientGenerator")
+						cgen.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
+							cgen.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator")
 								try {
 									val gen = cgen.newInstance
 									val node = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)

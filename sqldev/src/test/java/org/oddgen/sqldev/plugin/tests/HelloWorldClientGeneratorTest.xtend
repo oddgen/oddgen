@@ -20,7 +20,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.OddgenGenerator
-import org.oddgen.sqldev.plugin.HelloWorldClientGenerator
+import org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator
 
 class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 	static var OddgenGenerator gen

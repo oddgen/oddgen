@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.sqldev.plugin
+package org.oddgen.sqldev.plugin.examples
 
 import java.sql.Connection
 import java.util.ArrayList

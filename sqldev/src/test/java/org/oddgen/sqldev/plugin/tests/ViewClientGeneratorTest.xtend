@@ -21,7 +21,7 @@ import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.OddgenGenerator
-import org.oddgen.sqldev.plugin.ViewClientGenerator
+import org.oddgen.sqldev.plugin.examples.ViewClientGenerator
 
 class ViewClientGeneratorTest extends AbstractJdbcTest {
 	static var OddgenGenerator gen

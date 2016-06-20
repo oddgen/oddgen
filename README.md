@@ -4,7 +4,7 @@
 
 ## Introduction
 
-oddgen is a SQL Developer extension to invoke dictionary-driven code generators. Dictionary-driven means that the predominant part of a model is stored in an Oracle data dictionary or in other related relational tables. Generators written in PL/SQL are discovered after connecting to a database and presented in a navigator tree. The oddgen generator interface is designed to hide the complexity from the user and to support generation of any target code in just a few mouse clicks.
+oddgen is a SQL Developer extension to invoke dictionary-driven code generators. Dictionary-driven means that the predominant part of a model is stored in an Oracle data dictionary or in other related relational tables. Generators written in a JVM language or in PL/SQL are discovered after connecting to a database and presented in a navigator tree. The oddgen generator interface is designed to hide the complexity from the user and to support generation of any target code in just a few mouse clicks.
 
 See <https://www.oddgen.org/> for more information about the product.     
 

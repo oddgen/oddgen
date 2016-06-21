@@ -27,15 +27,15 @@ import org.reflections.util.ConfigurationBuilder
 class PluginUtils {
 
 	public static val SQLDEV_HOME_DIRS = #[
-		"/Applications/SQLDeveloper4.1.3.app/Contents/Resources",
-		"/Applications/SQLDeveloper.app/Contents/Resources",
+		"/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper",
+		"/Applications/SQLDeveloper.app/Contents/Resources/sqldeveloper",
 		"C:/app/sqldeveloper4.1.3",
 		"C:/app/sqldeveloper",
 		"C:/Program Files/sqldeveloper",
 		"C:/Program Files (x86)/sqldeveloper"
 	]
 
-	public static val SQLDEV_EXTENSION_DIR = "/sqldeveloper/sqldeveloper/extensions"
+	public static val SQLDEV_EXTENSION_DIR = "/sqldeveloper/extensions"
 
 	static def getSqlDevExtensionDir() {
 		var file = new File(PluginUtils.protectionDomain.codeSource.location.toURI());

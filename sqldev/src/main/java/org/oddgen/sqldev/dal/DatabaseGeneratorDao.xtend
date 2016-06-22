@@ -68,6 +68,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		val objectTypes = new ArrayList<String>()
 		var Document doc
 		if (metaData.hasGetObjectTypes) {
@@ -119,6 +120,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		var Document doc
 		if (metaData.hasGetObjectNames) {
 			doc = plsql.doc
@@ -160,6 +162,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		val orderedParams = new ArrayList<String>()
 		var Document doc
 		if (metaData.hasGetOrderedParams2 || metaData.hasGetOrderedParams1) {
@@ -207,6 +210,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		var Document doc
 		if (metaData.hasGetParams2 || metaData.hasGetParams1) {
 			doc = plsql.doc
@@ -266,6 +270,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		val lovs = new HashMap<String, List<String>>()
 		var Document doc
 		if (metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
@@ -326,6 +331,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		val paramStates = new HashMap<String, String>()
 		var Document doc
 		if (metaData.hasGetParamStates || metaData.hasRefreshParamStates) {
@@ -680,6 +686,7 @@ class DatabaseGeneratorDao {
 			   ? := l_result;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		val doc = plsql.doc
 		val dbgens = new ArrayList<DatabaseGenerator>()
 		if (doc != null) {
@@ -745,6 +752,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
+		Logger.debug(this, "plsql: %s", plsql)
 		var String result;
 		try {
 			val resultClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {

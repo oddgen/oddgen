@@ -116,6 +116,32 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 	}
 
 	@Test
+	// test case for issue #32, check if single quotes in parameters are handled correctly
+	// generated code is not valid code of course, but the test case is still useful
+	def generateViewWithSingleQuoteInSuffix() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_VIEW']
+		val expected = '''
+			-- create 1:1 view for demonstration purposes
+			CREATE OR REPLACE VIEW EMP_'V'' AS
+			   SELECT EMPNO,
+			          ENAME,
+			          JOB,
+			          MGR,
+			          HIREDATE,
+			          SAL,
+			          COMM,
+			          DEPTNO
+			     FROM EMP;
+		'''	
+		val params = dbgen.getParams(dataSource.connection, null, null)
+		params.put("Generate instead-of-trigger?", "No");
+		params.put("View suffix", "_'V''") // handle one or multiple single quotes
+		val generated = dbgen.generate(dataSource.connection, "TABLE", "EMP", params)
+		Assert.assertEquals(expected.trim, generated.trim)
+	}
+
+	@Test
 	def generateHelloWorldTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [

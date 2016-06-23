@@ -58,6 +58,21 @@ class GetParamStatesTest extends AbstractJdbcTest {
 	}
 
 	@Test
+	// test case for issue #32
+	def getParamStatesWithSingleQuotesInFirstParameterTest() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
+		]
+		val params = dbgen.getParams(dataSource.connection, null, null)
+		params.put("First parameter", "'not'' one") // single quote must not cause another result
+		val paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		Assert.assertEquals(1, paramStates.size)
+		Assert.assertEquals(false, paramStates.get("Second parameter"))
+	}
+
+
+	@Test
 	def getLovDefaultTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [

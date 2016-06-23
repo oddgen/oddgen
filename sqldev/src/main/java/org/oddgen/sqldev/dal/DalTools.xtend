@@ -116,5 +116,8 @@ class DalTools {
 		}
 		return doc
 	}
-
+	
+	def String escapeSingleQuotes(String value) {
+		return value.replace("'", "''")
+	}
 }

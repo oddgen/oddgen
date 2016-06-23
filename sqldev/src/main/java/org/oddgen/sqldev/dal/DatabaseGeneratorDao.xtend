@@ -243,7 +243,7 @@ class DatabaseGeneratorDao {
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF params != null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
 			   	«FOR key : params.keySet»
-			   		l_params('«key»') := '«params.get(key)»';
+			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   	«ENDFOR»
 			   «ENDIF»
 			   «IF metaData.hasGetLov2»
@@ -308,7 +308,7 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «FOR key : params.keySet»
-			   	l_params('«key»') := '«params.get(key)»';
+			   	l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   «ENDFOR»
 			   «IF metaData.hasGetParamStates»
 			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
@@ -739,7 +739,7 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   «IF metaData.hasGenerate1»
 			   	«FOR key : params.keySet»
-			   		l_params('«key»') := '«params.get(key)»';
+			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   	«ENDFOR»
 			   «ENDIF»
 			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(

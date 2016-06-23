@@ -15,17 +15,20 @@
  */
 package org.oddgen.sqldev.plugin
 
+import com.jcabi.aspects.Loggable
 import java.io.File
 import java.io.FilenameFilter
 import java.net.URL
 import java.net.URLClassLoader
+import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.ConfigurationBuilder
+import org.springframework.util.ResourceUtils
 
+@Loggable(LoggableConstants.DEBUG)
 class PluginUtils {
-
 	public static val SQLDEV_HOME_DIRS = #[
 		"/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper",
 		"/Applications/SQLDeveloper.app/Contents/Resources/sqldeveloper",
@@ -38,7 +41,7 @@ class PluginUtils {
 	public static val SQLDEV_EXTENSION_DIR = "/sqldeveloper/extensions"
 
 	static def getSqlDevExtensionDir() {
-		var file = new File(PluginUtils.protectionDomain.codeSource.location.toURI());
+		var file = ResourceUtils.getFile(PluginUtils.protectionDomain.codeSource.location)
 		if (file != null && file.name.endsWith(".jar")) {
 			return file.parentFile
 		} else {

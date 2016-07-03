@@ -192,12 +192,6 @@
 					<include>**/*.*</include>
 				</includes>
 			</resource>
-			<resource>
-				<directory>target/classes</directory>
-				<includes>
-					<include>META-INF/*.*</include>
-				</includes>
-			</resource>
 		</resources>
 		<plugins>
 			<plugin>
@@ -395,6 +389,11 @@
 						<Bundle-SymbolicName>${project.name}</Bundle-SymbolicName>
 						<Bundle-Version>${parsedVersion.majorVersion}.${parsedVersion.minorVersion}.${parsedVersion.incrementalVersion}</Bundle-Version>
 						<Bundle-Build>${buildNumber}</Bundle-Build>
+						<Include-Resource>
+							{maven-resources},
+							{maven-dependencies},
+							META-INF/extension.xml=target/classes/META-INF/extension.xml
+						</Include-Resource>
 						<Export-Package>
 							org.oddgen.sqldev,
 							org.oddgen.sqldev.model,

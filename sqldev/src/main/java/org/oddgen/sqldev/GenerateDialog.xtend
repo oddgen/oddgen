@@ -374,10 +374,15 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				loadParamStates
 				for (name : paramStates.keySet) {
 					val component = params.get(name)
-					if (paramStates.get(name)) {
-						component.enabled = true
+					if (component == null) {
+						Logger.warn(
+							this, '''Parameter "«name»" is unknown, cannot change parameter state. Please check getParamStates of your generator.''')
 					} else {
-						component.enabled = false
+						if (paramStates.get(name)) {
+							component.enabled = true
+						} else {
+							component.enabled = false
+						}
 					}
 				}
 			} catch (ExceptionInInitializerError e) {

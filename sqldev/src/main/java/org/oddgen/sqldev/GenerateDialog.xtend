@@ -378,10 +378,22 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 						Logger.warn(
 							this, '''Parameter "«name»" is unknown, cannot change parameter state. Please check getParamStates of your generator.''')
 					} else {
-						if (paramStates.get(name)) {
-							component.enabled = true
+						if (component.class.name == "javax.swing.JComboBox") {
+							val comboBox = component as JComboBox<String>
+							val model = comboBox.model as DefaultComboBoxModel<String>
+							if (paramStates.get(name) && model.size > 1) {
+								comboBox.editable = true
+								comboBox.enabled = true
+							} else {
+								comboBox.editable = false
+								comboBox.enabled = false
+							}
 						} else {
-							component.enabled = false
+							if (paramStates.get(name)) {
+								component.enabled = true
+							} else {
+								component.enabled = false
+							}
 						}
 					}
 				}

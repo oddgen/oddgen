@@ -309,8 +309,8 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 
 		def loadParamStates() {
 			val gen = gens.get(0)
-			this.paramStates = gen.objectName.objectType.generator.getParamStates(conn, gen.objectName.name,
-				gen.objectName.objectType.name, gen.params)
+			this.paramStates = gen.objectName.objectType.generator.getParamStates(conn, gen.objectName.objectType.name,
+				gen.objectName.name, gen.params)
 		}
 
 		def refresh() {

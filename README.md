@@ -29,19 +29,20 @@ Please file your bug reports, enhancement requests, questions and other support 
 
 ## How to Build
 
-1. [Download](http://www.oracle.com/technetwork/developer-tools/sql-developer/downloads/index.html) and install SQL Developer 4.1.x
-2. [Download](https://maven.apache.org/download.cgi) and install Apache Maven 3.1.x
-3. Clone the oddgen repository
-4. Open a terminal window in the oddgen root folder and type 
+1. [Download](http://www.oracle.com/technetwork/developer-tools/sql-developer/downloads/index.html) and install SQL Developer 4.1.3
+2. [Download](https://maven.apache.org/download.cgi) and install Apache Maven 3.1.9
+3. [Download](https://git-scm.com/downloads) and install a git command line client
+4. Clone the oddgen repository
+5. Open a terminal window in the oddgen root folder and type 
 
 		cd sqldev
 		
-5. Run maven build by the following command
+6. Run maven build by the following command
 
 		mvn -Dsqldev.basedir=/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper -DskipTests=true clean package
 		
 	Amend the parameter sqldev.basedir to match the path of your SQL Developer installation. This folder is used to reference various Oracle jar files which are not available in public Maven repositories
-6. The resulting file ```oddgen_for_SQLDev_x.x.x-SNAPSHOT.zip``` may be installed within SQL Developer
+7. The resulting file ```oddgen_for_SQLDev_x.x.x-SNAPSHOT.zip``` may be installed within SQL Developer
 
 ## License
 

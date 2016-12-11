@@ -27,31 +27,32 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * oddgen PL/SQL data types
    */
-   -- Values, max. string value allowed within PL/SQL.
-   SUBTYPE value_type IS VARCHAR2(32767 BYTE);
    -- Keys, restricted to a reasonable size.
    SUBTYPE key_type    IS VARCHAR2(100 CHAR);
-   -- Array of strings
+   -- Values, max. string value allowed within PL/SQL.
+   SUBTYPE value_type IS VARCHAR2(32767 BYTE);
+   -- Value array
    TYPE t_value_type  IS TABLE OF value_type;
    -- Associative array of parameters (key-value pairs). 
    TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
-   -- Associative array of list-of-values (key-value pairs, but a value is an array of strings).
+   -- Associative array of list-of-values (key-value pairs, but a value is a value array).
    TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
-   -- Record type to represent a folder or a leaf node in the SQL Developer navigator tree.
+   -- Record type to represent a node in the SQL Developer navigator tree.
    TYPE r_node_type    IS RECORD (
-      node_id           key_type,     -- e.g. EMP
-      parent_node_id    key_type,     -- e.g. TABLE
-      node_name         value_type,   -- e.g. Emp
-      node_description  value_type,   -- e.g. Table Emp
-      node_icon_name    value_type,   -- either icon name or icon_base64, e.g. TABLE_ICON, VIEW_ICON
-      node_icon_baset64 value_type,   -- e.g. ...
-      node_params       t_param_type, -- e.g. 
-      generatable       value_type,   -- e.g. Yes|No
-      multiselectable   value_type    -- e.g. Yes|No
+      id               key_type,     -- node identifier, e.g. EMP
+      parent_id        key_type,     -- parent node identifier, NULL for root nodes, e.g. TABLE
+      name             value_type,   -- name of the node, e.g. Emp
+      description      value_type,   -- description of the node, e.g. Table Emp
+      icon_name        value_type,   -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
+      icon_baset64     value_type,   -- Base64 encoded icon, size 16x16 pixels
+      params           t_param_type, -- array of parameters for this node including its ancestors
+      leaf             value_type,   -- Is this a leaf node? Yes|No
+      generatable      value_type,   -- Is the node with all its children generatable? Yes|No
+      multiselectable  value_type    -- May this node be part of a multiselection? Yes|No
    );
    -- Array of nodes representing a part of the full navigator tree within SQL Developer.
    TYPE t_node_type    IS TABLE OF r_node_type;
-   -- Array of associative array. Each entry represents the set of parameters for a node to be generator.
+   -- Array of associative array. Each entry represents the set of parameters for a node to be generated.
    TYPE t_tparam_type  IS TABLE OF t_param_type;
 
    /**

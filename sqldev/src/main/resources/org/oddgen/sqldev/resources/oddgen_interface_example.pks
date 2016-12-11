@@ -27,11 +27,32 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * oddgen PL/SQL data types
    */
-   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-   SUBTYPE param_type IS VARCHAR2(60 CHAR);
-   TYPE t_string IS TABLE OF string_type;
-   TYPE t_param IS TABLE OF string_type INDEX BY param_type;
-   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
+   -- Values, max. string value allowed within PL/SQL.
+   SUBTYPE value_type IS VARCHAR2(32767 BYTE);
+   -- Keys, restricted to a reasonable size.
+   SUBTYPE key_type    IS VARCHAR2(100 CHAR);
+   -- Array of strings
+   TYPE t_value_type  IS TABLE OF value_type;
+   -- Associative array of parameters (key-value pairs). 
+   TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
+   -- Associative array of list-of-values (key-value pairs, but a value is an array of strings).
+   TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
+   -- Record type to represent a folder or a leaf node in the SQL Developer navigator tree.
+   TYPE r_node_type    IS RECORD (
+      node_id           key_type,     -- e.g. EMP
+      parent_node_id    key_type,     -- e.g. TABLE
+      node_name         value_type,   -- e.g. Emp
+      node_description  value_type,   -- e.g. Table Emp
+      node_icon_name    value_type,   -- either icon name or icon_base64, e.g. TABLE_ICON, VIEW_ICON
+      node_icon_baset64 value_type,   -- e.g. ...
+      node_params       t_param_type, -- e.g. 
+      generatable       value_type,   -- e.g. Yes|No
+      multiselectable   value_type    -- e.g. Yes|No
+   );
+   -- Array of nodes representing a part of the full navigator tree within SQL Developer.
+   TYPE t_node_type    IS TABLE OF r_node_type;
+   -- Array of associative array. Each entry represents the set of parameters for a node to be generator.
+   TYPE t_tparam_type  IS TABLE OF t_param_type;
 
    /**
    * Get name of the generator, used in tree view
@@ -41,7 +62,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.1
    */
-   FUNCTION get_name RETURN VARCHAR2;
+   FUNCTION get_name RETURN value_type;
 
    /**
    * Get the description of the generator.
@@ -51,42 +72,28 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.1
    */
-   FUNCTION get_description RETURN VARCHAR2;
-
+   FUNCTION get_description RETURN value_type;
+   
    /**
-   * Get the list of supported object types.
-   * If this function is not implemented, [TABLE, VIEW] will be used. 
+   * Get the help of the generator.
+   * If this function is not implemented, no help is available.
+   * 
+   * @returns help text as HTML
    *
-   * @returns a list of supported object types
-   *
-   * @since v0.1
+   * @since v0.3
    */
-   FUNCTION get_object_types RETURN t_string;
-
+   FUNCTION get_help RETURN CLOB;   
+   
    /**
-   * Get the list of objects for a object type.
-   * If this function is not implemented, the result of the following query will be used:
-   * "SELECT object_name FROM user_objects WHERE object_type = in_object_type"
+   * Get the list of all nodes shown to be shown in the SQL Developer navigator tree.
+   * The implementation decides if nodes are returned eagerly oder lazyly.
    *
-   * @param in_object_type object type to filter objects
-   * @returns a list of objects
+   * @param in_parent_node_id root node to get children for
+   * @returns a list of all nodes in the tree in a hierarchical structure
    *
-   * @since v0.1
+   * @since v0.3
    */
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
-
-   /**
-   * Get all parameters supported by the generator including default values.
-   * If this function is not implemented, no parameters will be used.
-   *
-   * @param in_object_type bject type to determine default parameter values
-   * @param in_object_name object name to determine default parameter values
-   * @returns parameters supported by the generator
-   *
-   * @since v0.2
-   */
-   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_param;
+   FUNCTION get_nodes(in_parent_node_id IN key_type DEFAULT NULL) RETURN t_node_type;
 
    /**
    * Get all parameter names in the order to be displayed in the 
@@ -99,10 +106,10 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * @param in_object_name object name to determine parameter order
    * @returns ordered parameter names
    *
-   * @since v0.2
+   * @since v0.3
    */
-   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_string;
+   FUNCTION get_ordered_params(in_params IN t_param_type)
+      RETURN t_value_type;
 
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
@@ -114,11 +121,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their list-of-values
    *
-   * @since v0.2
+   * @since v0.3
    */
-   FUNCTION get_lov(in_object_type IN VARCHAR2,
-                    in_object_name IN VARCHAR2,
-                    in_params      IN t_param) RETURN t_lov;
+   FUNCTION get_lov(in_params IN t_param_type) RETURN t_lov_type;
                     
   /**
    * Get parameter states (enabled/disabled)
@@ -130,39 +135,58 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * @param in_params parameters to configure the behavior of the generator
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
    *
-   * @since v0.2
+   * @since v0.3
    */
-   FUNCTION get_param_states(in_object_type IN VARCHAR2,
-                             in_object_name IN VARCHAR2,
-                             in_params      IN t_param) RETURN t_param;                   
+   FUNCTION get_param_states(in_params IN t_param_type) RETURN t_value_type;
 
    /**
    * Generates the result.
-   * Complete signature. 
-   * Either this signature or the simplified signature or both must be implemented.
+   * The generate signature to be used when implmenting the get_nodes function.
+   * All parameters are part of in_params. There is no default behaviour for 
+   * parameters such as object_type and object_name.
    *
-   * @param in_object_type object type to generate code for
-   * @param in_object_name object_name of in_object_type to generate code for
    * @param in_params parameters to customize the code generation
    * @returns generator output
    *
-   * @since v0.1
+   * @since v0.3
    */
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2,
-                     in_params      IN t_param) RETURN CLOB;
+   FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
+   
+   /**
+   * Generates the prolog
+   * If this function is not implemented, no prolog will be generated.
+   * Called once for all selected nodes at the very begining of the procesing.
+   *
+   * @param in_tparams table of paramters to summarize processing.
+   * @returns generator prolog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_prolog(in_tparams IN t_tparam_type) RETURN CLOB;
 
    /**
-   * Generate the result.  
-   * Simplified signature, which is applicable in SQL. 
-   * Either this signature or the complete signature or both must be implemented.
+   * Generates the separator between generate calls.
+   * If this function is not implemented, an empty line will be generated.
+   * Called after every generate call except the last one.
    *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @returns generator output
+   * @param in_tparams table of paramters to summarize processing.
+   * @returns genertor separator
    *
-   * @since v0.1
+   * @since v0.3
    */
-   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB;
+   FUNCTION generate_separator RETURN CLOB;
+
+   /**
+   * Generates the epilog.
+   * If this function is not implemented, no epilog will be generated.
+   * Called once for all selected nodes at the very end of the processing.
+   *
+   * @param in_tparams table of paramters to summarize processing.
+   * @returns generator prolog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_epilog(in_tparams IN t_tparam_type) RETURN CLOB;
+
 END oddgen_interface_example;
 /

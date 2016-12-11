@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
       name             value_type,   -- name of the node, e.g. Emp
       description      value_type,   -- description of the node, e.g. Table Emp
       icon_name        value_type,   -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
-      icon_baset64     value_type,   -- Base64 encoded icon, size 16x16 pixels
+      icon_base64      value_type,   -- Base64 encoded icon, size 16x16 pixels
       params           t_param_type, -- array of parameters for this node including its ancestors
       leaf             value_type,   -- Is this a leaf node? Yes|No
       generatable      value_type,   -- Is the node with all its children generatable? Yes|No

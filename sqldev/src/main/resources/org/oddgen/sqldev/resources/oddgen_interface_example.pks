@@ -39,16 +39,16 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
    -- Record type to represent a node in the SQL Developer navigator tree.
    TYPE r_node_type    IS RECORD (
-      id               key_type,     -- node identifier, e.g. EMP
-      parent_id        key_type,     -- parent node identifier, NULL for root nodes, e.g. TABLE
-      name             value_type,   -- name of the node, e.g. Emp
-      description      value_type,   -- description of the node, e.g. Table Emp
-      icon_name        value_type,   -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
-      icon_base64      value_type,   -- Base64 encoded icon, size 16x16 pixels
-      params           t_param_type, -- array of parameters for this node including its ancestors
-      leaf             value_type,   -- Is this a leaf node? Yes|No
-      generatable      value_type,   -- Is the node with all its children generatable? Yes|No
-      multiselectable  value_type    -- May this node be part of a multiselection? Yes|No
+      id               key_type,             -- node identifier, e.g. EMP
+      parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
+      name             VARCHAR2(100 CHAR),   -- name of the node, e.g. Emp
+      description      VARCHAR2(4000 CHAR),  -- description of the node, e.g. Table Emp
+      icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
+      icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
+      params           t_param_type,         -- array of parameters for this node including its ancestors
+      leaf             VARCHAR2(5 CHAR),     -- Is this a leaf node? true|false
+      generatable      VARCHAR2(5 CHAR),     -- Is the node with all its children generatable? true|false
+      multiselectable  VARCHAR2(5 CHAR)      -- May this node be part of a multiselection? true|false
    );
    -- Array of nodes representing a part of the full navigator tree within SQL Developer.
    TYPE t_node_type    IS TABLE OF r_node_type;

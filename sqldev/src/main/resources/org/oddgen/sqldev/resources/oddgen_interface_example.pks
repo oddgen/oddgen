@@ -29,8 +29,8 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    */
    -- Keys, restricted to a reasonable size.
    SUBTYPE key_type    IS VARCHAR2(100 CHAR);
-   -- Values, max. string value allowed within PL/SQL.
-   SUBTYPE value_type IS VARCHAR2(32767 BYTE);
+   -- Values, typically short strings, but may contain larger values, e.g. for JSON content or similar.
+   SUBTYPE value_type IS CLOB;
    -- Value array
    TYPE t_value_type  IS TABLE OF value_type;
    -- Associative array of parameters (key-value pairs). 
@@ -52,8 +52,6 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    );
    -- Array of nodes representing a part of the full navigator tree within SQL Developer.
    TYPE t_node_type    IS TABLE OF r_node_type;
-   -- Array of associative array. Each entry represents the set of parameters for a node to be generated.
-   TYPE t_tparam_type  IS TABLE OF t_param_type;
 
    /**
    * Get name of the generator, used in tree view
@@ -63,7 +61,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.1
    */
-   FUNCTION get_name RETURN value_type;
+   FUNCTION get_name RETURN VARCHAR2;
 
    /**
    * Get the description of the generator.
@@ -73,7 +71,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.1
    */
-   FUNCTION get_description RETURN value_type;
+   FUNCTION get_description RETURN VARCHAR2;
    
    /**
    * Get the help of the generator.
@@ -83,7 +81,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_help RETURN CLOB;   
+   FUNCTION get_help RETURN CLOB;
    
    /**
    * Get the list of all nodes shown to be shown in the SQL Developer navigator tree.
@@ -138,7 +136,19 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_param_states(in_params IN t_param_type) RETURN t_value_type;
+   FUNCTION get_param_states(in_params IN t_param_type) RETURN t_param_type;
+
+   /**
+   * Generates the prolog
+   * If this function is not implemented, no prolog will be generated.
+   * Called once for all selected nodes at the very begining of the procesing.
+   *
+   * @param in_nodes table of selected nodes to be generated.
+   * @returns generator prolog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_prolog(in_nodes IN t_node_type) RETURN CLOB;
 
    /**
    * Generates the result.
@@ -154,40 +164,27 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
    
    /**
-   * Generates the prolog
-   * If this function is not implemented, no prolog will be generated.
-   * Called once for all selected nodes at the very begining of the procesing.
-   *
-   * @param in_tparams table of paramters to summarize processing.
-   * @returns generator prolog
-   *
-   * @since v0.3
-   */
-   FUNCTION generate_prolog(in_tparams IN t_tparam_type) RETURN CLOB;
-
-   /**
    * Generates the separator between generate calls.
    * If this function is not implemented, an empty line will be generated.
-   * Called after every generate call except the last one.
+   * Called once, but used between generator calls.
    *
-   * @param in_tparams table of paramters to summarize processing.
-   * @returns genertor separator
+   * @returns generator separator
    *
    * @since v0.3
    */
-   FUNCTION generate_separator RETURN CLOB;
+   FUNCTION generate_separator RETURN VARCHAR2;
 
    /**
    * Generates the epilog.
    * If this function is not implemented, no epilog will be generated.
    * Called once for all selected nodes at the very end of the processing.
    *
-   * @param in_tparams table of paramters to summarize processing.
-   * @returns generator prolog
+   * @param in_nodes table of selected nodes to be generated.
+   * @returns generator epilog
    *
    * @since v0.3
    */
-   FUNCTION generate_epilog(in_tparams IN t_tparam_type) RETURN CLOB;
+   FUNCTION generate_epilog(in_nodes IN t_node_type) RETURN CLOB;
 
 END oddgen_interface_example;
 /

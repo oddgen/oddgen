@@ -39,19 +39,25 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
    -- Record type to represent a node in the SQL Developer navigator tree.
    TYPE r_node_type    IS RECORD (
-      id               key_type,             -- node identifier, e.g. EMP
+      id               key_type,             -- node identifier, case-sensitive, e.g. EMP
       parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
       name             VARCHAR2(100 CHAR),   -- name of the node, e.g. Emp
       description      VARCHAR2(4000 CHAR),  -- description of the node, e.g. Table Emp
       icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
       icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
-      params           t_param_type,         -- array of parameters for this node including its ancestors
+      params           t_param_type,         -- array of parameters for a leaf node including co_path
       leaf             VARCHAR2(5 CHAR),     -- Is this a leaf node? true|false
       generatable      VARCHAR2(5 CHAR),     -- Is the node with all its children generatable? true|false
       multiselectable  VARCHAR2(5 CHAR)      -- May this node be part of a multiselection? true|false
    );
    -- Array of nodes representing a part of the full navigator tree within SQL Developer.
    TYPE t_node_type    IS TABLE OF r_node_type;
+   
+   /**
+   * oddgen constants
+   */
+   -- list of node identifier delimited by '/' representing the selected tree
+   co_path CONSTANT VARCHAR2(100 CHAR) := 'Path';
 
    /**
    * Get name of the generator, used in tree view
@@ -85,10 +91,10 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    
    /**
    * Get the list of all nodes shown to be shown in the SQL Developer navigator tree.
-   * The implementation decides if nodes are returned eagerly oder lazyly.
+   * The implementation decides if nodes are returned eagerly oder lazily.
    *
    * @param in_parent_node_id root node to get children for
-   * @returns a list of all nodes in the tree in a hierarchical structure
+   * @returns a list of nodes in a hierarchical structure
    *
    * @since v0.3
    */
@@ -101,8 +107,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * implicitly by name. Parameter names returned by this function 
    * are taking precedence. Remaining parameters are ordered by name.
    *
-   * @param in_object_type object type to determine parameter order
-   * @param in_object_name object name to determine parameter order
+   * @param in_params input parameters
    * @returns ordered parameter names
    *
    * @since v0.3
@@ -115,9 +120,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_object_type object type to determine list of values
-   * @param in_object_name object_name to determine list of values
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_params input parameters
    * @returns parameters with their list-of-values
    *
    * @since v0.3
@@ -129,9 +132,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_object_type object type to determine parameter state
-   * @param in_object_name object_name to determine parameter state
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_params input parameters
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
    *
    * @since v0.3
@@ -141,7 +142,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * Generates the prolog
    * If this function is not implemented, no prolog will be generated.
-   * Called once for all selected nodes at the very begining of the procesing.
+   * Called once for all selected nodes at the very beginning of the processing.
    *
    * @param in_nodes table of selected nodes to be generated.
    * @returns generator prolog
@@ -175,11 +176,10 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
 
    /**
    * Generates the result.
-   * The generate signature to be used when implmenting the get_nodes function.
-   * All parameters are part of in_params. There is no default behaviour for 
-   * parameters such as object_type and object_name.
+   * The generate signature to be used when implementing the get_nodes function.
+   * All parameters are part of in_params.
    *
-   * @param in_params parameters to customize the code generation
+   * @param in_params input parameters
    * @returns generator output
    *
    * @since v0.3

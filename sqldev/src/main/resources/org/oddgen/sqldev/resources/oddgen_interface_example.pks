@@ -149,19 +149,6 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * @since v0.3
    */
    FUNCTION generate_prolog(in_nodes IN t_node_type) RETURN CLOB;
-
-   /**
-   * Generates the result.
-   * The generate signature to be used when implmenting the get_nodes function.
-   * All parameters are part of in_params. There is no default behaviour for 
-   * parameters such as object_type and object_name.
-   *
-   * @param in_params parameters to customize the code generation
-   * @returns generator output
-   *
-   * @since v0.3
-   */
-   FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
    
    /**
    * Generates the separator between generate calls.
@@ -185,6 +172,19 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    * @since v0.3
    */
    FUNCTION generate_epilog(in_nodes IN t_node_type) RETURN CLOB;
+
+   /**
+   * Generates the result.
+   * The generate signature to be used when implmenting the get_nodes function.
+   * All parameters are part of in_params. There is no default behaviour for 
+   * parameters such as object_type and object_name.
+   *
+   * @param in_params parameters to customize the code generation
+   * @returns generator output
+   *
+   * @since v0.3
+   */
+   FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
 
 END oddgen_interface_example;
 /

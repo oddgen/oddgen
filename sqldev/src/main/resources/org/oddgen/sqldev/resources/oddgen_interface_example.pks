@@ -98,6 +98,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    /**
    * Get the list of all nodes shown to be shown in the SQL Developer navigator tree.
    * The implementation decides if nodes are returned eagerly oder lazily.
+   * If this function is not implemented nodes for tables and views are returned lazily.
    *
    * @param in_parent_node_id root node to get children for
    * @returns a list of nodes in a hierarchical structure

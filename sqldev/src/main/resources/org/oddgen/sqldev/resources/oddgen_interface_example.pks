@@ -38,6 +38,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    -- Associative array of list-of-values (key-value pairs, but a value is a value array).
    TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
    -- Record type to represent a node in the SQL Developer navigator tree.
+   -- Every node contains a co_path (constant) parameter, the value is provided by oddgen.
    TYPE r_node_type    IS RECORD (
       id               key_type,             -- node identifier, case-sensitive, e.g. EMP
       parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
@@ -45,7 +46,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
       description      VARCHAR2(4000 CHAR),  -- description of the node, e.g. Table Emp
       icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
       icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
-      params           t_param_type,         -- array of parameters for a leaf node including co_path
+      params           t_param_type,         -- array of parameters for a leaf node, co_path on every level
       leaf             VARCHAR2(5 CHAR),     -- Is this a leaf node? true|false
       generatable      VARCHAR2(5 CHAR),     -- Is the node with all its children generatable? true|false
       multiselectable  VARCHAR2(5 CHAR)      -- May this node be part of a multiselection? true|false

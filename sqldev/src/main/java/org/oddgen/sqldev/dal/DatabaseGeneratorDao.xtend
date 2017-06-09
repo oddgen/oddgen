@@ -620,10 +620,18 @@ class DatabaseGeneratorDao {
 			         RETURN get_default_name(in_owner        => in_owner,
 			                                 in_package_name => in_package_name);
 			      ELSE
-			         EXECUTE IMMEDIATE 'BEGIN :l_name := ' || in_owner || '.' || in_package_name ||
-			                           '.get_name; END;'
-			            USING OUT l_name;
-			         RETURN l_name;
+			         <<trap>>
+			         BEGIN
+			            EXECUTE IMMEDIATE 'BEGIN :l_name := ' || in_owner || '.' || in_package_name ||
+			                              '.get_name; END;'
+			               USING OUT l_name;
+			            RETURN l_name;
+			         EXCEPTION
+			            WHEN OTHERS THEN
+			               -- ignore error (issue #41), just return default name
+			               RETURN get_default_name(in_owner        => in_owner,
+			               			               in_package_name => in_package_name);
+			         END trap;
 			      END IF;
 			   END get_name;
 			   --
@@ -636,10 +644,18 @@ class DatabaseGeneratorDao {
 			         RETURN get_default_name(in_owner        => in_owner,
 			                                 in_package_name => in_package_name);
 			      ELSE
-			         EXECUTE IMMEDIATE 'BEGIN :l_description := ' || in_owner || '.' ||
-			                           in_package_name || '.get_description; END;'
-			            USING OUT l_description;
-			         RETURN l_description;
+			         <<trap>>
+			         BEGIN
+			            EXECUTE IMMEDIATE 'BEGIN :l_description := ' || in_owner || '.' ||
+			                              in_package_name || '.get_description; END;'
+			               USING OUT l_description;
+			            RETURN l_description;
+			         EXCEPTION
+			            WHEN OTHERS THEN
+			               -- ignore error (issue #41), just return default description
+			               RETURN get_default_name(in_owner        => in_owner,
+			                                       in_package_name => in_package_name);
+			         END trap;
 			      END IF;
 			   END get_description;
 			   --

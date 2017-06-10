@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    /*
-   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -15,86 +15,202 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * limitations under the License.
    */
 
-   /** 
-   * oddgen PL/SQL example to generate a 1:1 view based on an existing table.
+   /**
+   * oddgen PL/SQL example to generates Drop statements for selected objects in the current schema.
    *
    * @headcom
    */
 
-   --
-   -- oddgen PL/SQL data types
-   --
-   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-   SUBTYPE param_type IS VARCHAR2(30 CHAR);
-   TYPE t_string IS TABLE OF string_type;
-   TYPE t_param IS TABLE OF string_type INDEX BY param_type;
-   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
+   /**
+   * oddgen PL/SQL data types
+   */
+
+   -- Keys, restricted to a reasonable size.
+   SUBTYPE key_type    IS VARCHAR2(128 CHAR);
+
+   -- Values, typically short strings, but may contain larger values, e.g. for JSON content or similar.
+   SUBTYPE value_type  IS CLOB;
+
+   -- Value array
+   TYPE t_value_type   IS TABLE OF value_type;
+
+   -- Associative array of parameters (key-value pairs).
+   TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
+
+   -- Associative array of list-of-values (key-value pairs, but a value is a value array).
+   TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
+
+   -- Record type to represent a node in the SQL Developer navigator tree.
+   -- Icon is evaluated as follows:
+   --    a) by icon_base64, if defined and valid
+   --    b) by icon_name, if defined and valid
+   --    c) UNKNOWN_ICON, if leaf node
+   --    d) UNKNOWN_FOLDER_ICON
+   TYPE r_node_type    IS RECORD (
+      id               key_type,             -- node identifier, case-sensitive, e.g. EMP
+      parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
+      name             key_type,             -- name of the node, e.g. Emp
+      description      VARCHAR2(4000 BYTE),  -- description of the node, e.g. Table Emp
+      icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
+      icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
+      params           t_param_type,         -- array of parameters, e.g. OBJECT_TYPE=TABLE, OBJECT_NAME=EMP
+      leaf             VARCHAR2(5 CHAR),     -- Is this a leaf node? true|false, default false
+      generatable      VARCHAR2(5 CHAR),     -- Is the node with all its children generatable? true|false, default true
+      multiselectable  VARCHAR2(5 CHAR)      -- May this node be part of a multiselection? true|false, default true
+   );
+
+   -- Array of nodes representing a part of the full navigator tree within SQL Developer.
+   TYPE t_node_type    IS TABLE OF r_node_type;
 
    /**
-   * Get name of the generator, used in tree view
+   * Get the name of the generator, used in tree view
+   * If this function is not implemented, the package name will be used.
    *
    * @returns name of the generator
+   *
+   * @since v0.1
    */
    FUNCTION get_name RETURN VARCHAR2;
 
    /**
-   * Get a description of the generator.
-   * 
+   * Get the description of the generator.
+   * If this function is not implemented, the owner and the package name will be used.
+   *
    * @returns description of the generator
+   *
+   * @since v0.1
    */
    FUNCTION get_description RETURN VARCHAR2;
 
    /**
-   * Get a list of supported object types.
+   * Get the help of the generator.
+   * If this function is not implemented, no help is available.
    *
-   * @returns a list of supported object types
+   * @returns help text as HTML
+   *
+   * @since v0.3
    */
-   FUNCTION get_object_types RETURN t_string;
+   FUNCTION get_help RETURN CLOB;
+   
+   /**
+   * Get the group of an object type. 
+   * Function to be used in SQL, it is not part of the oddgen iterface.
+   *
+   * @param in_object_type object_type according user_objects
+   * @returns the group of object type, either CODE or DATA
+   */
+   FUNCTION get_object_group(in_object_type IN VARCHAR2) RETURN VARCHAR2;
 
    /**
-   * Get a list of objects for a object type.
+   * Get the list of nodes shown to be shown in the SQL Developer navigator tree.
+   * The implementation decides if nodes are returned eagerly oder lazily.
+   * If this function is not implemented nodes for tables and views are returned lazily.
    *
-   * @param in_object_type object type to filter objects
-   * @returns a list of objects
+   * @param in_parent_node_id root node to get children for
+   * @returns a list of nodes in a hierarchical structure
+   *
+   * @since v0.3
    */
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
+   FUNCTION get_nodes(in_parent_node_id IN key_type DEFAULT NULL) RETURN t_node_type;
 
    /**
-   * Get all parameters supported by the generator including default values.
+   * Get the list of parameter names in the order to be displayed in the generate dialog.
+   * If this function is not implemented, the parameters are ordered by name.
+   * Parameter names returned by this function are taking precedence.
+   * Remaining parameters are ordered by name.
    *
-   * @returns parameters supported by the generator
+   * @param in_params input parameters
+   * @returns ordered parameter names
+   *
+   * @since v0.3
    */
-   FUNCTION get_params RETURN t_param;
+   FUNCTION get_ordered_params(in_params IN t_param_type) RETURN t_value_type;
 
    /**
-   * Get a list of values per parameter, if such a LOV is applicable.
+   * Get the list of values per parameter, if such a LOV is applicable.
+   * If this function is not implemented, then the parameters cannot be validated in the GUI.
+   * This function is called when showing the generate dialog and after updating a parameter.
    *
+   * @param in_params input parameters
    * @returns parameters with their list-of-values
+   *
+   * @since v0.3
    */
-   FUNCTION get_lov RETURN t_lov;
- 
+   FUNCTION get_lov(in_params IN t_param_type) RETURN t_lov_type;
+
+  /**
+   * Get the list of parameter states (enabled/disabled)
+   * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
+   * This function is called when showing the generate dialog and after updating a parameter.
+   *
+   * @param in_params input parameters
+   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   *
+   * @since v0.3
+   */
+   FUNCTION get_param_states(in_params IN t_param_type) RETURN t_param_type;
+
+   /**
+   * Generates the prolog
+   * If this function is not implemented, no prolog will be generated.
+   * Called once for all selected nodes at the very beginning of the processing.
+   *
+   * @param in_nodes table of selected nodes to be generated.
+   * @returns generator prolog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_prolog(in_nodes IN t_node_type) RETURN CLOB;
+
+   /**
+   * Generates the separator between generate calls.
+   * If this function is not implemented, an empty line will be generated.
+   * Called once, but used between generator calls.
+   *
+   * @returns generator separator
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_separator RETURN VARCHAR2;
+
+   /**
+   * Generates the epilog.
+   * If this function is not implemented, no epilog will be generated.
+   * Called once for all selected nodes at the very end of the processing.
+   *
+   * @param in_nodes table of selected nodes to be generated.
+   * @returns generator epilog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_epilog(in_nodes IN t_node_type) RETURN CLOB;
+
    /**
    * Generates the result.
+   * The generate signature to be used when implementing the get_nodes function.
+   * All parameters are part of in_params.
    *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_params input parameters
    * @returns generator output
+   *
+   * @since v0.3
    */
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2,
-                     in_params      IN t_param) RETURN CLOB;
-
+   FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
+   
    /**
-   * Alternative, simplified version of the generator, which is applicable in SQL.
-   * Default values according get_params are used for in_params.
-   * This function is implemented for convenience purposes only.
+   * Wrapper to test the generator from SQL.
+   * Not part of the oddgen interface.
    *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @returns generator output
+   * @param in_object_group e.g. CODE, DATA
+   * @param in_object_type e.g. TABLE
+   * @param in_object_name e.g. EMP
    */
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB;
+   FUNCTION test_generate(
+      in_object_group IN VARCHAR2,
+      in_object_type  IN VARCHAR2 DEFAULT NULL,
+      in_object_name  IN VARCHAR2 DEFAULT NULL,
+      in_purge        IN VARCHAR2 DEFAULT 'No'
+   ) RETURN CLOB;
+   
 END dropall;
 /

@@ -52,7 +52,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    TYPE r_node_type    IS RECORD (
       id               key_type,             -- node identifier, case-sensitive, e.g. EMP
       parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
-      name             VARCHAR2(128 CHAR),   -- name of the node, e.g. Emp
+      name             key_type,             -- name of the node, e.g. Emp
       description      VARCHAR2(4000 BYTE),  -- description of the node, e.g. Table Emp
       icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
       icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels

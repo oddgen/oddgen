@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
+CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    /*
    * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
@@ -17,53 +17,12 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
 
    /**
    * oddgen PL/SQL database server generator.
-   * complete interface example.
+   * complete interface.
    * PL/SQL package specification only.
    * PL/SQL package body is not part of the interface definition.
    *
    * @headcom
    */
-
-   /**
-   * oddgen PL/SQL data types
-   */
-
-   -- Keys, restricted to a reasonable size.
-   SUBTYPE key_type    IS VARCHAR2(128 CHAR);
-
-   -- Values, typically short strings, but may contain larger values, e.g. for JSON content or similar.
-   SUBTYPE value_type  IS CLOB;
-
-   -- Value array
-   TYPE t_value_type   IS TABLE OF value_type;
-
-   -- Associative array of parameters (key-value pairs).
-   TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
-
-   -- Associative array of list-of-values (key-value pairs, but a value is a value array).
-   TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
-
-   -- Record type to represent a node in the SQL Developer navigator tree.
-   -- Icon is evaluated as follows:
-   --    a) by icon_base64, if defined and valid
-   --    b) by icon_name, if defined and valid
-   --    c) UNKNOWN_ICON, if leaf node
-   --    d) UNKNOWN_FOLDER_ICON
-   TYPE r_node_type    IS RECORD (
-      id               key_type,             -- node identifier, case-sensitive, e.g. EMP
-      parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
-      name             key_type,             -- name of the node, e.g. Emp
-      description      VARCHAR2(4000 BYTE),  -- description of the node, e.g. Table Emp
-      icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
-      icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
-      params           t_param_type,         -- array of parameters, e.g. OBJECT_TYPE=TABLE, OBJECT_NAME=EMP
-      leaf             VARCHAR2(5 CHAR),     -- Is this a leaf node? true|false, default false
-      generatable      VARCHAR2(5 CHAR),     -- Is the node with all its children generatable? true|false, default true
-      multiselectable  VARCHAR2(5 CHAR)      -- May this node be part of a multiselection? true|false, default true
-   );
-
-   -- Array of nodes representing a part of the full navigator tree within SQL Developer.
-   TYPE t_node_type    IS TABLE OF r_node_type;
 
    /**
    * Get the name of the generator, used in tree view
@@ -105,7 +64,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_nodes(in_parent_node_id IN key_type DEFAULT NULL) RETURN t_node_type;
+   FUNCTION get_nodes(
+      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+   ) RETURN oddgen_types.t_node_type;
 
    /**
    * Get the list of parameter names in the order to be displayed in the generate dialog.
@@ -118,8 +79,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_ordered_params(in_params IN t_param_type)
-      RETURN t_value_type;
+   FUNCTION get_ordered_params(
+      in_params IN oddgen_types.t_param_type
+   ) RETURN oddgen_types.t_value_type;
 
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
@@ -131,7 +93,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_lov(in_params IN t_param_type) RETURN t_lov_type;
+   FUNCTION get_lov(
+      in_params IN oddgen_types.t_param_type
+   ) RETURN oddgen_types.t_lov_type;
 
   /**
    * Get the list of parameter states (enabled/disabled)
@@ -143,7 +107,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION get_param_states(in_params IN t_param_type) RETURN t_param_type;
+   FUNCTION get_param_states(
+      in_params IN oddgen_types.t_param_type
+   ) RETURN oddgen_types.t_param_type;
 
    /**
    * Generates the prolog
@@ -155,7 +121,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION generate_prolog(in_nodes IN t_node_type) RETURN CLOB;
+   FUNCTION generate_prolog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB;
 
    /**
    * Generates the separator between generate calls.
@@ -178,7 +146,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION generate_epilog(in_nodes IN t_node_type) RETURN CLOB;
+   FUNCTION generate_epilog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB;
 
    /**
    * Generates the result.
@@ -190,7 +160,9 @@ CREATE OR REPLACE PACKAGE oddgen_interface_example AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   FUNCTION generate(in_params IN t_param_type) RETURN CLOB;
+   FUNCTION generate(
+      in_params IN oddgen_types.t_param_type
+   ) RETURN CLOB;
 
-END oddgen_interface_example;
+END oddgen_interface;
 /

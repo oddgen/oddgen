@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,7 +310,7 @@ class DatabaseGeneratorDao {
 			   «FOR key : params.keySet»
 			   	l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   «ENDFOR»
-			   «IF metaData.hasGetParamStates»
+			   «IF metaData.hasGetParamStates1»
 			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
 			   «ELSE»
 			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
@@ -334,7 +334,7 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val paramStates = new HashMap<String, String>()
 		var Document doc
-		if (metaData.hasGetParamStates || metaData.hasRefreshParamStates) {
+		if (metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
 			doc = plsql.doc
 		}
 		if (doc != null) {
@@ -375,7 +375,10 @@ class DatabaseGeneratorDao {
 			                   --
 			                    (argument_name = 'IN_OBJECT_NAME' AND in_out = 'IN' AND position = 2 AND
 			                    data_type = 'VARCHAR2') OR (argument_name = 'IN_PARAMS' AND in_out = 'IN' AND
-			                    position = 3 AND data_type = 'PL/SQL TABLE')
+			                    position = 3 AND data_type = 'PL/SQL TABLE') OR
+			                   --
+			                    (argument_name = 'IN_PARAMS' AND in_out = 'IN' AND position = 1 AND
+			                    data_type = 'PL/SQL TABLE')
 			                   --
 			                   )
 			             GROUP BY owner, package_name, object_name, overload),
@@ -393,7 +396,13 @@ class DatabaseGeneratorDao {
 			                            1
 			                           ELSE
 			                            0
-			                        END) AS has_generate2
+			                        END) AS has_generate2,
+			                   SUM(CASE
+			                           WHEN arg_count = 2 THEN
+			                            1
+			                            ELSE
+			                            0
+			                       END) AS has_generate3
 			              FROM gen_base
 			             GROUP BY owner, package_name
 			         ),
@@ -402,7 +411,13 @@ class DatabaseGeneratorDao {
 			                   gen.package_name,
 			                   arg.object_name AS procedure_name,
 			                   arg.overload,
-			                   COUNT(*) AS arg_count
+			                   COUNT(*) AS arg_count,
+			                   SUM(CASE 
+			                        WHEN argument_name = 'IN_PARAMS' THEN
+			                         1
+			                        ELSE
+			                         0
+			                    END) AS has_in_params_arg
 			              FROM all_arguments arg
 			              JOIN gen
 			                ON arg.owner = gen.owner
@@ -414,6 +429,15 @@ class DatabaseGeneratorDao {
 			                    data_type = 'VARCHAR2') OR
 			                   --
 			                    (arg.object_name = 'GET_DESCRIPTION' AND arg.position = 0 AND
+			                    data_type = 'VARCHAR2') OR
+			                   --
+			                    (arg.object_name = 'GET_HELP' AND arg.position = 0 AND
+			                    data_type = 'CLOB') OR
+			                   --
+			                    (arg.object_name = 'GET_NODES' AND arg.position = 0 AND
+			                    data_type = 'TABLE') OR
+			                    (arg.object_name = 'GET_NODES' AND arg.position = 1 AND
+			                    argument_name = 'IN_PARENT_NODE_ID' AND in_out = 'IN' AND
 			                    data_type = 'VARCHAR2') OR
 			                   --
 			                    (arg.object_name = 'GET_OBJECT_TYPES' AND arg.position = 0 AND
@@ -443,6 +467,9 @@ class DatabaseGeneratorDao {
 			                    (arg.object_name = 'GET_ORDERED_PARAMS' AND arg.position = 2 AND
 			                    argument_name = 'IN_OBJECT_NAME' AND in_out = 'IN' AND
 			                    data_type = 'VARCHAR2') OR
+			                    (arg.object_name = 'GET_ORDERED_PARAMS' AND arg.position = 1 AND
+			                    argument_name = 'IN_PARAMS' AND in_out = 'IN' AND
+			                    data_type = 'PL/SQL TABLE') OR
 			                   --
 			                    (arg.object_name IN ('GET_LOV', 'REFRESH_LOV') AND
 			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
@@ -457,6 +484,13 @@ class DatabaseGeneratorDao {
 			                    arg.position = 3 AND argument_name = 'IN_PARAMS' AND
 			                    in_out = 'IN' AND data_type = 'PL/SQL TABLE') OR
 			                   --
+			                    (arg.object_name = 'GET_LOV' AND
+			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
+			                    data_type = 'PL/SQL TABLE') OR
+			                    (arg.object_name = 'GET_LOV' AND
+			                    arg.position = 1 AND argument_name = 'IN_PARAMS' AND
+			                    in_out = 'IN' AND data_type = 'PL/SQL TABLE') OR
+			                   --
 			                    (arg.object_name IN ('GET_PARAM_STATES', 'REFRESH_PARAM_STATES') AND
 			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
 			                    data_type = 'PL/SQL TABLE') OR
@@ -468,7 +502,32 @@ class DatabaseGeneratorDao {
 			                    in_out = 'IN' AND data_type = 'VARCHAR2') OR
 			                    (arg.object_name IN ('GET_PARAM_STATES', 'REFRESH_PARAM_STATES') AND
 			                    arg.position = 3 AND argument_name = 'IN_PARAMS' AND
-			                    in_out = 'IN' AND data_type = 'PL/SQL TABLE')
+			                    in_out = 'IN' AND data_type = 'PL/SQL TABLE') OR
+			                   --
+			                    (arg.object_name = 'GET_PARAM_STATES' AND
+			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
+			                    data_type = 'PL/SQL TABLE') OR
+			                    (arg.object_name = 'GET_PARAM_STATES' AND
+			                    arg.position = 1 AND argument_name = 'IN_PARAMS' AND
+			                    in_out = 'IN' AND data_type = 'PL/SQL TABLE') OR
+			                   --
+			                    (arg.object_name = 'GENERATE_PROLOG' AND
+			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
+			                    data_type = 'CLOB') OR
+			                    (arg.object_name = 'GENERATE_PROLOG' AND
+			                    arg.position = 1 AND argument_name = 'IN_NODES' AND
+			                    in_out = 'IN' AND data_type = 'TABLE') OR
+			                   --
+			                    (arg.object_name = 'GENERATE_SEPARATOR' AND
+			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
+			                    data_type = 'VARCHAR2') OR
+			                   --
+			                    (arg.object_name = 'GENERATE_EPILOG' AND
+			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
+			                    data_type = 'CLOB') OR
+			                    (arg.object_name = 'GENERATE_EPILOG' AND
+			                    arg.position = 1 AND argument_name = 'IN_NODES' AND
+			                    in_out = 'IN' AND data_type = 'TABLE')
 			                   --
 			                   )
 			             GROUP BY gen.owner, gen.package_name, arg.object_name, arg.overload
@@ -488,6 +547,18 @@ class DatabaseGeneratorDao {
 			                           ELSE
 			                            0
 			                        END) AS has_get_description,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_HELP' AND arg_count = 1 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_help,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_NODES' AND arg_count = 2 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_nodes,
 			                   SUM(CASE
 			                           WHEN procedure_name = 'GET_OBJECT_TYPES' AND arg_count = 1 THEN
 			                            1
@@ -525,7 +596,13 @@ class DatabaseGeneratorDao {
 			                            0
 			                        END) AS has_get_ordered_params2,
 			                   SUM(CASE
-			                           WHEN procedure_name = 'GET_LOV' AND arg_count = 1 THEN
+			                           WHEN procedure_name = 'GET_ORDERED_PARAMS' AND arg_count = 2 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_ordered_params3,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_LOV' AND arg_count = 1 AND has_in_params_arg = 0 THEN
 			                            1
 			                           ELSE
 			                            0
@@ -537,44 +614,83 @@ class DatabaseGeneratorDao {
 			                            0
 			                        END) AS has_get_lov2,
 			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_LOV' AND arg_count = 2 AND has_in_params_arg = 1 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_lov3,
+			                   SUM(CASE
 			                           WHEN procedure_name = 'REFRESH_LOV' AND arg_count = 4 THEN
 			                            1
 			                           ELSE
 			                            0
 			                        END) AS has_refresh_lov,
 			                   SUM(CASE
-			                           WHEN procedure_name = 'GET_PARAM_STATES' AND arg_count = 4 THEN
-			                            1
-			                           ELSE
-			                            0
-			                        END) AS has_get_param_states,
-			                   SUM(CASE
 			                           WHEN procedure_name = 'REFRESH_PARAM_STATES' AND arg_count = 4 THEN
 			                            1
 			                           ELSE
 			                            0
-			                        END) AS has_refresh_param_states
+			                        END) AS has_refresh_param_states,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_PARAM_STATES' AND arg_count = 4 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_param_states1,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_PARAM_STATES' AND arg_count = 2 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_param_states2,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GENERATE_PROLOG' AND arg_count = 2 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_generate_prolog,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GENERATE_SEPARATOR' AND arg_count = 1 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_generate_separator,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GENERATE_EPILOG' AND arg_count = 2 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_generate_epilog
 			              FROM oth_base
 			             GROUP BY owner, package_name
 			         ),
 			         tot AS ( 
 			            SELECT gen.owner,
 			                   gen.package_name,
-			                   gen.has_generate1,
-			                   gen.has_generate2,
-			                   nvl(oth.has_get_name, 0) AS has_get_name,
-			                   nvl(oth.has_get_description, 0) AS has_get_description,
-			                   nvl(oth.has_get_object_types, 0) AS has_get_object_types,
-			                   nvl(oth.has_get_object_names, 0) AS has_get_object_names,
+			                   gen.has_generate1, -- v0.1.0 deprecated
+			                   gen.has_generate2, -- v0.2.0 deprecated
+			                   gen.has_generate3, -- v0.3.0 current
+			                   nvl(oth.has_get_name, 0) AS has_get_name, -- v0.1.0 current
+			                   nvl(oth.has_get_description, 0) AS has_get_description, -- v0.1.0 current
+			                   nvl(oth.has_get_help, 0) AS has_get_help, -- v0.3.0 current
+			                   nvl(oth.has_get_nodes, 0) AS has_get_nodes, -- v0.3.0 current
+			                   nvl(oth.has_get_object_types, 0) AS has_get_object_types, -- v0.1.0 depreated
+			                   nvl(oth.has_get_object_names, 0) AS has_get_object_names, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_params1, 0) AS has_get_params1, -- v0.1.0 deprecated
-			                   nvl(oth.has_get_params2, 0) AS has_get_params2,
-			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v.0.2.0 undocumented
-			                   nvl(oth.has_get_ordered_params2, 0) AS has_get_ordered_params2,
+			                   nvl(oth.has_get_params2, 0) AS has_get_params2, -- v0.2.0 deprecated
+			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v0.2.0 undocumented, deprecated
+			                   nvl(oth.has_get_ordered_params2, 0) AS has_get_ordered_params2, -- v0.2.0 deprecated
+			                   nvl(oth.has_get_ordered_params3, 0) AS has_get_ordered_params3, -- v0.3.0 current
 			                   nvl(oth.has_get_lov1, 0) AS has_get_lov1, -- v0.1.0 deprecated
-			                   nvl(oth.has_get_lov2, 0) AS has_get_lov2,
+			                   nvl(oth.has_get_lov2, 0) AS has_get_lov2, -- v0.2.0 deprecated
+			                   nvl(oth.has_get_lov3, 0) AS has_get_lov3, -- v0.3.0 current
 			                   nvl(oth.has_refresh_lov, 0) AS has_refresh_lov, -- v0.1.0 deprecated
-			                   nvl(oth.has_get_param_states, 0) AS has_get_param_states,
-			                   nvl(oth.has_refresh_param_states, 0) AS has_refresh_param_states -- v0.2.0 undocumented
+			                   nvl(oth.has_refresh_param_states, 0) AS has_refresh_param_states, -- v0.2.0 undocumented, deprecated
+			                   nvl(oth.has_get_param_states1, 0) AS has_get_param_states1, -- v0.2.0 deprecated
+			                   nvl(oth.has_get_param_states2, 0) AS has_get_param_states2, -- v0.3.0 current
+			                   nvl(oth.has_generate_prolog, 0) AS has_generate_prolog, -- v0.3.0 current
+			                   nvl(oth.has_generate_separator, 0) AS has_generate_separator, -- v0.3.0 current
+			                   nvl(oth.has_generate_epilog, 0) AS has_generate_epilog -- v0.3.0 current
 			              FROM gen
 			              LEFT JOIN oth
 			                ON gen.owner = oth.owner
@@ -585,19 +701,28 @@ class DatabaseGeneratorDao {
 			             package_name,
 			             has_generate1,
 			             has_generate2,
+			             has_generate3,
 			             has_get_name,
 			             has_get_description,
+			             has_get_help,
+			             has_get_nodes,
 			             has_get_object_types,
 			             has_get_object_names,
 			             has_get_params1,
 			             has_get_params2,
 			             has_get_ordered_params1,
 			             has_get_ordered_params2,
+			             has_get_ordered_params3,
 			             has_get_lov1,
 			             has_get_lov2,
+			             has_get_lov3,
 			             has_refresh_lov,
-			             has_get_param_states,
-			             has_refresh_param_states
+			             has_refresh_param_states,
+			             has_get_param_states1,
+			             has_get_param_states2,
+			             has_generate_prolog,
+			             has_generate_separator,
+			             has_generate_epilog
 			        FROM tot;
 			   --
 			   SUBTYPE string_type IS VARCHAR2(8192 CHAR);
@@ -683,19 +808,28 @@ class DatabaseGeneratorDao {
 			      add_node(in_node => 'description', in_value => l_description);
 			      add_node(in_node => 'hasGenerate1', in_value => r_metadata.has_generate1);
 			      add_node(in_node => 'hasGenerate2', in_value => r_metadata.has_generate2);
+			      add_node(in_node => 'hasGenerate3', in_value => r_metadata.has_generate3);
 			      add_node(in_node => 'hasGetName', in_value => r_metadata.has_get_name);
 			      add_node(in_node => 'hasGetDescription', in_value => r_metadata.has_get_description);
+			      add_node(in_node => 'hasGetHelp', in_value => r_metadata.has_get_help);
+			      add_node(in_node => 'hasGetNodes', in_value => r_metadata.has_get_nodes);
 			      add_node(in_node => 'hasGetObjectTypes', in_value => r_metadata.has_get_object_types);
 			      add_node(in_node => 'hasGetObjectNames', in_value => r_metadata.has_get_object_names);
 			      add_node(in_node => 'hasGetParams1', in_value => r_metadata.has_get_params1);
 			      add_node(in_node => 'hasGetParams2', in_value => r_metadata.has_get_params2);
 			      add_node(in_node => 'hasGetOrderedParams1', in_value => r_metadata.has_get_ordered_params1);
 			      add_node(in_node => 'hasGetOrderedParams2', in_value => r_metadata.has_get_ordered_params2);
+			      add_node(in_node => 'hasGetOrderedParams3', in_value => r_metadata.has_get_ordered_params3);
 			      add_node(in_node => 'hasGetLov1', in_value => r_metadata.has_get_lov1);
 			      add_node(in_node => 'hasGetLov2', in_value => r_metadata.has_get_lov2);
+			      add_node(in_node => 'hasGetLov3', in_value => r_metadata.has_get_lov3);
 			      add_node(in_node => 'hasRefreshLov', in_value => r_metadata.has_refresh_lov);
-			      add_node(in_node => 'hasGetParamStates', in_value => r_metadata.has_get_param_states);
 			      add_node(in_node => 'hasRefreshParamStates', in_value => r_metadata.has_refresh_param_states);
+			      add_node(in_node => 'hasGetParamStates1', in_value => r_metadata.has_get_param_states1);
+			      add_node(in_node => 'hasGetParamStates2', in_value => r_metadata.has_get_param_states2);
+			      add_node(in_node => 'hasGenerateProlog', in_value => r_metadata.has_generate_prolog);
+			      add_node(in_node => 'hasGenerateSeparator', in_value => r_metadata.has_generate_separator);
+			      add_node(in_node => 'hasGenerateEpilog', in_value => r_metadata.has_generate_epilog);
 			      sys.dbms_lob.append(l_result, '</generator>');
 			   END LOOP detected_db_generators;
 			   sys.dbms_lob.append(l_result, '</result>');
@@ -716,8 +850,11 @@ class DatabaseGeneratorDao {
 				metaData.description = xmlGenerator.getElementsByTagName("description").item(0).textContent
 				metaData.hasGenerate1 = xmlGenerator.getElementsByTagName("hasGenerate1").item(0).textContent == "1"
 				metaData.hasGenerate2 = xmlGenerator.getElementsByTagName("hasGenerate2").item(0).textContent == "1"
+				metaData.hasGenerate3 = xmlGenerator.getElementsByTagName("hasGenerate3").item(0).textContent == "1"
 				metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
 				metaData.hasGetDescription = xmlGenerator.getElementsByTagName("hasGetDescription").item(0).
+					textContent == "1"
+				metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).
 					textContent == "1"
 				metaData.hasGetObjectTypes = xmlGenerator.getElementsByTagName("hasGetObjectTypes").item(0).
 					textContent == "1"
@@ -729,12 +866,23 @@ class DatabaseGeneratorDao {
 					textContent == "1"
 				metaData.hasGetOrderedParams2 = xmlGenerator.getElementsByTagName("hasGetOrderedParams2").item(0).
 					textContent == "1"
+				metaData.hasGetOrderedParams3 = xmlGenerator.getElementsByTagName("hasGetOrderedParams3").item(0).
+					textContent == "1"
 				metaData.hasGetLov1 = xmlGenerator.getElementsByTagName("hasGetLov1").item(0).textContent == "1"
 				metaData.hasGetLov2 = xmlGenerator.getElementsByTagName("hasGetLov2").item(0).textContent == "1"
+				metaData.hasGetLov3 = xmlGenerator.getElementsByTagName("hasGetLov3").item(0).textContent == "1"
 				metaData.hasRefreshLov = xmlGenerator.getElementsByTagName("hasRefreshLov").item(0).textContent == "1"
-				metaData.hasGetParamStates = xmlGenerator.getElementsByTagName("hasGetParamStates").item(0).
-					textContent == "1"
 				metaData.hasRefreshParamStates = xmlGenerator.getElementsByTagName("hasRefreshParamStates").item(0).
+					textContent == "1"
+				metaData.hasGetParamStates1 = xmlGenerator.getElementsByTagName("hasGetParamStates1").item(0).
+					textContent == "1"
+				metaData.hasGetParamStates2 = xmlGenerator.getElementsByTagName("hasGetParamStates2").item(0).
+					textContent == "1"
+				metaData.hasGenerateProlog = xmlGenerator.getElementsByTagName("hasGenerateProlog").item(0).
+					textContent == "1"
+				metaData.hasGenerateSeparator = xmlGenerator.getElementsByTagName("hasGenerateSeparator").item(0).
+					textContent == "1"
+				metaData.hasGenerateEpilog = xmlGenerator.getElementsByTagName("hasGenerateEpilog").item(0).
 					textContent == "1"
 				val dbgen = new DatabaseGenerator(metaData)
 				dbgens.add(dbgen)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,15 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	String description
 	
 	/** indicates if the generator package has a generate function with all 3 input parameters */
+	@Deprecated
 	Boolean hasGenerate1
 
 	/** indicates if the generator package has a generate function with all 2 input parameters */
+	@Deprecated
 	Boolean hasGenerate2
+
+	/** indicates if the generator package has a generate function with all 1 input parameter */
+	Boolean hasGenerate3
 
 	/** indicates if the generator package has a get_name function */
 	Boolean hasGetName
@@ -43,36 +48,68 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	/** indicates if the generator package has a get_description function */
 	Boolean hasGetDescription
 
+	/** indicates if the generator package has a get_help function */
+	Boolean hasGetHelp
+
 	/** indicates if the generator package has a get_objectTypes function */
+	@Deprecated
 	Boolean hasGetObjectTypes
 
 	/** indicates if the generator package has a get_objectNames function */
+	@Deprecated
 	Boolean hasGetObjectNames
 
 	/** indicates if the generator package has a get_params function without input parameters */
+	@Deprecated
 	Boolean hasGetParams1
 
 	/** indicates if the generator package has a get_params function with 2 input parameters */
+	@Deprecated
 	Boolean hasGetParams2
 
 	/** indicates if the generator package has a get_ordered_params function without parameters */
+	@Deprecated
 	Boolean hasGetOrderedParams1
 
 	/** indicates if the generator package has a get_ordered_params function with 2 input parameters */
+	@Deprecated
 	Boolean hasGetOrderedParams2
 
+	/** indicates if the generator package has a get_ordered_params function with 1 input parameter */
+	Boolean hasGetOrderedParams3
+
 	/** indicates if the generator package has a get_lov function without parameters */
+	@Deprecated
 	Boolean hasGetLov1
 
 	/** indicates if the generator package has a get_lov function with 3 input parameters */
+	@Deprecated
 	Boolean hasGetLov2
 
+	/** indicates if the generator package has a get_lov function with 1 input parameter */
+	Boolean hasGetLov3
+
 	/** indicates if the generator package has a refresh_lov function */
+	@Deprecated
 	Boolean hasRefreshLov
 	
-	/** indicates if the generator package has a get_param_states function */
-	Boolean hasGetParamStates
-	
 	/** indicates if the generator package has a refresh_param_states function */
+	@Deprecated
 	Boolean hasRefreshParamStates
+	
+	/** indicates if the generator package has a get_param_states function with a v0.2.0 signature */
+	@Deprecated
+	Boolean hasGetParamStates1
+	
+	/** indicates if the generator package has a get_param_states function with a v0.3.0 signature */
+	Boolean hasGetParamStates2
+
+	/** indicates if the generator package has a generate_prolog function */
+	Boolean hasGenerateProlog
+
+	/** indicates if the generator package has a generate_separator function */
+	Boolean hasGenerateSeparator
+
+	/** indicates if the generator package has a generate_epilog function */
+	Boolean hasGenerateEpilog
 }

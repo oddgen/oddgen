@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@ import java.util.List
 /**
  * Generators need to implement this interface to be shown in the Generators
  * window of oddgen for SQL Developer.
+ * 
+ * @since v0.2.0
+ * @deprecated use {@link OddgenGenerator2} instead.
  */
+@Deprecated
 interface OddgenGenerator {
 	public static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]	
 	public static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]

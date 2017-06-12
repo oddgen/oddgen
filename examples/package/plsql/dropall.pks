@@ -82,27 +82,26 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * Parameter names returned by this function are taking precedence.
    * Remaining parameters are ordered by name.
    *
-   * @param in_params input parameters
    * @returns ordered parameter names
    *
    * @since v0.3
    */
-   FUNCTION get_ordered_params(
-      in_params IN oddgen_types.t_param_type
-   ) RETURN oddgen_types.t_value_type;
-
+   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type;
+   
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_params input parameters
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
    * @returns parameters with their list-of-values
    *
    * @since v0.3
    */
    FUNCTION get_lov(
-      in_params IN oddgen_types.t_param_type
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
    ) RETURN oddgen_types.t_lov_type;
 
   /**
@@ -110,13 +109,15 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_params input parameters
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
    *
    * @since v0.3
    */
    FUNCTION get_param_states(
-      in_params IN oddgen_types.t_param_type
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
    ) RETURN oddgen_types.t_param_type;
 
    /**
@@ -160,31 +161,27 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
 
    /**
    * Generates the result.
-   * The generate signature to be used when implementing the get_nodes function.
-   * All parameters are part of in_params.
+   * This function must be implemented.
+   * Called for every selected node.
+   * Non-leaf nodes are not resolved by oddgen.
    *
-   * @param in_params input parameters
+   * @param in_node node to be generated
    * @returns generator output
    *
    * @since v0.3
    */
    FUNCTION generate(
-      in_params IN oddgen_types.t_param_type
+      in_node IN oddgen_types.r_node_type
    ) RETURN CLOB;
    
    /**
    * Wrapper to test the generator from SQL.
    * Not part of the oddgen interface.
    *
-   * @param in_object_group e.g. CODE, DATA
-   * @param in_object_type e.g. TABLE
-   * @param in_object_name e.g. EMP
+   * @param in_id e.g. CODE, CODE.PACKAGE, DATA.TABLE.EMP
    */
-   FUNCTION test_generate(
-      in_object_group IN VARCHAR2,
-      in_object_type  IN VARCHAR2 DEFAULT NULL,
-      in_object_name  IN VARCHAR2 DEFAULT NULL,
-      in_purge        IN VARCHAR2 DEFAULT 'No'
+   FUNCTION generate(
+      in_id IN VARCHAR2
    ) RETURN CLOB;
    
 END dropall;

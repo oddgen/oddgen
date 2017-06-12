@@ -74,27 +74,26 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * Parameter names returned by this function are taking precedence.
    * Remaining parameters are ordered by name.
    *
-   * @param in_params input parameters
    * @returns ordered parameter names
    *
    * @since v0.3
    */
-   FUNCTION get_ordered_params(
-      in_params IN oddgen_types.t_param_type
-   ) RETURN oddgen_types.t_value_type;
+   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type;
 
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_params input parameters
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
    * @returns parameters with their list-of-values
    *
    * @since v0.3
    */
    FUNCTION get_lov(
-      in_params IN oddgen_types.t_param_type
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
    ) RETURN oddgen_types.t_lov_type;
 
   /**
@@ -102,13 +101,15 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
    * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_params input parameters
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
    * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
    *
    * @since v0.3
    */
    FUNCTION get_param_states(
-      in_params IN oddgen_types.t_param_type
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
    ) RETURN oddgen_types.t_param_type;
 
    /**
@@ -116,7 +117,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * If this function is not implemented, no prolog will be generated.
    * Called once for all selected nodes at the very beginning of the processing.
    *
-   * @param in_nodes table of selected nodes to be generated.
+   * @param in_nodes table of selected nodes to be generated
    * @returns generator prolog
    *
    * @since v0.3
@@ -128,7 +129,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    /**
    * Generates the separator between generate calls.
    * If this function is not implemented, an empty line will be generated.
-   * Called once, but used between generator calls.
+   * Called once, but applied between generator calls.
    *
    * @returns generator separator
    *
@@ -141,7 +142,7 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * If this function is not implemented, no epilog will be generated.
    * Called once for all selected nodes at the very end of the processing.
    *
-   * @param in_nodes table of selected nodes to be generated.
+   * @param in_nodes table of selected nodes to be generated
    * @returns generator epilog
    *
    * @since v0.3
@@ -152,16 +153,17 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
 
    /**
    * Generates the result.
-   * The generate signature to be used when implementing the get_nodes function.
-   * All parameters are part of in_params.
+   * This function must be implemented.
+   * Called for every selected node.
+   * Children of nodes are not resolved by oddgen.
    *
-   * @param in_params input parameters
+   * @param in_node node to be generated
    * @returns generator output
    *
    * @since v0.3
    */
    FUNCTION generate(
-      in_params IN oddgen_types.t_param_type
+      in_node IN oddgen_types.r_node_type
    ) RETURN CLOB;
 
 END oddgen_interface;

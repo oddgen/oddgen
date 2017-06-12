@@ -28,6 +28,7 @@ import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.DatabaseGenerator
+import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -48,6 +49,120 @@ class DatabaseGeneratorDao {
 		this.conn = conn
 		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
 		this.dalTools = new DalTools(conn)
+	}
+	
+	def getHelp(DatabaseGeneratorMetaData metaData) {
+		val plsql = '''
+		   DECLARE
+		      l_clob CLOB;
+		   BEGIN
+		      l_clob := «metaData.generatorOwner».«metaData.generatorName».get_help();
+		      ? := l_clob;
+		   END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		var String help = '<p>Help not implemented for this generator.</p>';
+		if (metaData.hasGetHelp) {
+			try {
+				help = plsql.getString
+			} catch (Exception e) {
+				help = '''
+					<p>Got the following error when calling «metaData.generatorOwner».«metaData.generatorName».get_help():</p>
+					<p>«e.message»</p>
+				'''
+			}
+		}
+		return help
+	}
+	
+	def getNodes(DatabaseGeneratorMetaData metaData, String parentNodeId) {
+		val plsql = '''
+			«IF metaData.hasGetNodes»
+				DECLARE
+				   t_nodes «metaData.generatorOwner».oddgen_types.t_node_type;
+				   l_key   «metaData.generatorOwner».oddgen_types.key_type;
+				   l_clob CLOB;
+				   -- 
+				   FUNCTION bool2string (in_bool BOOLEAN, in_default VARCHAR2) RETURN VARCHAR2 IS
+				   BEGIN
+				      IF in_bool IS NULL THEN
+				         RETURN in_default;
+				      ELSIF in_bool THEN
+				         RETURN 'true';
+				      ELSE
+				         RETURN 'false';
+				      END IF;
+				   END bool2string;
+				BEGIN
+				   sys.dbms_lob.createtemporary(l_clob, TRUE);
+				   t_nodes := «metaData.generatorOwner».«metaData.generatorName».get_nodes(in_parent_node_id => '«parentNodeId»');
+				   sys.dbms_lob.append(l_clob, '<nodes>');
+				   IF t_nodes.count > 0 THEN
+				      <<nodes>>
+				      FOR i IN 1..t_nodes.count LOOP
+				         sys.dbms_lob.append(l_clob, '<node>');
+				         sys.dbms_lob.append(l_clob, '<id>' || t_nodes(i).id || '</id>');
+				         sys.dbms_lob.append(l_clob, '<parent_id>' || t_nodes(i).parent_id || '</parent_id>');
+				         sys.dbms_lob.append(l_clob, '<name><![CDATA[' || t_nodes(i).name || ']]></name>');
+				         sys.dbms_lob.append(l_clob, '<description><![CDATA[' || t_nodes(i).description || ']]></description>');
+				         sys.dbms_lob.append(l_clob, '<icon_name>' || t_nodes(i).icon_name || '</icon_name>');
+				         sys.dbms_lob.append(l_clob, '<icon_base64>' || t_nodes(i).icon_base64 || '</icon_base64>');
+				         sys.dbms_lob.append(l_clob, '<params>');
+				         l_key := t_nodes(i).params.first;
+				         <<params>>
+				         WHILE l_key IS NOT NULL LOOP
+				            sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || t_nodes(i).params(l_key) || ']]></value></param>');
+				            t_nodes(i).params.delete(l_key);
+				            l_key := t_nodes(i).params.first;
+				         END LOOP params;
+				         sys.dbms_lob.append(l_clob, '</params>');
+				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
+				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, 'true') || '</generatable>');
+				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, 'true') || '</multiselectable>');
+				         sys.dbms_lob.append(l_clob, '</node>');
+				      END LOOP nodes;
+				   END IF;
+				   sys.dbms_lob.append(l_clob, '</nodes>');
+				   ? := l_clob;
+				END;
+			«ELSE»
+				DECLARE
+				   l_clob CLOB := '<nodes/>';
+				BEGIN
+				   ? := l_clob;
+				END;
+			«ENDIF»
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val nodes = new ArrayList<org.oddgen.sqldev.generators.model.Node>
+		var doc = plsql.doc
+		if (doc != null) {
+			val xmlNodes = doc.getElementsByTagName("node")
+			for (var i = 0; i < xmlNodes.length; i++) {
+				val node = new org.oddgen.sqldev.generators.model.Node
+				val xmlNode = xmlNodes.item(i) as Element
+				node.id =  xmlNode.getElementsByTagName("id").item(0).textContent
+				node.parentId = xmlNode.getElementsByTagName("parent_id").item(0).textContent
+				node.name = xmlNode.getElementsByTagName("name").item(0).textContent
+				node.description = xmlNode.getElementsByTagName("description").item(0).textContent
+				node.iconName = xmlNode.getElementsByTagName("icon_name").item(0).textContent
+				node.iconBase64 = xmlNode.getElementsByTagName("icon_base64").item(0).textContent
+				val params = new LinkedHashMap<String, String>
+				val xmlParams = xmlNode.getElementsByTagName("param")
+				for (var j = 0; j < xmlParams.length; j++) {
+					val xmlParam = xmlParams.item(j) as Element
+					val key = xmlParam.getElementsByTagName("key").item(0).textContent
+					val value = xmlParam.getElementsByTagName("value").item(0).textContent
+					params.put(key, value)
+				}
+				node.params = params 
+				node.leaf = xmlNode.getElementsByTagName("leaf").item(0).textContent == "true"
+				node.generatable = xmlNode.getElementsByTagName("generatable").item(0).textContent == "true"
+				node.multiselectable = xmlNode.getElementsByTagName("multiselectable").item(0).textContent == "true"
+				nodes.add(node)
+			}
+		} 
+		return nodes
 	}
 
 	def getObjectTypes(DatabaseGeneratorMetaData metaData) {
@@ -377,8 +492,8 @@ class DatabaseGeneratorDao {
 			                    data_type = 'VARCHAR2') OR (argument_name = 'IN_PARAMS' AND in_out = 'IN' AND
 			                    position = 3 AND data_type = 'PL/SQL TABLE') OR
 			                   --
-			                    (argument_name = 'IN_PARAMS' AND in_out = 'IN' AND position = 1 AND
-			                    data_type = 'PL/SQL TABLE')
+			                    (argument_name = 'IN_NODE' AND in_out = 'IN' AND position = 1 AND
+			                    data_type = 'PL/SQL RECORD')
 			                   --
 			                   )
 			             GROUP BY owner, package_name, object_name, overload),
@@ -467,9 +582,6 @@ class DatabaseGeneratorDao {
 			                    (arg.object_name = 'GET_ORDERED_PARAMS' AND arg.position = 2 AND
 			                    argument_name = 'IN_OBJECT_NAME' AND in_out = 'IN' AND
 			                    data_type = 'VARCHAR2') OR
-			                    (arg.object_name = 'GET_ORDERED_PARAMS' AND arg.position = 1 AND
-			                    argument_name = 'IN_PARAMS' AND in_out = 'IN' AND
-			                    data_type = 'PL/SQL TABLE') OR
 			                   --
 			                    (arg.object_name IN ('GET_LOV', 'REFRESH_LOV') AND
 			                    arg.position = 0 AND argument_name IS NULL AND in_out = 'OUT' AND
@@ -596,12 +708,6 @@ class DatabaseGeneratorDao {
 			                            0
 			                        END) AS has_get_ordered_params2,
 			                   SUM(CASE
-			                           WHEN procedure_name = 'GET_ORDERED_PARAMS' AND arg_count = 2 THEN
-			                            1
-			                           ELSE
-			                            0
-			                        END) AS has_get_ordered_params3,
-			                   SUM(CASE
 			                           WHEN procedure_name = 'GET_LOV' AND arg_count = 1 AND has_in_params_arg = 0 THEN
 			                            1
 			                           ELSE
@@ -678,9 +784,8 @@ class DatabaseGeneratorDao {
 			                   nvl(oth.has_get_object_names, 0) AS has_get_object_names, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_params1, 0) AS has_get_params1, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_params2, 0) AS has_get_params2, -- v0.2.0 deprecated
-			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v0.2.0 undocumented, deprecated
+			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v0.2.0 undocumented, v0.3.0 current
 			                   nvl(oth.has_get_ordered_params2, 0) AS has_get_ordered_params2, -- v0.2.0 deprecated
-			                   nvl(oth.has_get_ordered_params3, 0) AS has_get_ordered_params3, -- v0.3.0 current
 			                   nvl(oth.has_get_lov1, 0) AS has_get_lov1, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_lov2, 0) AS has_get_lov2, -- v0.2.0 deprecated
 			                   nvl(oth.has_get_lov3, 0) AS has_get_lov3, -- v0.3.0 current
@@ -712,7 +817,6 @@ class DatabaseGeneratorDao {
 			             has_get_params2,
 			             has_get_ordered_params1,
 			             has_get_ordered_params2,
-			             has_get_ordered_params3,
 			             has_get_lov1,
 			             has_get_lov2,
 			             has_get_lov3,
@@ -819,7 +923,6 @@ class DatabaseGeneratorDao {
 			      add_node(in_node => 'hasGetParams2', in_value => r_metadata.has_get_params2);
 			      add_node(in_node => 'hasGetOrderedParams1', in_value => r_metadata.has_get_ordered_params1);
 			      add_node(in_node => 'hasGetOrderedParams2', in_value => r_metadata.has_get_ordered_params2);
-			      add_node(in_node => 'hasGetOrderedParams3', in_value => r_metadata.has_get_ordered_params3);
 			      add_node(in_node => 'hasGetLov1', in_value => r_metadata.has_get_lov1);
 			      add_node(in_node => 'hasGetLov2', in_value => r_metadata.has_get_lov2);
 			      add_node(in_node => 'hasGetLov3', in_value => r_metadata.has_get_lov3);
@@ -848,14 +951,13 @@ class DatabaseGeneratorDao {
 				metaData.generatorName = xmlGenerator.getElementsByTagName("packageName").item(0).textContent
 				metaData.name = xmlGenerator.getElementsByTagName("name").item(0).textContent
 				metaData.description = xmlGenerator.getElementsByTagName("description").item(0).textContent
-				metaData.hasGenerate1 = xmlGenerator.getElementsByTagName("hasGenerate1").item(0).textContent == "1"
-				metaData.hasGenerate2 = xmlGenerator.getElementsByTagName("hasGenerate2").item(0).textContent == "1"
-				metaData.hasGenerate3 = xmlGenerator.getElementsByTagName("hasGenerate3").item(0).textContent == "1"
 				metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
 				metaData.hasGetDescription = xmlGenerator.getElementsByTagName("hasGetDescription").item(0).
 					textContent == "1"
 				metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).
 					textContent == "1"
+				metaData.hasGetNodes = xmlGenerator.getElementsByTagName("hasGetNodes").item(0).
+					textContent == "1"				
 				metaData.hasGetObjectTypes = xmlGenerator.getElementsByTagName("hasGetObjectTypes").item(0).
 					textContent == "1"
 				metaData.hasGetObjectNames = xmlGenerator.getElementsByTagName("hasGetObjectNames").item(0).
@@ -865,8 +967,6 @@ class DatabaseGeneratorDao {
 				metaData.hasGetOrderedParams1 = xmlGenerator.getElementsByTagName("hasGetOrderedParams1").item(0).
 					textContent == "1"
 				metaData.hasGetOrderedParams2 = xmlGenerator.getElementsByTagName("hasGetOrderedParams2").item(0).
-					textContent == "1"
-				metaData.hasGetOrderedParams3 = xmlGenerator.getElementsByTagName("hasGetOrderedParams3").item(0).
 					textContent == "1"
 				metaData.hasGetLov1 = xmlGenerator.getElementsByTagName("hasGetLov1").item(0).textContent == "1"
 				metaData.hasGetLov2 = xmlGenerator.getElementsByTagName("hasGetLov2").item(0).textContent == "1"
@@ -884,6 +984,9 @@ class DatabaseGeneratorDao {
 					textContent == "1"
 				metaData.hasGenerateEpilog = xmlGenerator.getElementsByTagName("hasGenerateEpilog").item(0).
 					textContent == "1"
+				metaData.hasGenerate1 = xmlGenerator.getElementsByTagName("hasGenerate1").item(0).textContent == "1"
+				metaData.hasGenerate2 = xmlGenerator.getElementsByTagName("hasGenerate2").item(0).textContent == "1"
+				metaData.hasGenerate3 = xmlGenerator.getElementsByTagName("hasGenerate3").item(0).textContent == "1"
 				val dbgen = new DatabaseGenerator(metaData)
 				dbgens.add(dbgen)
 			}

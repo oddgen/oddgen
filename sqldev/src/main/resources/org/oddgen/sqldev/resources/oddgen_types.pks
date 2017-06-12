@@ -17,6 +17,8 @@ CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
 
    /**
    * oddgen data types for PL/SQL database server generator.
+   * This package must be installed in the same schema as the generators.
+   * The user executing the generator must have execute privileges for this package.
    *
    * @headcom
    */

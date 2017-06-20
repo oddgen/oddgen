@@ -82,15 +82,172 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(true, bonus.multiselectable)
 	}
 
+	@Test
+	def getNodes3() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "")
+		Assert.assertEquals(2, nodes.size)
+		val table = nodes.get(0)
+		Assert.assertEquals("TABLE", table.id)
+		Assert.assertEquals("", table.parentId)
+		Assert.assertEquals(null, table.name)
+		Assert.assertEquals(null, table.description)
+		Assert.assertEquals(null, table.iconName)
+		Assert.assertEquals(null, table.iconBase64)
+		Assert.assertEquals(1, table.params.size)
+		Assert.assertEquals(#["Object type"], table.params.keySet.toList)
+		Assert.assertEquals(#["TABLE"], table.params.values.toList)
+		Assert.assertEquals(false, table.leaf)
+		Assert.assertEquals(false, table.generatable)
+		Assert.assertEquals(false, table.multiselectable)
+		val view = nodes.get(1)
+		Assert.assertEquals("VIEW", view.id)
+		Assert.assertEquals("", view.parentId)
+		Assert.assertEquals(null, view.name)
+		Assert.assertEquals(null, view.description)
+		Assert.assertEquals(null, view.iconName)
+		Assert.assertEquals(null, view.iconBase64)
+		Assert.assertEquals(1, view.params.size)
+		Assert.assertEquals(#["Object type"], view.params.keySet.toList)
+		Assert.assertEquals(#["VIEW"], view.params.values.toList)
+		Assert.assertEquals(false, view.leaf)
+		Assert.assertEquals(false, view.generatable)
+		Assert.assertEquals(false, view.multiselectable)
+	}
+
+	@Test
+	def getNodes4() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		Assert.assertEquals(4, nodes.size)
+		val bonus = nodes.get(0)
+		Assert.assertEquals("TABLE", bonus.parentId)
+		Assert.assertEquals("TABLE.BONUS", bonus.id)
+		Assert.assertEquals(null, bonus.name)
+		Assert.assertEquals(null, bonus.description)
+		Assert.assertEquals(null, bonus.iconName)
+		Assert.assertEquals(null, bonus.iconBase64)
+		Assert.assertEquals(2, bonus.params.size)
+		Assert.assertEquals(#["Object name", "Object type"], bonus.params.keySet.toList)
+		Assert.assertEquals(#["BONUS", "TABLE"], bonus.params.values.toList)
+		Assert.assertEquals(true, bonus.leaf)
+		Assert.assertEquals(true, bonus.generatable)
+		Assert.assertEquals(true, bonus.multiselectable)
+	}
+
+	@Test
+	def getNodes5() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "")
+		Assert.assertEquals(1, nodes.size)
+		val table = nodes.get(0)
+		Assert.assertEquals("TABLE", table.id)
+		Assert.assertEquals("", table.parentId)
+		Assert.assertEquals(null, table.name)
+		Assert.assertEquals(null, table.description)
+		Assert.assertEquals(null, table.iconName)
+		Assert.assertEquals(null, table.iconBase64)
+		Assert.assertEquals(1, table.params.size)
+		Assert.assertEquals(#["Object type"], table.params.keySet.toList)
+		Assert.assertEquals(#["TABLE"], table.params.values.toList)
+		Assert.assertEquals(false, table.leaf)
+		Assert.assertEquals(false, table.generatable)
+		Assert.assertEquals(false, table.multiselectable)
+	}
+
+	@Test
+	def getNodes6() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		Assert.assertEquals(4, nodes.size)
+		val bonus = nodes.get(0)
+		Assert.assertEquals("TABLE", bonus.parentId)
+		Assert.assertEquals("TABLE.BONUS", bonus.id)
+		Assert.assertEquals(null, bonus.name)
+		Assert.assertEquals(null, bonus.description)
+		Assert.assertEquals(null, bonus.iconName)
+		Assert.assertEquals(null, bonus.iconBase64)
+		Assert.assertEquals(2, bonus.params.size)
+		Assert.assertEquals(#["Object name", "Object type"], bonus.params.keySet.toList)
+		Assert.assertEquals(#["BONUS", "TABLE"], bonus.params.values.toList)
+		Assert.assertEquals(true, bonus.leaf)
+		Assert.assertEquals(true, bonus.generatable)
+		Assert.assertEquals(true, bonus.multiselectable)
+	}
+
+	@Test
+	def getNodes7() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "")
+		Assert.assertEquals(1, nodes.size)
+		val table = nodes.get(0)
+		Assert.assertEquals("TABLE", table.id)
+		Assert.assertEquals("", table.parentId)
+		Assert.assertEquals(null, table.name)
+		Assert.assertEquals(null, table.description)
+		Assert.assertEquals(null, table.iconName)
+		Assert.assertEquals(null, table.iconBase64)
+		Assert.assertEquals(1, table.params.size)
+		Assert.assertEquals(#["Object type"], table.params.keySet.toList)
+		Assert.assertEquals(#["TABLE"], table.params.values.toList)
+		Assert.assertEquals(false, table.leaf)
+		Assert.assertEquals(false, table.generatable)
+		Assert.assertEquals(false, table.multiselectable)
+	}
+
+	@Test
+	def getNodes8() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
+		]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		Assert.assertEquals(4, nodes.size)
+		val bonus = nodes.get(0)
+		Assert.assertEquals("TABLE", bonus.parentId)
+		Assert.assertEquals("TABLE.Bonus", bonus.id)
+		Assert.assertEquals(null, bonus.name)
+		Assert.assertEquals(null, bonus.description)
+		Assert.assertEquals(null, bonus.iconName)
+		Assert.assertEquals(null, bonus.iconBase64)
+		Assert.assertEquals(2, bonus.params.size)
+		Assert.assertEquals(#["Object name", "Object type"], bonus.params.keySet.toList)
+		Assert.assertEquals(#["Bonus", "TABLE"], bonus.params.values.toList)
+		Assert.assertEquals(true, bonus.leaf)
+		Assert.assertEquals(true, bonus.generatable)
+		Assert.assertEquals(true, bonus.multiselectable)
+	}
+
 	@BeforeClass
 	def static void setup() {
 		createPlsqlDummy1
+		createPlsqlDummy2
+		createPlsqlDummy3
+		createPlsqlDummy4
 	}
 
 	@AfterClass
 	def static tearDown() {
 		jdbcTemplate.execute("DROP PACKAGE oddgen_types")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy1")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy2")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy3")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy4")
 	}
 
 	def static createPlsqlDummy1() {
@@ -378,4 +535,115 @@ class GetNodesTest extends AbstractJdbcTest {
 			END plsql_dummy1;
 		''')
 	}
+
+	def static createPlsqlDummy2() {
+
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_dummy2 AUTHID CURRENT_USER IS
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB;			   
+			END plsql_dummy2;
+		''')
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_dummy2 IS
+			   --
+			   -- generate
+			   --
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB IS
+			   BEGIN
+			      RETURN NULL;
+			   END generate;
+			END plsql_dummy2;
+		''')
+	}
+
+	def static createPlsqlDummy3() {
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_dummy3 AUTHID CURRENT_USER IS
+			   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
+			   TYPE t_string IS TABLE OF string_type;
+			   FUNCTION get_object_types RETURN t_string;
+			   FUNCTION generate (
+			      in_object_type IN VARCHAR2,
+			      in_object_name IN VARCHAR2
+			   ) RETURN CLOB;			   
+			END plsql_dummy3;
+		''')
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_dummy3 IS
+			   --
+			   -- get_object_types
+			   --
+			   FUNCTION get_object_types RETURN t_string IS
+			   BEGIN
+			      RETURN NEW t_string('TABLE');
+			   END get_object_types;
+			   --
+			   -- generate
+			   --
+			   FUNCTION generate (
+			      in_object_type IN VARCHAR2,
+			      in_object_name IN VARCHAR2
+			   ) RETURN CLOB IS
+			   BEGIN
+			      RETURN NULL;
+			   END generate;
+			END plsql_dummy3;
+		''')
+	}
+
+	def static createPlsqlDummy4() {
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_dummy4 AUTHID CURRENT_USER IS
+			   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
+			   TYPE t_string IS TABLE OF string_type;
+			   FUNCTION get_object_types RETURN t_string;
+			   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
+			   FUNCTION generate (
+			      in_object_type IN VARCHAR2,
+			      in_object_name IN VARCHAR2
+			   ) RETURN CLOB;			   
+			END plsql_dummy4;
+		''')
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_dummy4 IS
+			   --
+			   -- get_object_types
+			   --
+			   FUNCTION get_object_types RETURN t_string IS
+			   BEGIN
+			      RETURN NEW t_string('TABLE');
+			   END get_object_types;
+			   --
+			   -- get_object_names
+			   --
+			   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string IS
+			      l_object_names t_string;
+			   BEGIN
+			      SELECT initcap(object_name) AS object_name
+			        BULK COLLECT
+			        INTO l_object_names
+			        FROM user_objects
+			       WHERE object_type = in_object_type
+			         AND generated = 'N'
+			       ORDER BY object_name;
+			      RETURN l_object_names;
+			   END get_object_names;
+			   --
+			   -- generate
+			   --
+			   FUNCTION generate (
+			      in_object_type IN VARCHAR2,
+			      in_object_name IN VARCHAR2
+			   ) RETURN CLOB IS
+			   BEGIN
+			      RETURN NULL;
+			   END generate;
+			END plsql_dummy4;
+		''')
+	}
+
 }

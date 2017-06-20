@@ -126,27 +126,133 @@ class DatabaseGeneratorDao {
 				   ? := l_clob;
 				END;
 			«ELSE»
-				DECLARE
-				   l_clob CLOB := '<nodes/>';
-				BEGIN
-				   ? := l_clob;
-				END;
+				«IF parentNodeId == null || parentNodeId.empty»
+					«IF metaData.hasGetObjectTypes»
+						DECLARE
+						   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
+						   l_clob CLOB;
+						BEGIN
+						   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR i IN 1 .. l_types.count
+						   LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>' || l_types(i) || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id/>');
+						      sys.dbms_lob.append(l_clob, '<params>');
+						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>' || l_types(i) || '</value></param>');
+						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ELSE»
+						DECLARE
+						   l_clob CLOB;
+						BEGIN
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   sys.dbms_lob.append(l_clob, '<node>');
+						   sys.dbms_lob.append(l_clob, '<id>TABLE</id>');
+						   sys.dbms_lob.append(l_clob, '<parent_id/>');
+						   sys.dbms_lob.append(l_clob, '<params>');
+						   sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>TABLE</value></param>');
+						   sys.dbms_lob.append(l_clob, '</params>');
+						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						   sys.dbms_lob.append(l_clob, '</node>');
+						   sys.dbms_lob.append(l_clob, '<node>');
+						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
+						   sys.dbms_lob.append(l_clob, '<parent_id/>');
+						   sys.dbms_lob.append(l_clob, '<params>');
+						   sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>VIEW</value></param>');
+						   sys.dbms_lob.append(l_clob, '</params>');
+						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						   sys.dbms_lob.append(l_clob, '</node>');
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ENDIF»
+				«ELSE»
+					«IF metaData.hasGetObjectNames»
+						DECLARE
+						   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
+						   l_clob   CLOB;
+						BEGIN
+						   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«parentNodeId»');
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR i IN 1 .. l_names.count
+						   LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || l_names(i) || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
+						      sys.dbms_lob.append(l_clob, '<params>');
+						      sys.dbms_lob.append(l_clob, '<param><key>Object name</key><value>' || l_names(i) || '</value></param>');
+						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>«parentNodeId»</value></param>');
+						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ELSE»
+						DECLARE
+						   l_clob   CLOB;
+						BEGIN
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR r IN (
+						      SELECT object_name
+						        FROM user_objects
+						       WHERE object_type = '«parentNodeId»'
+						         AND generated = 'N'
+						       ORDER BY object_name
+						   ) LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || r.object_name || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
+						      sys.dbms_lob.append(l_clob, '<params>');
+						      sys.dbms_lob.append(l_clob, '<param><key>Object name</key><value>' || r.object_name || '</value></param>');
+						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>«parentNodeId»</value></param>');
+						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ENDIF»
+				«ENDIF»
 			«ENDIF»
 		'''
 		Logger.debug(this, "plsql: %s", plsql)
-		val nodes = new ArrayList<org.oddgen.sqldev.generators.model.Node>
+		val nodes = new ArrayList<Node>
 		var doc = plsql.doc
 		if (doc != null) {
 			val xmlNodes = doc.getElementsByTagName("node")
 			for (var i = 0; i < xmlNodes.length; i++) {
-				val node = new org.oddgen.sqldev.generators.model.Node
+				val node = new Node
 				val xmlNode = xmlNodes.item(i) as Element
 				node.id =  xmlNode.getElementsByTagName("id").item(0).textContent
-				node.parentId = xmlNode.getElementsByTagName("parent_id").item(0).textContent
-				node.name = xmlNode.getElementsByTagName("name").item(0).textContent
-				node.description = xmlNode.getElementsByTagName("description").item(0).textContent
-				node.iconName = xmlNode.getElementsByTagName("icon_name").item(0).textContent
-				node.iconBase64 = xmlNode.getElementsByTagName("icon_base64").item(0).textContent
+				node.parentId = xmlNode.getElementsByTagName("parent_id")?.item(0)?.textContent
+				node.name = xmlNode.getElementsByTagName("name")?.item(0)?.textContent
+				node.description = xmlNode.getElementsByTagName("description")?.item(0)?.textContent
+				node.iconName = xmlNode.getElementsByTagName("icon_name")?.item(0)?.textContent
+				node.iconBase64 = xmlNode.getElementsByTagName("icon_base64")?.item(0)?.textContent
 				val params = new LinkedHashMap<String, String>
 				val xmlParams = xmlNode.getElementsByTagName("param")
 				for (var j = 0; j < xmlParams.length; j++) {
@@ -156,9 +262,9 @@ class DatabaseGeneratorDao {
 					params.put(key, value)
 				}
 				node.params = params 
-				node.leaf = xmlNode.getElementsByTagName("leaf").item(0).textContent == "true"
-				node.generatable = xmlNode.getElementsByTagName("generatable").item(0).textContent == "true"
-				node.multiselectable = xmlNode.getElementsByTagName("multiselectable").item(0).textContent == "true"
+				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
+				node.generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent == "true"
+				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
 				nodes.add(node)
 			}
 		} 

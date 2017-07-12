@@ -19,12 +19,14 @@ import com.jcabi.aspects.Loggable
 import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
+import java.util.List
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 
 @Loggable(LoggableConstants.DEBUG)
-class DatabaseGenerator implements OddgenGenerator {
+class DatabaseGenerator implements OddgenGenerator2 {
 	var DatabaseGeneratorMetaData metaData
 
 	new(DatabaseGeneratorMetaData metaData) {
@@ -42,39 +44,79 @@ class DatabaseGenerator implements OddgenGenerator {
 	override getDescription(Connection conn) {
 		return metaData.description
 	}
+	
+	override getHelp(Connection conn) {
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getHelp(metaData)
+	}
+	
+	override List<Node> getNodes(Connection conn, String parentNodeId) {
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getNodes(metaData, parentNodeId)
+	}
+	
+	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
+		// TODO
+		return null
+	}
+	
+	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
+		// TODO
+		return null
+	}
+	
+	override generateProlog(Connection conn, List<Node> nodes) {
+		// TODO
+		return null
+	}
+	
+	override generateSeparator(Connection conn) {
+		// TODO
+		return null
+	}
+	
+	override generateEpilog(Connection conn, List<Node> nodes) {
+		// TODO
+		return null
+	}
+	
+	override generate(Connection conn, LinkedHashMap<String, String> params) {
+		// TODO
+		return null
+	}
 
-	override getObjectTypes(Connection conn) {
+	def getObjectTypes(Connection conn) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getObjectTypes(metaData)
 	}
 
-	override getObjectNames(Connection conn, String objectType) {
+	def getObjectNames(Connection conn, String objectType) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getObjectNames(metaData, objectType)
 	}
 
-	override getParams(Connection conn, String objectType, String objectName) {
+	def getParams(Connection conn, String objectType, String objectName) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getParams(metaData, objectType, objectName)
 	}
 
-	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	def getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getLov(metaData, objectType, objectName, params)
 	}
 
-	override getParamStates(Connection conn, String objectType, String objectName,
+	def getParamStates(Connection conn, String objectType, String objectName,
 		LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
 		val HashMap<String, String> paramStates = dao.getParamStates(metaData, objectType, objectName, params);
 		val result = new HashMap<String, Boolean>()
 		for (p : paramStates.keySet) {
-			result.put(p, if(OddgenGenerator.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] != null) true else false)
+			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] != null) true else false)
 		}
 		return result
 	}
 
-	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	def generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.generate(metaData, objectType, objectName, params)
 	}

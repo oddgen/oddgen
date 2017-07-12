@@ -31,17 +31,6 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	/** description of the generator */
 	String description
 	
-	/** indicates if the generator package has a generate function with all 3 input parameters */
-	@Deprecated
-	Boolean hasGenerate1
-
-	/** indicates if the generator package has a generate function with all 2 input parameters */
-	@Deprecated
-	Boolean hasGenerate2
-
-	/** indicates if the generator package has a generate function with all 1 input parameter */
-	Boolean hasGenerate3
-
 	/** indicates if the generator package has a get_name function */
 	Boolean hasGetName
 	
@@ -50,6 +39,9 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 
 	/** indicates if the generator package has a get_help function */
 	Boolean hasGetHelp
+	
+	/** indicates if the generator package has a get_nodes function */
+	Boolean hasGetNodes
 
 	/** indicates if the generator package has a get_objectTypes function */
 	@Deprecated
@@ -68,15 +60,11 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	Boolean hasGetParams2
 
 	/** indicates if the generator package has a get_ordered_params function without parameters */
-	@Deprecated
 	Boolean hasGetOrderedParams1
 
 	/** indicates if the generator package has a get_ordered_params function with 2 input parameters */
 	@Deprecated
 	Boolean hasGetOrderedParams2
-
-	/** indicates if the generator package has a get_ordered_params function with 1 input parameter */
-	Boolean hasGetOrderedParams3
 
 	/** indicates if the generator package has a get_lov function without parameters */
 	@Deprecated
@@ -112,4 +100,15 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 
 	/** indicates if the generator package has a generate_epilog function */
 	Boolean hasGenerateEpilog
+
+	/** indicates if the generator package has a generate function with all 3 input parameters */
+	@Deprecated
+	Boolean hasGenerate1
+
+	/** indicates if the generator package has a generate function with all 2 input parameters */
+	@Deprecated
+	Boolean hasGenerate2
+
+	/** indicates if the generator package has a generate function with all 1 input parameter */
+	Boolean hasGenerate3
 }

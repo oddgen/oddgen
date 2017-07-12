@@ -5,12 +5,12 @@
 	<!-- The Basics -->
 	<groupId>org.oddgen</groupId>
 	<artifactId>org.oddgen.sqldev</artifactId>
-	<version>0.3.0-SNAPSHOT</version>
+	<version>0.2.6</version>
 	<packaging>bundle</packaging>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jdk.version>1.7</jdk.version>
-		<sqldev.basedir>/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper</sqldev.basedir>
+		<sqldev.basedir>/Applications/SQLDeveloper17.2.0.app/Contents/Resources/sqldeveloper</sqldev.basedir>
 		<final.name>oddgen_for_SQLDev_${project.version}</final.name>
 	</properties>
 	<dependencies>
@@ -102,10 +102,10 @@
 		</dependency>
 		<dependency>
 			<groupId>oracle</groupId>
-			<artifactId>ojdbc6</artifactId>
-			<version>12.1.0.2.0</version>
+			<artifactId>ojdbc8</artifactId>
+			<version>12.2.0.1.0</version>
 			<scope>system</scope>
-			<systemPath>${sqldev.basedir}/jdbc/lib/ojdbc6.jar</systemPath>
+			<systemPath>${sqldev.basedir}/jdbc/lib/ojdbc8.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>oracle</groupId>
@@ -423,24 +423,17 @@
 							oracle.icons,
 							oracle.jdeveloper.java.core,
 							oracle.jdeveloper.common,
-							oracle.layout-managers,
-							oracle.db-api,
-							oracle.db-api-impl,
 							oracle.db-ca,
 							oracle.jdev-cm,
 							oracle.ide.db,
 							oracle.jdeveloper.db.connection,
-							oracle.ide.db.explorer,
-							oracle.jewt-dbui,
 							oracle.orahelp-helpshare,
 							oracle.orahelp-ohj,
 							oracle.external.oracle-ice,
-							oracle.balipi,
 							oracle.jewt-core,
 							oracle.external.balishare,
 							oracle.external.jdbc,
 							oracle.sqldeveloper,
-							oracle.sqldeveloper.utils-nodeps,
 							oracle.sqldeveloper.utils,
 							oracle.sqldeveloper.worksheet,
 							oracle.external.itext

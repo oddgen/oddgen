@@ -45,6 +45,11 @@ class DatabaseGenerator implements OddgenGenerator2 {
 		return metaData.description
 	}
 	
+	override getFolders(Connection conn) {
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getFolders(metaData);
+	}
+	
 	override getHelp(Connection conn) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getHelp(metaData)
@@ -111,7 +116,7 @@ class DatabaseGenerator implements OddgenGenerator2 {
 		val HashMap<String, String> paramStates = dao.getParamStates(metaData, objectType, objectName, params);
 		val result = new HashMap<String, Boolean>()
 		for (p : paramStates.keySet) {
-			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] != null) true else false)
+			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] !== null) true else false)
 		}
 		return result
 	}

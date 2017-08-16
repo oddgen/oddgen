@@ -46,6 +46,14 @@ interface OddgenGenerator2 {
 	 * @return the description of the generator
 	 */
 	def String getDescription(Connection conn)
+	
+	/**
+	 * Get the list of folder names. The first entry in the list is the folder 
+	 * under 'All Generators', the second one is the subfolder under the 
+	 * first one and so on. The generator will be visible in the last folder
+	 * of the list.
+	 */
+	def List<String> getFolders(Connection conn)
 
 	/** 
 	 * Get the help of the generator.

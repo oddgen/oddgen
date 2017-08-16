@@ -36,6 +36,9 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	
 	/** indicates if the generator package has a get_description function */
 	Boolean hasGetDescription
+	
+	/** indicates if the generator package has a get_folders function */
+	Boolean hasGetFolders
 
 	/** indicates if the generator package has a get_help function */
 	Boolean hasGetHelp

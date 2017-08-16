@@ -51,17 +51,58 @@ class DatabaseGeneratorDao {
 		this.dalTools = new DalTools(conn)
 	}
 	
-	def getHelp(DatabaseGeneratorMetaData metaData) {
+	def List<String> getFolders(DatabaseGeneratorMetaData metaData) {
+		// convert PL/SQL table to XML
 		val plsql = '''
-		   DECLARE
-		      l_clob CLOB;
-		   BEGIN
-		      l_clob := «metaData.generatorOwner».«metaData.generatorName».get_help();
-		      ? := l_clob;
-		   END;
+			DECLARE
+			   l_folders «metaData.generatorOwner».oddgen_types.t_value_type;
+			   l_clob    CLOB;
+			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
+			   l_folders := «metaData.generatorOwner».«metaData.generatorName».get_folders;
+			   sys.dbms_lob.append(l_clob, '<values>');
+			   FOR i IN 1 .. l_folders.count
+			   LOOP
+			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_folders(i) || ']]></value>');
+			   END LOOP;
+			   sys.dbms_lob.append(l_clob, '</values>');
+			   ? := l_clob;
+			END;
 		'''
 		Logger.debug(this, "plsql: %s", plsql)
-		var String help = '<p>Help not implemented for this generator.</p>';
+		val folders = new ArrayList<String>()
+		var Document doc
+		if (metaData.hasGetFolders) {
+			try {
+				doc = plsql.doc
+			} catch (Exception e) {
+				// error has been logged, ignore it and return default
+			}
+		}
+		if (doc !== null) {
+			val values = doc.getElementsByTagName("value")
+			for (var i = 0; i < values.length; i++) {
+				val value = values.item(i) as Element
+				val type = value.textContent
+				folders.add(type)
+			}
+		} else {
+			folders.add("Database Server Generators")
+		}
+		return folders
+	}	
+
+	def getHelp(DatabaseGeneratorMetaData metaData) {
+		val plsql = '''
+			DECLARE
+			   l_clob CLOB;
+			BEGIN
+			   l_clob := «metaData.generatorOwner».«metaData.generatorName».get_help();
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		var String help = '<p>Help is not implemented for this generator.</p>';
 		if (metaData.hasGetHelp) {
 			try {
 				help = plsql.getString
@@ -74,7 +115,7 @@ class DatabaseGeneratorDao {
 		}
 		return help
 	}
-	
+
 	def getNodes(DatabaseGeneratorMetaData metaData, String parentNodeId) {
 		val plsql = '''
 			«IF metaData.hasGetNodes»
@@ -126,7 +167,7 @@ class DatabaseGeneratorDao {
 				   ? := l_clob;
 				END;
 			«ELSE»
-				«IF parentNodeId == null || parentNodeId.empty»
+				«IF parentNodeId === null || parentNodeId.empty»
 					«IF metaData.hasGetObjectTypes»
 						DECLARE
 						   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
@@ -242,12 +283,12 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val nodes = new ArrayList<Node>
 		var doc = plsql.doc
-		if (doc != null) {
+		if (doc !== null) {
 			val xmlNodes = doc.getElementsByTagName("node")
 			for (var i = 0; i < xmlNodes.length; i++) {
 				val node = new Node
 				val xmlNode = xmlNodes.item(i) as Element
-				node.id =  xmlNode.getElementsByTagName("id").item(0).textContent
+				node.id = xmlNode.getElementsByTagName("id").item(0).textContent
 				node.parentId = xmlNode.getElementsByTagName("parent_id")?.item(0)?.textContent
 				node.name = xmlNode.getElementsByTagName("name")?.item(0)?.textContent
 				node.description = xmlNode.getElementsByTagName("description")?.item(0)?.textContent
@@ -261,13 +302,13 @@ class DatabaseGeneratorDao {
 					val value = xmlParam.getElementsByTagName("value").item(0).textContent
 					params.put(key, value)
 				}
-				node.params = params 
+				node.params = params
 				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
 				node.generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent == "true"
 				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
 				nodes.add(node)
 			}
-		} 
+		}
 		return nodes
 	}
 
@@ -295,7 +336,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetObjectTypes) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
@@ -309,7 +350,7 @@ class DatabaseGeneratorDao {
 		}
 		return objectTypes
 	}
-	
+
 	def getUserObjectNames(String objectType) {
 		// ignore generated objects, such as IOT overflow tables
 		val sql = '''
@@ -346,7 +387,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetObjectNames) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val objectNames = new ArrayList<String>()
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
@@ -358,10 +399,9 @@ class DatabaseGeneratorDao {
 		} else {
 			return getUserObjectNames(objectType)
 		}
-	}	
+	}
 
-	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType,
-		String objectName) {
+	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -389,7 +429,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetOrderedParams2 || metaData.hasGetOrderedParams1) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val values = doc.getElementsByTagName("value")
 			for (var i = 0; i < values.length; i++) {
 				val value = values.item(i) as Element
@@ -436,7 +476,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetParams2 || metaData.hasGetParams1) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val xmlParams = doc.getElementsByTagName("param")
 			for (var i = 0; i < xmlParams.length; i++) {
 				val param = xmlParams.item(i) as Element
@@ -462,7 +502,7 @@ class DatabaseGeneratorDao {
 			   l_clob CLOB;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   «IF params != null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
+			   «IF params !== null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
 			   	«FOR key : params.keySet»
 			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   	«ENDFOR»
@@ -497,7 +537,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val xmlLovs = doc.getElementsByTagName("lov")
 			if (xmlLovs.length > 0) {
 				for (var i = 0; i < xmlLovs.length; i++) {
@@ -536,9 +576,9 @@ class DatabaseGeneratorDao {
 			   «ELSE»
 			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
 			   «ENDIF»
-			                        in_object_type => '«objectType»',
-			                        in_object_name => '«objectName»',
-			                        in_params      => l_params
+			   in_object_type => '«objectType»',
+			   in_object_name => '«objectName»',
+			   in_params      => l_params
 			                     );
 			   l_key          := l_param_states.first;
 			   sys.dbms_lob.append(l_clob, '<paramStates>');
@@ -558,7 +598,7 @@ class DatabaseGeneratorDao {
 		if (metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
 			doc = plsql.doc
 		}
-		if (doc != null) {
+		if (doc !== null) {
 			val xmlParamStates = doc.getElementsByTagName("paramState")
 			for (var i = 0; i < xmlParamStates.length; i++) {
 				val paramState = xmlParamStates.item(i) as Element
@@ -651,6 +691,9 @@ class DatabaseGeneratorDao {
 			                   --
 			                    (arg.object_name = 'GET_DESCRIPTION' AND arg.position = 0 AND
 			                    data_type = 'VARCHAR2') OR
+			                   --
+			                    (arg.object_name = 'GET_FOLDERS' AND arg.position = 0 AND
+			                    data_type = 'TABLE') OR
 			                   --
 			                    (arg.object_name = 'GET_HELP' AND arg.position = 0 AND
 			                    data_type = 'CLOB') OR
@@ -765,6 +808,12 @@ class DatabaseGeneratorDao {
 			                           ELSE
 			                            0
 			                        END) AS has_get_description,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_FOLDERS' AND arg_count = 1 THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_folders,
 			                   SUM(CASE
 			                           WHEN procedure_name = 'GET_HELP' AND arg_count = 1 THEN
 			                            1
@@ -884,6 +933,7 @@ class DatabaseGeneratorDao {
 			                   gen.has_generate3, -- v0.3.0 current
 			                   nvl(oth.has_get_name, 0) AS has_get_name, -- v0.1.0 current
 			                   nvl(oth.has_get_description, 0) AS has_get_description, -- v0.1.0 current
+			                   nvl(oth.has_get_folders, 0) AS has_get_folders, -- v0.3.0 current
 			                   nvl(oth.has_get_help, 0) AS has_get_help, -- v0.3.0 current
 			                   nvl(oth.has_get_nodes, 0) AS has_get_nodes, -- v0.3.0 current
 			                   nvl(oth.has_get_object_types, 0) AS has_get_object_types, -- v0.1.0 depreated
@@ -915,6 +965,7 @@ class DatabaseGeneratorDao {
 			             has_generate3,
 			             has_get_name,
 			             has_get_description,
+			             has_get_folders,
 			             has_get_help,
 			             has_get_nodes,
 			             has_get_object_types,
@@ -934,6 +985,7 @@ class DatabaseGeneratorDao {
 			             has_generate_separator,
 			             has_generate_epilog
 			        FROM tot;
+			
 			   --
 			   SUBTYPE string_type IS VARCHAR2(8192 CHAR);
 			   l_name        string_type;
@@ -1021,6 +1073,7 @@ class DatabaseGeneratorDao {
 			      add_node(in_node => 'hasGenerate3', in_value => r_metadata.has_generate3);
 			      add_node(in_node => 'hasGetName', in_value => r_metadata.has_get_name);
 			      add_node(in_node => 'hasGetDescription', in_value => r_metadata.has_get_description);
+			      add_node(in_node => 'hasGetFolders', in_value => r_metadata.has_get_folders);
 			      add_node(in_node => 'hasGetHelp', in_value => r_metadata.has_get_help);
 			      add_node(in_node => 'hasGetNodes', in_value => r_metadata.has_get_nodes);
 			      add_node(in_node => 'hasGetObjectTypes', in_value => r_metadata.has_get_object_types);
@@ -1048,7 +1101,7 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val doc = plsql.doc
 		val dbgens = new ArrayList<DatabaseGenerator>()
-		if (doc != null) {
+		if (doc !== null) {
 			val xmlGenerators = doc.getElementsByTagName("generator")
 			for (var i = 0; i < xmlGenerators.length; i++) {
 				val metaData = new DatabaseGeneratorMetaData
@@ -1060,10 +1113,9 @@ class DatabaseGeneratorDao {
 				metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
 				metaData.hasGetDescription = xmlGenerator.getElementsByTagName("hasGetDescription").item(0).
 					textContent == "1"
-				metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).
-					textContent == "1"
-				metaData.hasGetNodes = xmlGenerator.getElementsByTagName("hasGetNodes").item(0).
-					textContent == "1"				
+				metaData.hasGetFolders = xmlGenerator.getElementsByTagName("hasGetFolders").item(0).textContent == "1"
+				metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).textContent == "1"
+				metaData.hasGetNodes = xmlGenerator.getElementsByTagName("hasGetNodes").item(0).textContent == "1"
 				metaData.hasGetObjectTypes = xmlGenerator.getElementsByTagName("hasGetObjectTypes").item(0).
 					textContent == "1"
 				metaData.hasGetObjectNames = xmlGenerator.getElementsByTagName("hasGetObjectNames").item(0).
@@ -1140,8 +1192,7 @@ class DatabaseGeneratorDao {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded
 				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = generate(metaData, objectType, objectName,
-					params)
+				result = generate(metaData, objectType, objectName, params)
 			} else {
 				result = '''Failed to generate code for «objectType».«objectName» via «metaData.generatorOwner».«metaData.generatorName». Got the following error: «e.cause?.message»'''
 				Logger.error(this, plsql + result)

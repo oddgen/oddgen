@@ -20,6 +20,8 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * complete interface.
    * PL/SQL package specification only.
    * PL/SQL package body is not part of the interface definition.
+   * Requires the ODDGEN_TYPES package specification to be installed in 
+   * the same schema. 
    *
    * @headcom
    */
@@ -43,6 +45,21 @@ CREATE OR REPLACE PACKAGE oddgen_interface AUTHID CURRENT_USER IS
    * @since v0.1
    */
    FUNCTION get_description RETURN VARCHAR2;
+   
+   /**
+   * Get the list of folder names. The first entry in the list is the folder 
+   * under 'All Generators', the second one is the subfolder under the 
+   * first one and so on. The generator will be visible in the last folder
+   * of the list.
+   * If this function is not implemented, the default will be determined
+   * based on the generator type. For generators stored in the database 
+   * this will be oddgen_types.t_value_type('Database Server Generators').
+   *
+   * @returns the list of folders under 'All Generators'
+   *
+   * @since v0.3
+   */
+   FUNCTION get_folders RETURN oddgen_types.t_value_type;
 
    /**
    * Get the help of the generator.

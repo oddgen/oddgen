@@ -15,105 +15,132 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.LinkedHashMap
+import java.util.List
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.Node
 
 class GetLovTest extends AbstractJdbcTest {
 
 	@Test
-	// deprecated get_lov signature
+	// deprecated get_lov signature (v0.1.0)
 	def getLov1Test() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		val lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		val lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 	}
 	
 	@Test
-	// deprecated refresh_lov function
+	// deprecated, undocumented refresh_lov (v0.2.0)
 	def getLov2Test() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		var lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 		params.put("Second parameter", "no")
-		lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 	}
 
 	@Test
-	// deprecated get_lov signature and deprecated refresh_lov function
+	// deprecated get_lov (v0.1.0) and deprecated, undocumented refresh_lov (v0.2.0)
 	def getLov3Test() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		var lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 		params.put("Second parameter", "no")
-		lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 	}
 
 	@Test
-	// current get_lov signature 
+	// deprecated get_lov signature (v0.2.0)
 	def getLov4Test() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		var lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 		params.put("Second parameter", "no")
-		lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 	}
 
 	@Test
-	// test case for issue #32
+	// test case for issue #32 using deprecated get_lov signature (v0.2.0)
 	def getLov4WithSingleQuotesInFirstParameterTest() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
 		params.put("First Parameter", "'cause") // single quote must not cause another result
-		var lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 		params.put("Second parameter", "no")
-		lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
 	}
 
+	@Test
+	// current get_lov signature (v0.3.0)
+	def getLov5Test() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY5"
+		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val LinkedHashMap<String,String> params = new LinkedHashMap<String,String>;
+		var lov = dbgen.getLov(dataSource.connection, null, nodes);
+		Assert.assertEquals(2, lov.size)
+		Assert.assertEquals(#["1", "2", "3"], lov.get("First parameter"))
+		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
+		params.put("Second parameter", "no")
+		lov = dbgen.getLov(dataSource.connection, params, nodes);
+		Assert.assertEquals(2, lov.size)
+		Assert.assertEquals(#["4", "5"], lov.get("First parameter"))
+		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
+	}
 
 	@Test
 	def getLovDefaultTest() {
@@ -121,8 +148,9 @@ class GetLovTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		val lov = dbgen.getLov(dataSource.connection, "someObjectType", "someObjectname", params);
+		val lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(0, lov.size)
 	}
 
@@ -132,6 +160,7 @@ class GetLovTest extends AbstractJdbcTest {
 		createPlsqlDummy2
 		createPlsqlDummy3
 		createPlsqlDummy4
+		createPlsqlDummy5
 	}
 
 	@AfterClass
@@ -140,6 +169,7 @@ class GetLovTest extends AbstractJdbcTest {
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy2")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy3")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy4")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy5")
 	}
 
 	def static createPlsqlDummy1() {
@@ -367,6 +397,46 @@ class GetLovTest extends AbstractJdbcTest {
 			      RETURN NULL;
 			   END generate;
 			END plsql_dummy4;
+		''')
+	}
+
+	def static createPlsqlDummy5() {
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_dummy5 IS
+			   FUNCTION get_lov(
+			      in_params IN oddgen_types.t_param_type,
+			      in_nodes  IN oddgen_types.t_node_type
+			   ) RETURN oddgen_types.t_lov_type;
+
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB;
+			END plsql_dummy5;
+		''')
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_dummy5 IS
+			   FUNCTION get_lov(
+			      in_params IN oddgen_types.t_param_type,
+			      in_nodes  IN oddgen_types.t_node_type
+			   ) RETURN oddgen_types.t_lov_type IS
+			      l_lov oddgen_types.t_lov_type;
+			   BEGIN
+			      IF in_nodes(1).params('Object type') = 'TABLE' AND in_params.count = 0 THEN
+			         l_lov('First parameter') := NEW oddgen_types.t_value_type ('1', '2', '3');
+			      ELSE
+			         l_lov('First parameter') := NEW oddgen_types.t_value_type ('4', '5');
+			      END IF;
+			      l_lov('Second parameter') := NEW oddgen_types.t_value_type ('yes', 'no');
+			      RETURN l_lov;
+			   END get_lov;
+			
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB IS
+			   BEGIN
+			      RETURN NULL;
+			   END generate;
+			END plsql_dummy5;
 		''')
 	}
 }

@@ -41,7 +41,8 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		Assert.assertEquals("_T", params.get("Table suffix to be replaced"))
 		Assert.assertEquals("_TRG", params.get("Instead-of-trigger suffix"))
 		Assert.assertEquals("Yes", params.get("Generate instead-of-trigger?"))
-		var lovs = plsqlView.getLov(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
+		var nodes = plsqlView.getNodes(dataSource.connection, "TABLE").filter[it.id=="TABLE.DEPT"].toList
+		var lovs = plsqlView.getLov(dataSource.connection, params, nodes)
 		Assert.assertEquals(2, lovs.get("Generate instead-of-trigger?").size)
 		Assert.assertEquals(#["Yes", "No"], lovs.get("Generate instead-of-trigger?"))
 		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)

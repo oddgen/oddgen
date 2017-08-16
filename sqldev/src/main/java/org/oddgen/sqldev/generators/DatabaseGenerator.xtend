@@ -61,8 +61,8 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.getLov(metaData, params, nodes)
 	}
 	
 	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
@@ -103,11 +103,6 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	def getParams(Connection conn, String objectType, String objectName) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getParams(metaData, objectType, objectName)
-	}
-
-	def getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getLov(metaData, objectType, objectName, params)
 	}
 
 	def getParamStates(Connection conn, String objectType, String objectName,

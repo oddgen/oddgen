@@ -488,29 +488,40 @@ class DatabaseGeneratorDao {
 		return params
 	}
 
-	def getLov(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
+	def getLov(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
-			   	l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
+			   «IF metaData.hasGetLov3»
+			   	l_params «metaData.generatorOwner».oddgen_types.t_param_type;
+			   	l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			   	l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			   	l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
+			   	l_key    «metaData.generatorOwner».oddgen_types.value_type;
+			   	l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
+			   «ELSE»
+			   	«IF metaData.hasGetLov2 || metaData.hasRefreshLov»
+			   		l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
+				«ENDIF»
+			   	l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
+			   	l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   	l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   «ENDIF»
-			   l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
-			   l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
-			   l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob CLOB;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   «IF params !== null && (metaData.hasGetLov2 || metaData.hasRefreshLov)»
+			   «IF params !== null && (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov)»
 			   	«FOR key : params.keySet»
 			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   	«ENDFOR»
 			   «ENDIF»
-			   «IF metaData.hasGetLov2»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
+			   «IF metaData.hasGetLov3»
+			   	«nodes.toPlsql»
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_params => l_params, in_nodes => l_nodes);
+			   «ELSEIF metaData.hasGetLov2»
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
 			   «ELSEIF metaData.hasRefreshLov»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«objectType»', in_object_name => '«objectName»', in_params => l_params);
+			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
 			   «ELSEIF metaData.hasGetLov1»
 			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   «ENDIF»
@@ -534,7 +545,7 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val lovs = new HashMap<String, List<String>>()
 		var Document doc
-		if (metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
+		if (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
 			doc = plsql.doc
 		}
 		if (doc !== null) {

@@ -128,8 +128,8 @@ interface OddgenGenerator2 {
 	 * Called by oddgen for every selected node.
 	 * Children of nodes are not resolved by oddgen.
 	 * @param conn active connection in the Generators window
-	 * @param params parameters to customize the code generation
+	 * @param node node to be generated
 	 * @return the generated code
 	 */
-	def String generate(Connection conn, LinkedHashMap<String, String> params)
+	def String generate(Connection conn, Node node)
 }

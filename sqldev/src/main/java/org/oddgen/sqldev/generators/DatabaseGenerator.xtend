@@ -85,7 +85,7 @@ class DatabaseGenerator implements OddgenGenerator2 {
 		return null
 	}
 	
-	override generate(Connection conn, LinkedHashMap<String, String> params) {
+	override generate(Connection conn, Node node) {
 		// TODO
 		return null
 	}

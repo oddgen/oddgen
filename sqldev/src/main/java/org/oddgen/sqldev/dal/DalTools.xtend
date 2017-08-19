@@ -23,10 +23,8 @@ import java.sql.Clob
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.Types
-import java.util.List
 import javax.xml.parsers.DocumentBuilderFactory
 import org.oddgen.sqldev.LoggableConstants
-import org.oddgen.sqldev.generators.model.Node
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.BadSqlGrammarException
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -117,61 +115,6 @@ class DalTools {
 			depth--
 		}
 		return doc
-	}
-
-	def String escapeSingleQuotes(String value) {
-		return value.replace("'", "''")
-	}
-
-	def CharSequence toPlsql(List<Node> nodes) '''
-		«IF nodes !== null»
-			«FOR node : nodes»
-				l_node.id              := '«node.id»';
-				l_node.parent_id       := «IF node.parentId === null»NULL«ELSE»'«node.parentId»'«ENDIF»;
-				l_node.name            := «IF node.name === null»NULL«ELSE»'«node.name»'«ENDIF»;
-				l_node.description     := «IF node.description === null»NULL«ELSE»'«node.description.escapeSingleQuotes»'«ENDIF»;
-				l_node.icon_name       := «IF node.iconName === null»NULL«ELSE»'«node.iconName»'«ENDIF»;
-				l_node.icon_base64     := «IF node.iconBase64 === null»NULL«ELSE»'«node.iconBase64»'«ENDIF»;
-				«IF node.params === null»
-					l_node.params          := NULL;
-				«ELSE»
-					«IF node.params === null»
-						l_node.params          := NULL;
-					«ELSE»
-						«FOR key : node.params.keySet»
-							l_node.params('«key.escapeSingleQuotes»') := '«node.params.get(key)»';
-						«ENDFOR»
-					«ENDIF»
-				«ENDIF»
-				l_node.leaf            := «IF node.leaf»TRUE«ELSE»FALSE«ENDIF»;
-				l_node.generatable     := «IF node.generatable»TRUE«ELSE»FALSE«ENDIF»;
-				l_node.multiselectable := «IF node.multiselectable»TRUE«ELSE»FALSE«ENDIF»;
-				l_nodes.extend;
-				l_nodes(l_nodes.count) := l_node;
-			«ENDFOR»
-		«ENDIF»
-	'''
-
-	def toObjectType(List<Node> nodes) {
-		var String objectType = null
-		if (nodes !== null && nodes.size > 0) {
-			val params = nodes?.get(0)?.params
-			if (params !== null) {
-				objectType = params.get("Object type")
-			}
-		}
-		return objectType
-	}
-
-	def toObjectName(List<Node> nodes) {
-		var String objectName = null
-		if (nodes !== null && nodes.size > 0) {
-			val params = nodes?.get(0)?.params
-			if (params !== null) {
-				objectName = nodes?.get(0)?.params?.get("Object name")
-			}
-		}
-		return objectName
 	}
 
 }

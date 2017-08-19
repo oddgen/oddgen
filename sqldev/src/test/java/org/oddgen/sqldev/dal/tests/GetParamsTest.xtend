@@ -15,11 +15,13 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.List
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.Node
 
 class GetParamsTest extends AbstractJdbcTest {
 
@@ -30,7 +32,8 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
-		val result = dao.getParams(dbgen.metaData, "someObjectType", "someObjectname");
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val result = nodes.get(0).params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(0))
 		Assert.assertEquals("Second parameter", result.keySet.get(2))
@@ -49,7 +52,8 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
-		val result = dao.getParams(dbgen.metaData, "someObjectType", "someObjectname");
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val result = nodes.get(0).params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(0))
 		Assert.assertEquals("Second parameter", result.keySet.get(1))
@@ -68,16 +72,17 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
-		var result = dao.getParams(dbgen.metaData, "TABLE", "AbC");
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val result = nodes.findFirst[it.id=="TABLE.EMP"].params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(0))
 		Assert.assertEquals("Second parameter", result.keySet.get(2))
 		Assert.assertEquals("Third parameter", result.keySet.get(3))
 		Assert.assertEquals("Fourth parameter", result.keySet.get(1))
-		Assert.assertEquals("table.abc one", result.get("First parameter"))
-		Assert.assertEquals("table.abc two", result.get("Second parameter"))
-		Assert.assertEquals("table.abc three", result.get("Third parameter"))
-		Assert.assertEquals("table.abc four", result.get("Fourth parameter"))
+		Assert.assertEquals("table.emp one", result.get("First parameter"))
+		Assert.assertEquals("table.emp two", result.get("Second parameter"))
+		Assert.assertEquals("table.emp three", result.get("Third parameter"))
+		Assert.assertEquals("table.emp four", result.get("Fourth parameter"))
 	}
 
 	@Test
@@ -87,16 +92,17 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
-		var result = dao.getParams(dbgen.metaData, "TABLE", "AbC");
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val result = nodes.findFirst[it.id=="TABLE.EMP"].params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(0))
 		Assert.assertEquals("Second parameter", result.keySet.get(1))
 		Assert.assertEquals("Third parameter", result.keySet.get(2))
 		Assert.assertEquals("Fourth parameter", result.keySet.get(3))
-		Assert.assertEquals("table.abc one", result.get("First parameter"))
-		Assert.assertEquals("table.abc two", result.get("Second parameter"))
-		Assert.assertEquals("table.abc three", result.get("Third parameter"))
-		Assert.assertEquals("table.abc four", result.get("Fourth parameter"))
+		Assert.assertEquals("table.emp one", result.get("First parameter"))
+		Assert.assertEquals("table.emp two", result.get("Second parameter"))
+		Assert.assertEquals("table.emp three", result.get("Third parameter"))
+		Assert.assertEquals("table.emp four", result.get("Fourth parameter"))
 	}
 
 	@Test
@@ -106,26 +112,28 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY5"
 		]
-		var result = dao.getParams(dbgen.metaData, "TABLE", "AbC");
+		var nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		var result = nodes.findFirst[it.id=="TABLE.EMP"].params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(0))
 		Assert.assertEquals("Second parameter", result.keySet.get(1))
 		Assert.assertEquals("Third parameter", result.keySet.get(2))
 		Assert.assertEquals("Fourth parameter", result.keySet.get(3))
-		Assert.assertEquals("table.abc one", result.get("First parameter"))
-		Assert.assertEquals("table.abc two", result.get("Second parameter"))
-		Assert.assertEquals("table.abc three", result.get("Third parameter"))
-		Assert.assertEquals("table.abc four", result.get("Fourth parameter"))
-		result = dao.getParams(dbgen.metaData, "VIEW", "AbC");
+		Assert.assertEquals("table.emp one", result.get("First parameter"))
+		Assert.assertEquals("table.emp two", result.get("Second parameter"))
+		Assert.assertEquals("table.emp three", result.get("Third parameter"))
+		Assert.assertEquals("table.emp four", result.get("Fourth parameter"))
+		nodes = dbgen.getNodes(dataSource.connection, "VIEW")
+		result = nodes.findFirst[it.id=="VIEW.EMP_VIEW1"].params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(3))
 		Assert.assertEquals("Second parameter", result.keySet.get(2))
 		Assert.assertEquals("Third parameter", result.keySet.get(1))
 		Assert.assertEquals("Fourth parameter", result.keySet.get(0))
-		Assert.assertEquals("view.abc one", result.get("First parameter"))
-		Assert.assertEquals("view.abc two", result.get("Second parameter"))
-		Assert.assertEquals("view.abc three", result.get("Third parameter"))
-		Assert.assertEquals("view.abc four", result.get("Fourth parameter"))
+		Assert.assertEquals("view.emp_view1 one", result.get("First parameter"))
+		Assert.assertEquals("view.emp_view1 two", result.get("Second parameter"))
+		Assert.assertEquals("view.emp_view1 three", result.get("Third parameter"))
+		Assert.assertEquals("view.emp_view1 four", result.get("Fourth parameter"))
 	}
 
 	@Test
@@ -134,7 +142,8 @@ class GetParamsTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val result = dao.getParams(dbgen.metaData, "someObjectType", "someObjectname");
+		var nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		var result = nodes.findFirst[it.id=="TABLE.EMP"].params
 		Assert.assertEquals(0, result.size)
 	}
 
@@ -145,6 +154,7 @@ class GetParamsTest extends AbstractJdbcTest {
 		createPlsqlDummy3
 		createPlsqlDummy4
 		createPlsqlDummy5
+		createEmpView1
 	}
 
 	@AfterClass
@@ -154,6 +164,7 @@ class GetParamsTest extends AbstractJdbcTest {
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy3")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy4")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy5")
+		jdbcTemplate.execute("DROP VIEW emp_view1")
 	}
 
 	def static createPlsqlDummy1() {
@@ -379,4 +390,10 @@ class GetParamsTest extends AbstractJdbcTest {
 			END plsql_dummy5;
 		''')
 	}
+	def static createEmpView1() {
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE VIEW emp_view1 AS SELECT * FROM emp
+		''')
+	}
+
 }

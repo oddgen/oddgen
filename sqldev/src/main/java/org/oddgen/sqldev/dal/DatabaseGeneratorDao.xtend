@@ -29,6 +29,7 @@ import java.util.List
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.model.Node
+import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.CallableStatementCallback
@@ -44,6 +45,7 @@ class DatabaseGeneratorDao {
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
 	private extension DalTools dalTools
+	private extension NodeTools nodeTools = new NodeTools
 
 	new(Connection conn) {
 		this.conn = conn
@@ -181,9 +183,7 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<node>');
 						      sys.dbms_lob.append(l_clob, '<id>' || l_types(i) || '</id>');
 						      sys.dbms_lob.append(l_clob, '<parent_id/>');
-						      sys.dbms_lob.append(l_clob, '<params>');
-						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>' || l_types(i) || '</value></param>');
-						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
 						      sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
 						      sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
@@ -201,9 +201,7 @@ class DatabaseGeneratorDao {
 						   sys.dbms_lob.append(l_clob, '<node>');
 						   sys.dbms_lob.append(l_clob, '<id>TABLE</id>');
 						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params>');
-						   sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>TABLE</value></param>');
-						   sys.dbms_lob.append(l_clob, '</params>');
+						   sys.dbms_lob.append(l_clob, '<params/>');
 						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
 						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
 						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
@@ -211,9 +209,7 @@ class DatabaseGeneratorDao {
 						   sys.dbms_lob.append(l_clob, '<node>');
 						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
 						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params>');
-						   sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>VIEW</value></param>');
-						   sys.dbms_lob.append(l_clob, '</params>');
+						   sys.dbms_lob.append(l_clob, '<params/>');
 						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
 						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
 						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
@@ -236,10 +232,7 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<node>');
 						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || l_names(i) || '</id>');
 						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params>');
-						      sys.dbms_lob.append(l_clob, '<param><key>Object name</key><value>' || l_names(i) || '</value></param>');
-						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>«parentNodeId»</value></param>');
-						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
 						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
 						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
@@ -264,10 +257,7 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<node>');
 						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || r.object_name || '</id>');
 						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params>');
-						      sys.dbms_lob.append(l_clob, '<param><key>Object name</key><value>' || r.object_name || '</value></param>');
-						      sys.dbms_lob.append(l_clob, '<param><key>Object type</key><value>«parentNodeId»</value></param>');
-						      sys.dbms_lob.append(l_clob, '</params>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
 						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
 						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
@@ -308,100 +298,17 @@ class DatabaseGeneratorDao {
 				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
 				nodes.add(node)
 			}
+			if (!metaData.hasGetNodes) {
+				// extend nodes with parameters
+				for (node : nodes) {
+					node.params = getParams(metaData, node.toObjectType, node.toObjectName)
+				}
+			}
 		}
 		return nodes
 	}
 
-	def getObjectTypes(DatabaseGeneratorMetaData metaData) {
-		// convert PL/SQL associative array to XML
-		val plsql = '''
-			DECLARE
-			   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
-			   l_clob   CLOB;
-			BEGIN
-			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
-			   sys.dbms_lob.append(l_clob, '<values>');
-			   FOR i IN 1 .. l_types.count
-			   LOOP
-			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_types(i) || ']]></value>');
-			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</values>');
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val objectTypes = new ArrayList<String>()
-		var Document doc
-		if (metaData.hasGetObjectTypes) {
-			doc = plsql.doc
-		}
-		if (doc !== null) {
-			val values = doc.getElementsByTagName("value")
-			for (var i = 0; i < values.length; i++) {
-				val value = values.item(i) as Element
-				val type = value.textContent
-				objectTypes.add(type)
-			}
-		}
-		if (objectTypes.size == 0) {
-			objectTypes.add("TABLE")
-			objectTypes.add("VIEW")
-		}
-		return objectTypes
-	}
-
-	def getUserObjectNames(String objectType) {
-		// ignore generated objects, such as IOT overflow tables
-		val sql = '''
-			SELECT object_name
-			  FROM user_objects
-			 WHERE object_type = ?
-			   AND generated = 'N'
-			ORDER BY object_name
-		'''
-		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
-		return objectNames
-	}
-
-	def getObjectNames(DatabaseGeneratorMetaData metaData, String objectType) {
-		// convert PL/SQL nested table XML
-		val plsql = '''
-			DECLARE
-			   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
-			   l_clob   CLOB;
-			BEGIN
-			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«objectType»');
-			   sys.dbms_lob.append(l_clob, '<values>');
-			   FOR i IN 1 .. l_names.count
-			   LOOP
-			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_names(i) || ']]></value>');
-			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</values>');
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		var Document doc
-		if (metaData.hasGetObjectNames) {
-			doc = plsql.doc
-		}
-		if (doc !== null) {
-			val objectNames = new ArrayList<String>()
-			val values = doc.getElementsByTagName("value")
-			for (var i = 0; i < values.length; i++) {
-				val value = values.item(i) as Element
-				val objectName = value.textContent
-				objectNames.add(objectName)
-			}
-			return objectNames
-		} else {
-			return getUserObjectNames(objectType)
-		}
-	}
-
-	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
+	private def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
@@ -440,7 +347,7 @@ class DatabaseGeneratorDao {
 		return orderedParams
 	}
 
-	def getParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
+	private def getParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// initialize Parameters in the requested order
 		val params = new LinkedHashMap<String, String>()
 		for (param : getOrderedParams(metaData, objectType, objectName)) {
@@ -1174,28 +1081,38 @@ class DatabaseGeneratorDao {
 		return dbgens
 	}
 
-	def String generate(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
+	def String generate(DatabaseGeneratorMetaData metaData, Node node) {
 		depth++
 		val plsql = '''
 			DECLARE
-			   «IF metaData.hasGenerate1»
-			   	l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   «IF metaData.hasGenerate3»
+			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			   «ELSEIF metaData.hasGenerate1»
+			      l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
 			   «ENDIF»
 			   l_clob   CLOB;
 			BEGIN
-			   «IF metaData.hasGenerate1»
-			   	«FOR key : params.keySet»
-			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
-			   	«ENDFOR»
+			   «IF metaData.hasGenerate3»
+			      «node.toPlsql»
+			      l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                   node => l_node
+			                );
+			   «ELSE»
+			      «IF metaData.hasGenerate1»
+			         «IF node.params !== null»
+			            «FOR key : node.params.keySet»
+			               l_params('«key»') := '«node.params.get(key).escapeSingleQuotes»';
+			            «ENDFOR»
+			         «ENDIF»
+			      «ENDIF»
+			      l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                     in_object_type => '«node.toObjectType»'
+			                   , in_object_name => '«node.toObjectName»'
+			                   «IF metaData.hasGenerate1»
+			                      , in_params      => l_params
+			                   «ENDIF»
+			                );
 			   «ENDIF»
-			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
-			                  in_object_type => '«objectType»'
-			                , in_object_name => '«objectName»'
-			                «IF metaData.hasGenerate1»
-			                	, in_params      => l_params
-			                «ENDIF»
-			             );
 			   ? := l_clob;
 			END;
 		'''
@@ -1214,9 +1131,9 @@ class DatabaseGeneratorDao {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded
 				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = generate(metaData, objectType, objectName, params)
+				result = generate(metaData, node)
 			} else {
-				result = '''Failed to generate code for «objectType».«objectName» via «metaData.generatorOwner».«metaData.generatorName». Got the following error: «e.cause?.message»'''
+				result = '''Failed to generate code for «node.id» via «metaData.generatorOwner».«metaData.generatorName». Got the following error: «e.cause?.message»'''
 				Logger.error(this, plsql + result)
 			}
 		} finally {

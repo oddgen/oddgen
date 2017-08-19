@@ -29,9 +29,9 @@ class GetObjectTypesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
 		]
-		val result = dao.getObjectTypes(dbgen.metaData)
-		Assert.assertEquals(1, result.size)
-		Assert.assertEquals(#["dummy"], result)
+		var nodes = dbgen.getNodes(dataSource.connection, null)
+		Assert.assertEquals(1, nodes.size)
+		Assert.assertEquals("dummy", nodes.get(0).id)
 	}
 
 	@Test
@@ -40,9 +40,10 @@ class GetObjectTypesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val result = dao.getObjectTypes(dbgen.metaData)
-		Assert.assertEquals(2, result.size)
-		Assert.assertEquals(#["TABLE", "VIEW"], result)
+		var nodes = dbgen.getNodes(dataSource.connection, null)
+		Assert.assertEquals(2, nodes.size)
+		Assert.assertEquals("TABLE", nodes.get(0).id)
+		Assert.assertEquals("VIEW", nodes.get(1).id)
 	}
 
 	@BeforeClass

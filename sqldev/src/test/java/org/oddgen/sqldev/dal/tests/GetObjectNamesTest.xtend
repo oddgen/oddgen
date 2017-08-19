@@ -20,16 +20,10 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.NodeTools
 
 class GetObjectNamesTest extends AbstractJdbcTest {
-
-	@Test
-	def getUserObjectNamesTest() {
-		val dao = new DatabaseGeneratorDao(dataSource.connection)
-		val result = dao.getUserObjectNames("TABLE")
-		Assert.assertEquals(4, result.size)
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], result)
-	}
+	private extension NodeTools nodeTools = new NodeTools
 
 	@Test
 	def getObjectNamesTest() {
@@ -37,9 +31,11 @@ class GetObjectNamesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
 		]
-		val result = dbgen.getObjectNames(dataSource.connection, "TABLE")
-		Assert.assertEquals(3, result.size)
-		Assert.assertEquals(#["one", "two", "three"], result)
+		var nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		Assert.assertEquals(3, nodes.size)
+		Assert.assertEquals("one", nodes.get(0).toObjectName)
+		Assert.assertEquals("two", nodes.get(1).toObjectName)
+		Assert.assertEquals("three", nodes.get(2).toObjectName)
 	}
 
 	@Test
@@ -48,9 +44,12 @@ class GetObjectNamesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val result = dbgen.getObjectNames(dataSource.connection, "TABLE")
-		Assert.assertEquals(4, result.size)
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], result)
+		var nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		Assert.assertEquals(4, nodes.size)
+		Assert.assertEquals(1, nodes.filter[it.toObjectName == "BONUS"].size)
+		Assert.assertEquals(1, nodes.filter[it.toObjectName == "DEPT"].size)
+		Assert.assertEquals(1, nodes.filter[it.toObjectName == "EMP"].size)
+		Assert.assertEquals(1, nodes.filter[it.toObjectName == "SALGRADE"].size)
 	}
 
 	@BeforeClass

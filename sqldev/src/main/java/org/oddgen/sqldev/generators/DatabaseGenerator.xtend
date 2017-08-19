@@ -91,27 +91,8 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override generate(Connection conn, Node node) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.generate(metaData, node)
 	}
 
-	def getObjectTypes(Connection conn) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getObjectTypes(metaData)
-	}
-
-	def getObjectNames(Connection conn, String objectType) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getObjectNames(metaData, objectType)
-	}
-
-	def getParams(Connection conn, String objectType, String objectName) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getParams(metaData, objectType, objectName)
-	}
-
-	def generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generate(metaData, objectType, objectName, params)
-	}
 }

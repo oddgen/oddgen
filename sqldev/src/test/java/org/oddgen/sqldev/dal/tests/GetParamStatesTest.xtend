@@ -33,8 +33,8 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
-		val List<Node> nodes = null // not required for this test case
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val params = nodes.get(0).params
 		var paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Second parameter"))
@@ -51,8 +51,8 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
-		val List<Node> nodes = null // not required for this test case
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val params = nodes.get(0).params
 		var paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Second parameter"))
@@ -69,8 +69,8 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
-		val List<Node> nodes = null // not required for this test case
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val params = nodes.get(0).params
 		params.put("First parameter", "'not'' one") // single quote must not cause another result
 		val paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
@@ -104,8 +104,8 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
-		val List<Node> nodes = null // not required for this test case
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val params = nodes.get(0).params
 		val paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(0, paramStates.size)
 	}

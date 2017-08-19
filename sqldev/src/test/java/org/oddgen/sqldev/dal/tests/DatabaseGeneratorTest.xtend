@@ -15,9 +15,11 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.LinkedHashMap
 import org.junit.Assert
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.Node
 
 class DatabaseGeneratorTest extends AbstractJdbcTest {
 
@@ -32,9 +34,8 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		Assert.assertEquals(
 			"Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.",
 			plsqlView.getDescription(dataSource.connection))
-		Assert.assertEquals(1, plsqlView.getObjectTypes(dataSource.connection).size)
-		Assert.assertEquals(#["TABLE"], plsqlView.getObjectTypes(dataSource.connection))
-		var params = plsqlView.getParams(dataSource.connection, "TABLE", "PLSQL_VIEW")
+		Assert.assertEquals("TABLE", plsqlView.getNodes(dataSource.connection, null).get(0).id)
+		var params = plsqlView.getNodes(dataSource.connection, "TABLE").findFirst[true].params
 		Assert.assertEquals(4, params.size)
 		Assert.assertEquals(#["View suffix", "Table suffix to be replaced", "Generate instead-of-trigger?", "Instead-of-trigger suffix"], params.keySet.toList)
 		Assert.assertEquals("_V", params.get("View suffix"))
@@ -88,8 +89,9 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 			END;
 			/
 		'''	
-		val params = dbgen.getParams(dataSource.connection, null, null)
-		val generated = dbgen.generate(dataSource.connection, "TABLE", "DEPT", params)
+		val node = new Node;
+		node.id = "TABLE.DEPT"
+		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -110,9 +112,11 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 			          DEPTNO
 			     FROM EMP;
 		'''	
-		val params = dbgen.getParams(dataSource.connection, null, null)
-		params.put("Generate instead-of-trigger?", "No");
-		val generated = dbgen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val node = new Node;
+		node.id = "TABLE.EMP"
+		node.params = new LinkedHashMap<String, String>
+		node.params.put("Generate instead-of-trigger?", "No");
+		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -134,11 +138,13 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 			          COMM,
 			          DEPTNO
 			     FROM EMP;
-		'''	
-		val params = dbgen.getParams(dataSource.connection, null, null)
-		params.put("Generate instead-of-trigger?", "No");
-		params.put("View suffix", "_'V''") // handle one or multiple single quotes
-		val generated = dbgen.generate(dataSource.connection, "TABLE", "EMP", params)
+		'''
+		val node = new Node;
+		node.id = "TABLE.EMP"
+		node.params = new LinkedHashMap<String, String>
+		node.params.put("Generate instead-of-trigger?", "No");
+		node.params.put("View suffix", "_'V''") // handle one or multiple single quotes
+		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -154,7 +160,9 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 			END;
 			/
 		'''
-		val generated = dbgen.generate(dataSource.connection, "VIEW", "EMP_V", null)
+		val node = new Node;
+		node.id = "VIEW.EMP_V"
+		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
 
@@ -171,7 +179,9 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 			ORA-06550: line 4, column 4:
 			PL/SQL: Statement ignored
 		'''
-		val generated = dbgen.generate(dataSource.connection, "TYPE", "NAME", null)
+		val node = new Node;
+		node.id = "TYPE.NAME"
+		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated?.trim)
 	}
 }

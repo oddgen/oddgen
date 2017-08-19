@@ -34,8 +34,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
-		val lov = dbgen.getLov(dataSource.connection, params, nodes);
+		val lov = dbgen.getLov(dataSource.connection, nodes.get(0).params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
 		Assert.assertEquals(#["yes", "no"], lov.get("Second parameter"))
@@ -49,7 +48,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val params = nodes.get(0).params
 		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
@@ -69,7 +68,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val params = nodes.get(0).params
 		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
@@ -89,7 +88,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val params = nodes.get(0).params
 		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
 		Assert.assertEquals(#["one", "two", "three"], lov.get("First parameter"))
@@ -109,7 +108,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val params = nodes.get(0).params
 		params.put("First Parameter", "'cause") // single quote must not cause another result
 		var lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(2, lov.size)
@@ -149,7 +148,7 @@ class GetLovTest extends AbstractJdbcTest {
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
 		val List<Node> nodes = dbgen.getNodes(dataSource.connection, "TABLE")
-		val params = dbgen.getParams(dataSource.connection, null, null)
+		val params = nodes.get(0).params
 		val lov = dbgen.getLov(dataSource.connection, params, nodes);
 		Assert.assertEquals(0, lov.size)
 	}
@@ -421,7 +420,7 @@ class GetLovTest extends AbstractJdbcTest {
 			   ) RETURN oddgen_types.t_lov_type IS
 			      l_lov oddgen_types.t_lov_type;
 			   BEGIN
-			      IF in_nodes(1).params('Object type') = 'TABLE' AND in_params.count = 0 THEN
+			      IF in_nodes(1).id LIKE 'TABLE%' AND in_params.count = 0 THEN
 			         l_lov('First parameter') := NEW oddgen_types.t_value_type ('1', '2', '3');
 			      ELSE
 			         l_lov('First parameter') := NEW oddgen_types.t_value_type ('4', '5');

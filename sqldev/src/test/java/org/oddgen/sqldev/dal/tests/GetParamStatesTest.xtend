@@ -15,11 +15,14 @@
  */
 package org.oddgen.sqldev.dal.tests
 
+import java.util.LinkedHashMap
+import java.util.List
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.Node
 
 class GetParamStatesTest extends AbstractJdbcTest {
 
@@ -30,29 +33,31 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
+		val List<Node> nodes = null // not required for this test case
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		var paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		var paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Second parameter"))
 		params.put("First parameter", "not one")
-		paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(false, paramStates.get("Second parameter"))
 	}
 	
 	@Test
-	// current get_param_states function
+	// deprecated get_param_states function
 	def getParamStates2Test() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
+		val List<Node> nodes = null // not required for this test case
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		var paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		var paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Second parameter"))
 		params.put("First parameter", "not one")
-		paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(false, paramStates.get("Second parameter"))
 	}
@@ -64,13 +69,34 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
+		val List<Node> nodes = null // not required for this test case
 		val params = dbgen.getParams(dataSource.connection, null, null)
 		params.put("First parameter", "'not'' one") // single quote must not cause another result
-		val paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		val paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(false, paramStates.get("Second parameter"))
 	}
 
+	@Test
+	// current get_param_states function
+	def getParamStates3Test() {
+		val dao = new DatabaseGeneratorDao(dataSource.connection)
+		val dbgen = dao.findAll.findFirst [
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
+		]
+		val List<Node> nodes = null // not required for this test case
+		val params = new LinkedHashMap<String, String>
+		params.put("First parameter", "one")
+		params.put("Second parameter", "two")
+		params.put("Third parameter", "tree")
+		var paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
+		Assert.assertEquals(1, paramStates.size)
+		Assert.assertEquals(true, paramStates.get("Second parameter"))
+		params.put("First parameter", "not one")
+		paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
+		Assert.assertEquals(1, paramStates.size)
+		Assert.assertEquals(false, paramStates.get("Second parameter"))
+	}
 
 	@Test
 	def getLovDefaultTest() {
@@ -78,8 +104,9 @@ class GetParamStatesTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
+		val List<Node> nodes = null // not required for this test case
 		val params = dbgen.getParams(dataSource.connection, null, null)
-		val paramStates = dbgen.getParamStates(dataSource.connection, "someObjectType", "someObjectname", params);
+		val paramStates = dbgen.getParamStates(dataSource.connection, params, nodes);
 		Assert.assertEquals(0, paramStates.size)
 	}
 
@@ -87,12 +114,14 @@ class GetParamStatesTest extends AbstractJdbcTest {
 	def static void setup() {
 		createPlsqlDummy1
 		createPlsqlDummy2
+		createPlsqlDummy3
 	}
 
 	@AfterClass
 	def static tearDown() {
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy1")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy2")
+		jdbcTemplate.execute("DROP PACKAGE plsql_dummy3")
 	}
 
 	def static createPlsqlDummy1() {
@@ -130,14 +159,14 @@ class GetParamStatesTest extends AbstractJdbcTest {
 			   FUNCTION refresh_param_states(in_object_type IN VARCHAR2,
 			   			                     in_object_name IN VARCHAR2,
 			   			                     in_params      IN t_param) RETURN t_param IS
-			      l_paramStates t_param;
+			      l_param_states t_param;
 			   BEGIN
 			      If in_params('First parameter') = 'one' THEN
-			         l_paramStates('Second parameter') := 'true';
+			         l_param_states('Second parameter') := 'true';
 			      ELSE
-			         l_paramStates('Second parameter') := 'false';
+			         l_param_states('Second parameter') := 'false';
 			      END IF;
-			      RETURN l_paramStates;
+			      RETURN l_param_states;
 			   END refresh_param_states;
 
 			   FUNCTION generate(in_object_type IN VARCHAR2,
@@ -184,14 +213,14 @@ class GetParamStatesTest extends AbstractJdbcTest {
 			   FUNCTION get_param_states(in_object_type IN VARCHAR2,
 			   			                 in_object_name IN VARCHAR2,
 			   			                 in_params      IN t_param) RETURN t_param IS
-			      l_paramStates t_param;
+			      l_param_states t_param;
 			   BEGIN
 			      If in_params('First parameter') = 'one' THEN
-			         l_paramStates('Second parameter') := 'true';
+			         l_param_states('Second parameter') := 'true';
 			      ELSE
-			         l_paramStates('Second parameter') := 'false';
+			         l_param_states('Second parameter') := 'false';
 			      END IF;
-			      RETURN l_paramStates;
+			      RETURN l_param_states;
 			   END get_param_states;
 
 			   FUNCTION generate(in_object_type IN VARCHAR2,
@@ -202,4 +231,45 @@ class GetParamStatesTest extends AbstractJdbcTest {
 			END plsql_dummy2;
 		''')
 	}
+
+	def static createPlsqlDummy3() {
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE plsql_dummy3 IS
+			   FUNCTION get_param_states(
+			      in_params IN oddgen_types.t_param_type,
+			      in_nodes  IN oddgen_types.t_node_type
+			   ) RETURN oddgen_types.t_param_type;
+			
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB;
+			END plsql_dummy3;
+		''')
+		jdbcTemplate.execute('''
+			CREATE OR REPLACE PACKAGE BODY plsql_dummy3 IS
+			
+			   FUNCTION get_param_states(
+			      in_params IN oddgen_types.t_param_type,
+			      in_nodes  IN oddgen_types.t_node_type
+			   ) RETURN oddgen_types.t_param_type IS
+			      l_param_states oddgen_types.t_param_type;
+			   BEGIN
+			      If in_params('First parameter') = 'one' THEN
+			         l_param_states('Second parameter') := 'true';
+			      ELSE
+			         l_param_states('Second parameter') := 'false';
+			      END IF;
+			      RETURN l_param_states;
+			   END get_param_states;
+
+			   FUNCTION generate(
+			      in_node IN oddgen_types.r_node_type
+			   ) RETURN CLOB IS
+			   BEGIN
+			      RETURN NULL;
+			   END generate;
+			END plsql_dummy3;
+		''')
+	}
+
 }

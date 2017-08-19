@@ -45,7 +45,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		var lovs = plsqlView.getLov(dataSource.connection, params, nodes)
 		Assert.assertEquals(2, lovs.get("Generate instead-of-trigger?").size)
 		Assert.assertEquals(#["Yes", "No"], lovs.get("Generate instead-of-trigger?"))
-		var paramStates = plsqlView.getParamStates(dataSource.connection, "TABLE", "PLSQL_VIEW", params)
+		var paramStates = plsqlView.getParamStates(dataSource.connection, params, nodes)
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get("Instead-of-trigger suffix"))
 	}

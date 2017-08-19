@@ -55,7 +55,7 @@ class DatabaseGenerator implements OddgenGenerator2 {
 		return dao.getHelp(metaData)
 	}
 	
-	override List<Node> getNodes(Connection conn, String parentNodeId) {
+	override getNodes(Connection conn, String parentNodeId) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getNodes(metaData, parentNodeId)
 	}
@@ -66,8 +66,13 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		val HashMap<String, String> paramStates = dao.getParamStates(metaData, params, nodes);
+		val result = new HashMap<String, Boolean>()
+		for (p : paramStates.keySet) {
+			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] !== null) true else false)
+		}
+		return result
 	}
 	
 	override generateProlog(Connection conn, List<Node> nodes) {
@@ -103,17 +108,6 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	def getParams(Connection conn, String objectType, String objectName) {
 		val dao = new DatabaseGeneratorDao(conn)
 		return dao.getParams(metaData, objectType, objectName)
-	}
-
-	def getParamStates(Connection conn, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
-		val dao = new DatabaseGeneratorDao(conn)
-		val HashMap<String, String> paramStates = dao.getParamStates(metaData, objectType, objectName, params);
-		val result = new HashMap<String, Boolean>()
-		for (p : paramStates.keySet) {
-			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] !== null) true else false)
-		}
-		return result
 	}
 
 	def generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {

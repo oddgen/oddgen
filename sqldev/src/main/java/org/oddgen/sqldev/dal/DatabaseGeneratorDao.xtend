@@ -410,9 +410,9 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetOrderedParams2»
-			   	l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
+			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
 			   «ELSE»
-			   	l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
+			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
 			   «ENDIF»
 			   sys.dbms_lob.append(l_clob, '<values>');
 			   FOR i IN 1 .. l_ordered_params.count
@@ -455,9 +455,9 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetParams2»
-			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
+			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
 			   «ELSE»
-			   	l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
+			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   «ENDIF»
 			   l_key    := l_params.first;
 			   sys.dbms_lob.append(l_clob, '<params>');
@@ -493,37 +493,37 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGetLov3»
-			   	l_params «metaData.generatorOwner».oddgen_types.t_param_type;
-			   	l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			   	l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			   	l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
-			   	l_key    «metaData.generatorOwner».oddgen_types.value_type;
-			   	l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
+			      l_params «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			      l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
+			      l_key    «metaData.generatorOwner».oddgen_types.value_type;
+			      l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
 			   «ELSE»
-			   	«IF metaData.hasGetLov2 || metaData.hasRefreshLov»
-			   		l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
-				«ENDIF»
-			   	l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
-			   	l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
-			   	l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
+			      «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
+			          l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
+			      «ENDIF»
+			      l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
+			      l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
+			      l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   «ENDIF»
 			   l_clob CLOB;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF params !== null && (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov)»
-			   	«FOR key : params.keySet»
-			   		l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
-			   	«ENDFOR»
+			      «FOR key : params.keySet»
+			         l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
+			      «ENDFOR»
 			   «ENDIF»
 			   «IF metaData.hasGetLov3»
-			   	«nodes.toPlsql»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_params => l_params, in_nodes => l_nodes);
+			      «nodes.toPlsql»
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_params => l_params, in_nodes => l_nodes);
 			   «ELSEIF metaData.hasGetLov2»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
 			   «ELSEIF metaData.hasRefreshLov»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
 			   «ELSEIF metaData.hasGetLov1»
-			   	l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   «ENDIF»
 			   l_key  := l_lovs.first;
 			   sys.dbms_lob.append(l_clob, '<lovs>');
@@ -568,29 +568,40 @@ class DatabaseGeneratorDao {
 		return lovs
 	}
 
-	def getParamStates(DatabaseGeneratorMetaData metaData, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
+	def getParamStates(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
-			   l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
-			   l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   «IF metaData.hasGetParamStates2»
+			      l_params       «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_node         «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_nodes        «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			      l_param_states «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_key          «metaData.generatorOwner».oddgen_types.value_type;
+			   «ELSE»
+			      l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
+			      l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
+			      l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   «ENDIF»
 			   l_clob         CLOB;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «FOR key : params.keySet»
-			   	l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
+			      l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
 			   «ENDFOR»
-			   «IF metaData.hasGetParamStates1»
-			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
+			   «IF metaData.hasGetParamStates2»
+			      «nodes.toPlsql»
+			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
+			                           in_params => l_params,
+			                           in_nodes  => l_nodes
+			                        );
 			   «ELSE»
-			   	l_param_states := «metaData.generatorOwner».«metaData.generatorName».refresh_param_states(
+			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».«IF metaData.hasGetParamStates1»get_param_states«ELSE»refresh_param_states«ENDIF»(
+			                           in_object_type => '«nodes.toObjectType»',
+			                           in_object_name => '«nodes.toObjectName»',
+			                           in_params      => l_params
+			                        );
 			   «ENDIF»
-			   in_object_type => '«objectType»',
-			   in_object_name => '«objectName»',
-			   in_params      => l_params
-			                     );
 			   l_key          := l_param_states.first;
 			   sys.dbms_lob.append(l_clob, '<paramStates>');
 			   WHILE l_key IS NOT NULL
@@ -606,7 +617,7 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val paramStates = new HashMap<String, String>()
 		var Document doc
-		if (metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
+		if (metaData.hasGetParamStates2 || metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
 			doc = plsql.doc
 		}
 		if (doc !== null) {

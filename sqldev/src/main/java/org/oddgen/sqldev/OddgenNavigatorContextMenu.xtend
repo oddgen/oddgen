@@ -27,7 +27,7 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 	private static OddgenNavigatorContextMenu INSTANCE
 
 	def static synchronized getInstance() {
-		if (INSTANCE == null) {
+		if (INSTANCE === null) {
 			INSTANCE = new OddgenNavigatorContextMenu()
 		}
 		return INSTANCE

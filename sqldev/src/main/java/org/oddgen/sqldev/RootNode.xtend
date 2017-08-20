@@ -40,7 +40,7 @@ class RootNode extends DefaultContainer {
 	private GeneratorFolderNode dbServerGenerators
 
 	def static synchronized getInstance() {
-		if (INSTANCE == null) {
+		if (INSTANCE === null) {
 			INSTANCE = new RootNode
 			Logger.info(RootNode, "RootNode created.")
 		}
@@ -49,7 +49,7 @@ class RootNode extends DefaultContainer {
 
 	private new() {
 		val url = URLFactory.newURL("oddgen.generators", ROOT_NODE_NAME)
-		if (url == null) {
+		if (url === null) {
 			Logger.error(this, "root node URL is null")
 		}
 		setURL(url)

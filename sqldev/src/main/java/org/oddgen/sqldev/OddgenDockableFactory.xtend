@@ -34,7 +34,7 @@ class OddgenDockableFactory implements DockableFactory {
 	}
 
 	def private getLocalDockable() {
-		if (dockable == null) {
+		if (dockable === null) {
 			dockable = OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow
 		}
 		return dockable

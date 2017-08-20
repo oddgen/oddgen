@@ -64,7 +64,7 @@ class GeneratorFolderNode extends DefaultContainer {
 		val folder = this
 		folder.removeAll
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-		if (conn != null) {
+		if (conn !== null) {
 			if (folder == RootNode.instance.dbServerGenerators) {
 				val dao = new DatabaseGeneratorDao(conn)
 				val dbgens = dao.findAll
@@ -119,7 +119,7 @@ class GeneratorFolderNode extends DefaultContainer {
 						child = node
 					}
 				}
-				if (child != null) {
+				if (child !== null) {
 					val rootPath = new TreePath(root)
 					Logger.debug(this, "rootPath is %s", rootPath)
 					val childPath = rootPath.pathByAddingChild(child)

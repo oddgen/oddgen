@@ -24,6 +24,6 @@ class GeneratorFolder extends AbstractModel {
 	private String tooltip
 
 	def getTooltip() {
-		return if(tooltip == null) description else tooltip
+		return if(tooltip === null) description else tooltip
 	}
 }

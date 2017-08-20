@@ -66,7 +66,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 
 	@Loggable(value=LoggableConstants.DEBUG)
 	def protected createToolbar() {
-		if (tb != null) {
+		if (tb !== null) {
 			tb.removeAll
 			tb.dispose
 			RootNode.instance.clientGenerators.removeAll(true)
@@ -89,7 +89,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	}
 
 	override getGUI() {
-		if (gui == null) {
+		if (gui === null) {
 			gui = super.getGUI()
 			initialize()
 		}
@@ -97,7 +97,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	}
 
 	override getController() {
-		if (controller == null) {
+		if (controller === null) {
 			controller = new OddgenNavigatorController()
 		}
 		return controller;
@@ -130,7 +130,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		if (e.source == connComboBox.JComboBox) {
 			val selection = connComboBox.JComboBox.selectedItem as String
 			connComboBox.currentConnection = selection
-			if (selection != null) {
+			if (selection !== null) {
 				refreshConnection
 			}
 		} else if (e.source == refreshButton) {
@@ -158,7 +158,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 
 	def getConnection() {
 		var Connection conn = null
-		if (connectionName != null) {
+		if (connectionName !== null) {
 			try {
 				val connectionInfo = Connections.instance.getConnectionInfo(connectionName)
 				val alreadyOpen = Connections.instance.isConnectionOpen(connectionName)

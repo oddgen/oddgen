@@ -42,7 +42,7 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	def static OddgenNavigatorManager getInstance() {
-		if (INSTANCE == null) {
+		if (INSTANCE === null) {
 			INSTANCE = new OddgenNavigatorManager
 			Logger.debug(DefaultNavigatorManager, "OddgenNavigatorManager initialized")
 		}

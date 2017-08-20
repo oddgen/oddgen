@@ -28,6 +28,16 @@ import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
 @Loggable(LoggableConstants.DEBUG)
 class DatabaseGenerator implements OddgenGenerator2 {
 	var DatabaseGeneratorMetaData metaData
+	var Connection cachedConnection
+	var DatabaseGeneratorDao cachedDao
+	
+	def getDao(Connection conn) {
+		if (conn !== cachedConnection) {
+			cachedConnection = conn;
+			cachedDao = new DatabaseGeneratorDao(conn)
+		}
+		return cachedDao
+	}
 
 	new(DatabaseGeneratorMetaData metaData) {
 		this.metaData = metaData
@@ -46,28 +56,23 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override getFolders(Connection conn) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getFolders(metaData);
+		return conn.dao.getFolders(metaData);
 	}
 	
 	override getHelp(Connection conn) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getHelp(metaData)
+		return conn.dao.getHelp(metaData)
 	}
 	
 	override getNodes(Connection conn, String parentNodeId) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getNodes(metaData, parentNodeId)
+		return conn.dao.getNodes(metaData, parentNodeId)
 	}
 	
 	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.getLov(metaData, params, nodes)
+		return conn.dao.getLov(metaData, params, nodes)
 	}
 	
 	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		val dao = new DatabaseGeneratorDao(conn)
-		val HashMap<String, String> paramStates = dao.getParamStates(metaData, params, nodes);
+		val HashMap<String, String> paramStates = conn.dao.getParamStates(metaData, params, nodes);
 		val result = new HashMap<String, Boolean>()
 		for (p : paramStates.keySet) {
 			result.put(p, if(OddgenGenerator2.BOOLEAN_TRUE.findFirst[it == paramStates.get(p)] !== null) true else false)
@@ -76,23 +81,19 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override generateProlog(Connection conn, List<Node> nodes) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generateProlog(metaData, nodes)
+		return conn.dao.generateProlog(metaData, nodes)
 	}
 	
 	override generateSeparator(Connection conn) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generateSeparator(metaData)
+		return conn.dao.generateSeparator(metaData)
 	}
 	
 	override generateEpilog(Connection conn, List<Node> nodes) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generateEpilog(metaData, nodes)
+		return conn.dao.generateEpilog(metaData, nodes)
 	}
 	
 	override generate(Connection conn, Node node) {
-		val dao = new DatabaseGeneratorDao(conn)
-		return dao.generate(metaData, node)
+		return conn.dao.generate(metaData, node)
 	}
 
 }

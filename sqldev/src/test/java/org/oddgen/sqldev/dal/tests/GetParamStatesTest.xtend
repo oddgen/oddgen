@@ -28,7 +28,7 @@ class GetParamStatesTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated refresh_param_states function
-	def getParamStates1Test() {
+	def getParamStates1() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
@@ -46,7 +46,7 @@ class GetParamStatesTest extends AbstractJdbcTest {
 	
 	@Test
 	// deprecated get_param_states function
-	def getParamStates2Test() {
+	def getParamStates2() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
@@ -64,7 +64,7 @@ class GetParamStatesTest extends AbstractJdbcTest {
 
 	@Test
 	// test case for issue #32
-	def getParamStatesWithSingleQuotesInFirstParameterTest() {
+	def getParamStatesWithSingleQuotesInFirstParameter() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
@@ -79,7 +79,7 @@ class GetParamStatesTest extends AbstractJdbcTest {
 
 	@Test
 	// current get_param_states function
-	def getParamStates3Test() {
+	def getParamStates3() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
@@ -99,7 +99,7 @@ class GetParamStatesTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getLovDefaultTest() {
+	def getLovDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

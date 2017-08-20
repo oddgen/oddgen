@@ -28,7 +28,7 @@ class GetLovTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated get_lov signature (v0.1.0)
-	def getLov1Test() {
+	def getLov1() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
@@ -42,7 +42,7 @@ class GetLovTest extends AbstractJdbcTest {
 	
 	@Test
 	// deprecated, undocumented refresh_lov (v0.2.0)
-	def getLov2Test() {
+	def getLov2() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
@@ -62,7 +62,7 @@ class GetLovTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated get_lov (v0.1.0) and deprecated, undocumented refresh_lov (v0.2.0)
-	def getLov3Test() {
+	def getLov3() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
@@ -82,7 +82,7 @@ class GetLovTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated get_lov signature (v0.2.0)
-	def getLov4Test() {
+	def getLov4() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
@@ -102,7 +102,7 @@ class GetLovTest extends AbstractJdbcTest {
 
 	@Test
 	// test case for issue #32 using deprecated get_lov signature (v0.2.0)
-	def getLov4WithSingleQuotesInFirstParameterTest() {
+	def getLov4WithSingleQuotesInFirstParameter() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
@@ -123,7 +123,7 @@ class GetLovTest extends AbstractJdbcTest {
 
 	@Test
 	// current get_lov signature (v0.3.0)
-	def getLov5Test() {
+	def getLov5() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY5"
@@ -142,7 +142,7 @@ class GetLovTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getLovDefaultTest() {
+	def getLovDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

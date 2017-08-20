@@ -25,7 +25,7 @@ class GetParamsTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated get_params signature
-	def getParams1Test() {
+	def getParams1() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
@@ -45,7 +45,7 @@ class GetParamsTest extends AbstractJdbcTest {
 
 	@Test
 	// deprecated get_params signature and deprecated get_ordered_params signature
-	def getParams2Test() {
+	def getParams2() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
@@ -65,7 +65,7 @@ class GetParamsTest extends AbstractJdbcTest {
 
 	@Test
 	// current get_params without get_ordered_params
-	def getParams3Test() {
+	def getParams3() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
@@ -85,7 +85,7 @@ class GetParamsTest extends AbstractJdbcTest {
 
 	@Test
 	// current get_params signature with deprecated get_ordered_params signature
-	def getParams4Test() {
+	def getParams4() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
@@ -105,7 +105,7 @@ class GetParamsTest extends AbstractJdbcTest {
 
 	@Test
 	// current get_params signature with current get_ordered_params signature
-	def getParams5Test() {
+	def getParams5() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY5"
@@ -135,7 +135,7 @@ class GetParamsTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getParamsDefaultTest() {
+	def getParamsDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

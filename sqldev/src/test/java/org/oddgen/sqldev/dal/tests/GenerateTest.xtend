@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GenerateTest extends AbstractJdbcTest {
 
 	@Test
-	def generateEpilogTest() {
+	def generate() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"

@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GetObjectTypesTest extends AbstractJdbcTest {
 
 	@Test
-	def getObjectTypesTest() {
+	def getObjectTypes() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -35,15 +35,15 @@ class GetObjectTypesTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getObjectTypesDefaultTest() {
+	def getObjectTypesDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
 		var nodes = dbgen.getNodes(dataSource.connection, null)
+		val names = nodes.sortBy[it.id].map[it.id].toList
 		Assert.assertEquals(2, nodes.size)
-		Assert.assertEquals("TABLE", nodes.get(0).id)
-		Assert.assertEquals("VIEW", nodes.get(1).id)
+		Assert.assertEquals(#["TABLE", "VIEW"], names)
 	}
 
 	@BeforeClass

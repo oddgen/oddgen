@@ -24,7 +24,7 @@ import org.oddgen.sqldev.generators.model.Node
 class DatabaseGeneratorTest extends AbstractJdbcTest {
 
 	@Test
-	def plsqlViewDaoTest() {
+	def plsqlViewDao() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgens = dao.findAll
 		val plsqlView = dbgens.findFirst [
@@ -52,7 +52,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generateViewWithInsteadOfTriggerTest() {
+	def generateViewWithInsteadOfTrigger() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_VIEW']
 		val expected = '''
@@ -96,7 +96,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generateViewWithoutInsteadOfTriggerTest() {
+	def generateViewWithoutInsteadOfTrigger() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.getMetaData.generatorName == 'PLSQL_VIEW']
 		val expected = '''
@@ -149,7 +149,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generateHelloWorldTest() {
+	def generateHelloWorld() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == 'PLSQL_HELLO_WORLD'
@@ -167,7 +167,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generateErrorTest() {
+	def generateError() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == 'PLSQL_HELLO_WORLD'

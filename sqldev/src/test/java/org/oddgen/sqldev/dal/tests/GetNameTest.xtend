@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GetNameTest extends AbstractJdbcTest {
 
 	@Test
-	def getNameTest() {
+	def getName() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -33,7 +33,7 @@ class GetNameTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getNameDefaultTest() {
+	def getNameDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

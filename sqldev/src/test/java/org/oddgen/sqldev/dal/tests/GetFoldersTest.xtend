@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GetFoldersTest extends AbstractJdbcTest {
 
 	@Test
-	def getFoldersTest() {
+	def getFolders() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -33,7 +33,7 @@ class GetFoldersTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getFoldersDefaultTest() {
+	def getFoldersDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

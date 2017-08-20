@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GeneratePrologTest extends AbstractJdbcTest {
 
 	@Test
-	def generatePrologTest() {
+	def generateProlog() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -35,7 +35,7 @@ class GeneratePrologTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generatePrologDefaultTest() {
+	def generatePrologDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

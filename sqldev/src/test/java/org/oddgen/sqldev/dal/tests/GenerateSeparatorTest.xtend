@@ -24,7 +24,7 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 class GenerateSeparatorTest extends AbstractJdbcTest {
 
 	@Test
-	def generateSeparatorTest() {
+	def generateSeparator() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -34,7 +34,7 @@ class GenerateSeparatorTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def generateSeparatorDefaultTest() {
+	def generateSeparatorDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"

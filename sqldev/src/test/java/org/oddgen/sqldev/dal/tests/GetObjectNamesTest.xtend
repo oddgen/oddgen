@@ -26,7 +26,7 @@ class GetObjectNamesTest extends AbstractJdbcTest {
 	private extension NodeTools nodeTools = new NodeTools
 
 	@Test
-	def getObjectNamesTest() {
+	def getObjectNames() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY"
@@ -39,17 +39,15 @@ class GetObjectNamesTest extends AbstractJdbcTest {
 	}
 
 	@Test
-	def getObjectNamesDefaultTest() {
+	def getObjectNamesDefault() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY_DEFAULT"
 		]
 		var nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		val names = nodes.sortBy[it.id].map[it.id.split("\\.").get(1)].toList
 		Assert.assertEquals(4, nodes.size)
-		Assert.assertEquals(1, nodes.filter[it.toObjectName == "BONUS"].size)
-		Assert.assertEquals(1, nodes.filter[it.toObjectName == "DEPT"].size)
-		Assert.assertEquals(1, nodes.filter[it.toObjectName == "EMP"].size)
-		Assert.assertEquals(1, nodes.filter[it.toObjectName == "SALGRADE"].size)
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], names)
 	}
 
 	@BeforeClass

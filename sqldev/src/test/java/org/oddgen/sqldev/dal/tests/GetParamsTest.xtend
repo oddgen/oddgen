@@ -15,13 +15,11 @@
  */
 package org.oddgen.sqldev.dal.tests
 
-import java.util.List
 import org.junit.AfterClass
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
-import org.oddgen.sqldev.generators.model.Node
 
 class GetParamsTest extends AbstractJdbcTest {
 

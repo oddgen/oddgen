@@ -52,6 +52,8 @@ interface OddgenGenerator2 {
 	 * under 'All Generators', the second one is the subfolder under the 
 	 * first one and so on. The generator will be visible in the last folder
 	 * of the list.
+	 * @param conn active connection in the Generators window
+	 * @return the list of folders under 'All Generators'
 	 */
 	def List<String> getFolders(Connection conn)
 

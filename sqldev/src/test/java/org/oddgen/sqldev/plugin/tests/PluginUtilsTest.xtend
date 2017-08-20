@@ -33,7 +33,7 @@ class PluginUtilsTest {
 	@Test
 	def getSqlDevExtensionDirTest() {
 		val dir = PluginUtils.sqlDevExtensionDir
-		Assert.assertTrue(dir != null)
+		Assert.assertTrue(dir !== null)
 		val hostname = InetAddress.localHost.hostName
 		if (hostname.startsWith("macphs")) {
 			Assert.assertEquals(PluginUtils.SQLDEV_HOME_DIRS.get(0) + PluginUtils.SQLDEV_EXTENSION_DIR,

@@ -70,8 +70,8 @@ class GeneratorFolderNode extends DefaultContainer {
 				val dbgens = dao.findAll
 				Logger.info(this, "discovered %d database generators", dbgens.size)
 				for (dbgen : dbgens) {
-					val node = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
-					folder.add(node)
+					val navigatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
+					folder.add(navigatorNode)
 				}
 			} else if (folder == RootNode.instance.clientGenerators) {
 				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars)
@@ -84,8 +84,8 @@ class GeneratorFolderNode extends DefaultContainer {
 							cgen.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator")
 								try {
 									val gen = cgen.newInstance
-									val node = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
-									folder.add(node)
+									val navigatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
+									folder.add(navigatorNode)
 								} catch (Exception e) {
 									Logger.error(this, "Cannot populate client generator %s1 node due to %s2",
 										cgen.name, e.message)

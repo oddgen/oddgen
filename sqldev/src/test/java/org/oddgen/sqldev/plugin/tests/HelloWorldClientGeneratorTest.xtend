@@ -19,11 +19,11 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator
 
 class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
-	static var OddgenGenerator gen
+	static var OddgenGenerator2 gen
 
 	@Test
 	def getName() {
@@ -34,47 +34,108 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 	def getDescription() {
 		Assert.assertEquals("Hello World example generator", gen.getDescription(dataSource.connection))
 	}
+	
+	@Test
+	def getFolders() {
+		Assert.assertEquals(#["Client Generators", "Examples"], gen.getFolders(dataSource.connection))
+	}	
 
 	@Test
-	def getObjectTypes() {
-		val objectTypes = gen.getObjectTypes(dataSource.connection)
-		Assert.assertEquals(#["TABLE", "VIEW"], objectTypes)
+	def getHelp() {
+		Assert.assertEquals("<p>Hello World example generator</p>", gen.getHelp(dataSource.connection))
+	}	
+
+	@Test
+	def getNodes_Level1() {
+		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId === null || it.parentId.empty]
+		val names = nodes.sortBy[it.id].map[it.id].toList
+		Assert.assertEquals(2, nodes.size)
+		Assert.assertEquals(#["TABLE", "VIEW"], names)
 	}
 
 	@Test
-	def getObjectNamesTest() {
-		val objectNames = gen.getObjectNames(dataSource.connection, "TABLE")
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], objectNames)
-	}
-
-	@Test
-	def getParamsTest() {
-		val params = gen.getParams(dataSource.connection, null, null)
-		Assert.assertEquals(0, params.size)
+	def getNodes_Level2() {
+		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId !== null]
+		val names = nodes.sortBy[it.id].map[it.id.split("\\.").get(1)].toList
+		Assert.assertEquals(4, nodes.size)
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], names)
 	}
 
 	@Test
 	def getLov() {
-		val lov = gen.getLov(dataSource.connection, null, null, null)
+		val node = gen.getNodes(dataSource.connection, null).get(0)
+		val lov = gen.getLov(dataSource.connection, node.params, null)
 		Assert.assertEquals(0, lov.size)
 	}
 
 	@Test
 	def getParamStates() {
-		val paramStates = gen.getParamStates(dataSource.connection, null, null, null)
+		val node = gen.getNodes(dataSource.connection, null).get(0)
+		val paramStates = gen.getParamStates(dataSource.connection, node.params, null)
 		Assert.assertEquals(0, paramStates.size)
+	}
+	
+	@Test
+	def generateProlog() {
+		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId == "TABLE"].toList
+		val expected = '''
+			BEGIN
+			   -- 4 nodes selected.
+		'''
+		val result = gen.generateProlog(dataSource.connection, nodes)
+		Assert.assertEquals(expected, result)		
 	}
 
 	@Test
-	def generateTest() {
+	def generateSeparator() {
+		val result = gen.generateSeparator(dataSource.connection)
+		Assert.assertEquals("", result)		
+	}
+
+	@Test
+	def generateEpilog() {
+		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId == "TABLE"].toList
 		val expected = '''
-			BEGIN
-			   sys.dbms_output.put_line('Hello TABLE EMP!');
+			«'   '»-- 4 nodes generated in ... ms.
 			END;
 			/
 		'''
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", null)
-		Assert.assertEquals(expected.trim, result.trim)
+		val result = gen.generateEpilog(dataSource.connection, nodes)
+		Assert.assertEquals(expected, result.replaceAll("[0-9]+ ms", "... ms"))		
+	}
+
+	@Test
+	def generate() {
+		val node = gen.getNodes(dataSource.connection, null).findFirst[it.id == "TABLE.EMP"]
+		val expected = '''
+			«'   '»sys.dbms_output.put_line('Hello TABLE EMP!');
+		'''
+		val result = gen.generate(dataSource.connection, node)
+		Assert.assertEquals(expected, result)
+	}
+
+	@Test
+	def generate4Nodes() {
+		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId == "TABLE"].sortBy[it.id].toList
+		val expected = '''
+			BEGIN
+			   -- 4 nodes selected.
+			   sys.dbms_output.put_line('Hello TABLE BONUS!');
+			   sys.dbms_output.put_line('Hello TABLE DEPT!');
+			   sys.dbms_output.put_line('Hello TABLE EMP!');
+			   sys.dbms_output.put_line('Hello TABLE SALGRADE!');
+			   -- 4 nodes generated in ... ms.
+			END;
+			/
+		'''
+		val result = '''
+			«gen.generateProlog(dataSource.connection, nodes)»
+			«FOR node : nodes»
+				«gen.generate(dataSource.connection, node)»«gen.generateSeparator(dataSource.connection)»
+			«ENDFOR»
+			«gen.generateEpilog(dataSource.connection, nodes)»
+		'''
+		Assert.assertEquals(expected, result.replaceAll("[0-9]+ ms", "... ms"))
 	}
 
 	@BeforeClass

@@ -20,12 +20,12 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.plugin.examples.ViewClientGenerator
 
 class ViewClientGeneratorTest extends AbstractJdbcTest {
-	static var OddgenGenerator gen
-	static var OddgenGenerator dbgen
+	static var OddgenGenerator2 gen
+	static var OddgenGenerator2 dbgen
 
 	private def dropTableIgnoreError(String tableName) {
 		val sql = '''
@@ -49,64 +49,62 @@ class ViewClientGeneratorTest extends AbstractJdbcTest {
 			"Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.",
 			gen.getDescription(dataSource.connection))
 	}
-
+	
 	@Test
-	def getObjectTypes() {
-		val objectTypes = gen.getObjectTypes(dataSource.connection)
-		Assert.assertEquals(#["TABLE"], objectTypes)
+	def getHelp() {
+		Assert.assertEquals(
+			"<p>Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.</p>",
+			gen.getHelp(dataSource.connection)
+		)
 	}
 
 	@Test
-	def getObjectNamesTest() {
-		val objectNames = gen.getObjectNames(dataSource.connection, "TABLE")
-		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], objectNames)
+	def getNodes_Level1() {
+		val nodes = gen.getNodes(dataSource.connection, null)
+		Assert.assertEquals(1, nodes.size)
+		Assert.assertEquals("TABLE", nodes.get(0).id)
 	}
 
 	@Test
-	def getParamsTest() {
-		val params = gen.getParams(dataSource.connection, null, null)
-		Assert.assertEquals(4, params.size)
-		Assert.assertEquals(#[
-			ViewClientGenerator.VIEW_SUFFIX,
-			ViewClientGenerator.TABLE_SUFFIX,
-			ViewClientGenerator.GEN_IOT,
-			ViewClientGenerator.IOT_SUFFIX
-		], params.keySet.toList)
-		Assert.assertEquals(#["_V", "_T", "Yes", "_TRG"], params.values.toList)
+	def getNodes_Level2() {
+		val nodes = gen.getNodes(dataSource.connection, "TABLE")
+		val names = nodes.sortBy[it.id].map[it.id.split("\\.").get(1)].toList
+		Assert.assertEquals(4, nodes.size)
+		Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], names)
 	}
 
 	@Test
 	def getLov() {
-		val lov = gen.getLov(dataSource.connection, null, null, null)
+		val lov = gen.getLov(dataSource.connection, null, null)
 		Assert.assertEquals(1, lov.size)
 		Assert.assertEquals(#["Yes", "No"], lov.get(ViewClientGenerator.GEN_IOT))
 	}
 
 	@Test
 	def getParamStates() {
-		val params = gen.getParams(dataSource.connection, null, null)
-		var paramStates = gen.getParamStates(dataSource.connection, null, null, params)
+		val node = gen.getNodes(dataSource.connection, null).get(0)
+		var paramStates = gen.getParamStates(dataSource.connection, node.params, null)
 		Assert.assertEquals(1, paramStates.size)
 		Assert.assertEquals(true, paramStates.get(ViewClientGenerator.IOT_SUFFIX))
-		params.put(ViewClientGenerator.GEN_IOT, "No")
-		paramStates = gen.getParamStates(dataSource.connection, null, null, params)
+		node.params.put(ViewClientGenerator.GEN_IOT, "No")
+		paramStates = gen.getParamStates(dataSource.connection, node.params, null)
 		Assert.assertEquals(false, paramStates.get(ViewClientGenerator.IOT_SUFFIX))
 	}
 
 	@Test
 	def generateEmpDefaultTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		val dbgenResult = dbgen.generate(dataSource.connection, "TABLE", "EMP", params)
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		val dbgenResult = dbgen.generate(dataSource.connection, node)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(dbgenResult, result)
 	}
 
 	@Test
 	def generateEmpWithoutInsteadOfTriggerTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.put(ViewClientGenerator.GEN_IOT, "No")
-		val dbgenResult = dbgen.generate(dataSource.connection, "TABLE", "EMP", params)
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.params.put(ViewClientGenerator.GEN_IOT, "No")
+		val dbgenResult = dbgen.generate(dataSource.connection, node)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(dbgenResult, result)
 	}
 
@@ -123,7 +121,7 @@ class ViewClientGeneratorTest extends AbstractJdbcTest {
 			)
 		'''
 		jdbcTemplate.execute(sql)
-		val params = gen.getParams(dataSource.connection, "TABLE", "T")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.T"]
 		val expected = '''
 			-- create 1:1 view for demonstration purposes
 			CREATE OR REPLACE VIEW T_V AS
@@ -164,68 +162,71 @@ class ViewClientGeneratorTest extends AbstractJdbcTest {
 			END;
 			/
 		'''
-		val result = gen.generate(dataSource.connection, "TABLE", "T", params)
+		val result = gen.generate(dataSource.connection, node)
 		dropTableIgnoreError("T")
 		Assert.assertEquals(expected.trim, result.trim)
 	}
 	
 	@Test
 	def checkObjectTypeNotSupportedTest() {
-		val params = gen.getParams(dataSource.connection, "VIEW", "EMP")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.parentId = "VIEW"
+		node.id = "VIEW.EMP"
 		val expected = '''<VIEW> is not a supported object type. Please use TABLE.'''
-		val result = gen.generate(dataSource.connection, "VIEW", "EMP", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterIsMissingTestTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.remove(ViewClientGenerator.VIEW_SUFFIX)
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.params.remove(ViewClientGenerator.VIEW_SUFFIX)
 		val expected = '''Parameter <«ViewClientGenerator.VIEW_SUFFIX»> is missing.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterIsNotKnownTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.put("test", "value")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.params.put("test", "value")
 		val expected = '''Parameter <test> is not known.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterInvalidValueTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.put(ViewClientGenerator.GEN_IOT, "Maybe")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.params.put(ViewClientGenerator.GEN_IOT, "Maybe")
 		val expected = '''Invalid value <Maybe> for parameter <«ViewClientGenerator.GEN_IOT»>. Valid values are: Yes, No.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterTableNotFoundTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "XYZ")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.id = "TABLE.XYZ"
 		val expected = '''Table XYZ not found.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "XYZ", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterViewMustBeNamedDifferentlyTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "EMP")
-		params.put(ViewClientGenerator.VIEW_SUFFIX, "")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.EMP"]
+		node.params.put(ViewClientGenerator.VIEW_SUFFIX, "")
 		val expected = '''Change <«ViewClientGenerator.VIEW_SUFFIX»>. The target view must be named differently than its base table.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "EMP", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 
 	@Test
 	def checkParameterNoPrimaryKeyTest() {
-		val params = gen.getParams(dataSource.connection, "TABLE", "BONUS")
+		val node = gen.getNodes(dataSource.connection, "TABLE").findFirst[id == "TABLE.BONUS"]
 		val expected = '''No primary key found in table BONUS. Cannot generate instead-of-trigger.'''
-		val result = gen.generate(dataSource.connection, "TABLE", "BONUS", params)
+		val result = gen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected, result)
 	}
 

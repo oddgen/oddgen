@@ -76,18 +76,18 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	}
 	
 	override generateProlog(Connection conn, List<Node> nodes) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.generateProlog(metaData, nodes)
 	}
 	
 	override generateSeparator(Connection conn) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.generateSeparator(metaData)
 	}
 	
 	override generateEpilog(Connection conn, List<Node> nodes) {
-		// TODO
-		return null
+		val dao = new DatabaseGeneratorDao(conn)
+		return dao.generateEpilog(metaData, nodes)
 	}
 	
 	override generate(Connection conn, Node node) {

@@ -17,11 +17,7 @@ package org.oddgen.sqldev.dal
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
-import java.sql.CallableStatement
-import java.sql.Clob
 import java.sql.Connection
-import java.sql.SQLException
-import java.sql.Types
 import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
@@ -31,8 +27,6 @@ import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
-import org.springframework.dao.DataAccessException
-import org.springframework.jdbc.core.CallableStatementCallback
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
@@ -40,273 +34,10 @@ import org.w3c.dom.Element
 
 @Loggable(LoggableConstants.DEBUG)
 class DatabaseGeneratorDao {
-	private static int MAX_DEPTH = 2
-	private int depth = 0
 	private Connection conn
 	private JdbcTemplate jdbcTemplate
 	private extension DalTools dalTools
 	private extension NodeTools nodeTools = new NodeTools
-
-	new(Connection conn) {
-		this.conn = conn
-		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		this.dalTools = new DalTools(conn)
-	}
-	
-	def List<String> getFolders(DatabaseGeneratorMetaData metaData) {
-		// convert PL/SQL table to XML
-		val plsql = '''
-			DECLARE
-			   l_folders «metaData.generatorOwner».oddgen_types.t_value_type;
-			   l_clob    CLOB;
-			BEGIN
-			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   l_folders := «metaData.generatorOwner».«metaData.generatorName».get_folders;
-			   sys.dbms_lob.append(l_clob, '<values>');
-			   FOR i IN 1 .. l_folders.count
-			   LOOP
-			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_folders(i) || ']]></value>');
-			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</values>');
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val folders = new ArrayList<String>()
-		var Document doc
-		if (metaData.hasGetFolders) {
-			try {
-				doc = plsql.doc
-			} catch (Exception e) {
-				// error has been logged, ignore it and return default
-			}
-		}
-		if (doc !== null) {
-			val values = doc.getElementsByTagName("value")
-			for (var i = 0; i < values.length; i++) {
-				val value = values.item(i) as Element
-				val type = value.textContent
-				folders.add(type)
-			}
-		} else {
-			folders.add("Database Server Generators")
-		}
-		return folders
-	}	
-
-	def getHelp(DatabaseGeneratorMetaData metaData) {
-		val plsql = '''
-			DECLARE
-			   l_clob CLOB;
-			BEGIN
-			   l_clob := «metaData.generatorOwner».«metaData.generatorName».get_help();
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		var String help = '<p>Help is not implemented for this generator.</p>';
-		if (metaData.hasGetHelp) {
-			try {
-				help = plsql.getString
-			} catch (Exception e) {
-				help = '''
-					<p>Got the following error when calling «metaData.generatorOwner».«metaData.generatorName».get_help():</p>
-					<p>«e.message»</p>
-				'''
-			}
-		}
-		return help
-	}
-
-	def getNodes(DatabaseGeneratorMetaData metaData, String parentNodeId) {
-		val plsql = '''
-			«IF metaData.hasGetNodes»
-				DECLARE
-				   t_nodes «metaData.generatorOwner».oddgen_types.t_node_type;
-				   l_key   «metaData.generatorOwner».oddgen_types.key_type;
-				   l_clob CLOB;
-				   -- 
-				   FUNCTION bool2string (in_bool BOOLEAN, in_default VARCHAR2) RETURN VARCHAR2 IS
-				   BEGIN
-				      IF in_bool IS NULL THEN
-				         RETURN in_default;
-				      ELSIF in_bool THEN
-				         RETURN 'true';
-				      ELSE
-				         RETURN 'false';
-				      END IF;
-				   END bool2string;
-				BEGIN
-				   sys.dbms_lob.createtemporary(l_clob, TRUE);
-				   t_nodes := «metaData.generatorOwner».«metaData.generatorName».get_nodes(in_parent_node_id => '«parentNodeId»');
-				   sys.dbms_lob.append(l_clob, '<nodes>');
-				   IF t_nodes.count > 0 THEN
-				      <<nodes>>
-				      FOR i IN 1..t_nodes.count LOOP
-				         sys.dbms_lob.append(l_clob, '<node>');
-				         sys.dbms_lob.append(l_clob, '<id>' || t_nodes(i).id || '</id>');
-				         sys.dbms_lob.append(l_clob, '<parent_id>' || t_nodes(i).parent_id || '</parent_id>');
-				         sys.dbms_lob.append(l_clob, '<name><![CDATA[' || t_nodes(i).name || ']]></name>');
-				         sys.dbms_lob.append(l_clob, '<description><![CDATA[' || t_nodes(i).description || ']]></description>');
-				         sys.dbms_lob.append(l_clob, '<icon_name>' || t_nodes(i).icon_name || '</icon_name>');
-				         sys.dbms_lob.append(l_clob, '<icon_base64>' || t_nodes(i).icon_base64 || '</icon_base64>');
-				         sys.dbms_lob.append(l_clob, '<params>');
-				         l_key := t_nodes(i).params.first;
-				         <<params>>
-				         WHILE l_key IS NOT NULL LOOP
-				            sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || t_nodes(i).params(l_key) || ']]></value></param>');
-				            t_nodes(i).params.delete(l_key);
-				            l_key := t_nodes(i).params.first;
-				         END LOOP params;
-				         sys.dbms_lob.append(l_clob, '</params>');
-				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
-				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, 'true') || '</generatable>');
-				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, 'true') || '</multiselectable>');
-				         sys.dbms_lob.append(l_clob, '</node>');
-				      END LOOP nodes;
-				   END IF;
-				   sys.dbms_lob.append(l_clob, '</nodes>');
-				   ? := l_clob;
-				END;
-			«ELSE»
-				«IF parentNodeId === null || parentNodeId.empty»
-					«IF metaData.hasGetObjectTypes»
-						DECLARE
-						   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
-						   l_clob CLOB;
-						BEGIN
-						   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
-						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
-						   FOR i IN 1 .. l_types.count
-						   LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>' || l_types(i) || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id/>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
-						      sys.dbms_lob.append(l_clob, '</node>');
-						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
-						   ? := l_clob;
-						END;
-					«ELSE»
-						DECLARE
-						   l_clob CLOB;
-						BEGIN
-						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
-						   sys.dbms_lob.append(l_clob, '<node>');
-						   sys.dbms_lob.append(l_clob, '<id>TABLE</id>');
-						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params/>');
-						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
-						   sys.dbms_lob.append(l_clob, '</node>');
-						   sys.dbms_lob.append(l_clob, '<node>');
-						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
-						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params/>');
-						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
-						   sys.dbms_lob.append(l_clob, '</node>');
-						   sys.dbms_lob.append(l_clob, '</nodes>');
-						   ? := l_clob;
-						END;
-					«ENDIF»
-				«ELSE»
-					«IF metaData.hasGetObjectNames»
-						DECLARE
-						   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
-						   l_clob   CLOB;
-						BEGIN
-						   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«parentNodeId»');
-						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
-						   FOR i IN 1 .. l_names.count
-						   LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || l_names(i) || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
-						      sys.dbms_lob.append(l_clob, '</node>');
-						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
-						   ? := l_clob;
-						END;
-					«ELSE»
-						DECLARE
-						   l_clob   CLOB;
-						BEGIN
-						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
-						   FOR r IN (
-						      SELECT object_name
-						        FROM user_objects
-						       WHERE object_type = '«parentNodeId»'
-						         AND generated = 'N'
-						       ORDER BY object_name
-						   ) LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || r.object_name || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
-						      sys.dbms_lob.append(l_clob, '</node>');
-						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
-						   ? := l_clob;
-						END;
-					«ENDIF»
-				«ENDIF»
-			«ENDIF»
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val nodes = new ArrayList<Node>
-		var doc = plsql.doc
-		if (doc !== null) {
-			val xmlNodes = doc.getElementsByTagName("node")
-			for (var i = 0; i < xmlNodes.length; i++) {
-				val node = new Node
-				val xmlNode = xmlNodes.item(i) as Element
-				node.id = xmlNode.getElementsByTagName("id").item(0).textContent
-				node.parentId = xmlNode.getElementsByTagName("parent_id")?.item(0)?.textContent
-				node.name = xmlNode.getElementsByTagName("name")?.item(0)?.textContent
-				node.description = xmlNode.getElementsByTagName("description")?.item(0)?.textContent
-				node.iconName = xmlNode.getElementsByTagName("icon_name")?.item(0)?.textContent
-				node.iconBase64 = xmlNode.getElementsByTagName("icon_base64")?.item(0)?.textContent
-				val params = new LinkedHashMap<String, String>
-				val xmlParams = xmlNode.getElementsByTagName("param")
-				for (var j = 0; j < xmlParams.length; j++) {
-					val xmlParam = xmlParams.item(j) as Element
-					val key = xmlParam.getElementsByTagName("key").item(0).textContent
-					val value = xmlParam.getElementsByTagName("value").item(0).textContent
-					params.put(key, value)
-				}
-				node.params = params
-				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
-				node.generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent == "true"
-				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
-				nodes.add(node)
-			}
-			if (!metaData.hasGetNodes) {
-				// extend nodes with parameters
-				for (node : nodes) {
-					node.params = getParams(metaData, node.toObjectType, node.toObjectName)
-				}
-			}
-		}
-		return nodes
-	}
 
 	private def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// convert PL/SQL associative array to XML
@@ -395,148 +126,10 @@ class DatabaseGeneratorDao {
 		return params
 	}
 
-	def getLov(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
-		// convert PL/SQL associative array to XML
-		val plsql = '''
-			DECLARE
-			   «IF metaData.hasGetLov3»
-			      l_params «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			      l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
-			      l_key    «metaData.generatorOwner».oddgen_types.value_type;
-			      l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
-			   «ELSE»
-			      «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
-			          l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
-			      «ENDIF»
-			      l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
-			      l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
-			      l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
-			   «ENDIF»
-			   l_clob CLOB;
-			BEGIN
-			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   «IF params !== null && (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov)»
-			      «FOR key : params.keySet»
-			         l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
-			      «ENDFOR»
-			   «ENDIF»
-			   «IF metaData.hasGetLov3»
-			      «nodes.toPlsql»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_params => l_params, in_nodes => l_nodes);
-			   «ELSEIF metaData.hasGetLov2»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
-			   «ELSEIF metaData.hasRefreshLov»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
-			   «ELSEIF metaData.hasGetLov1»
-			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
-			   «ENDIF»
-			   l_key  := l_lovs.first;
-			   sys.dbms_lob.append(l_clob, '<lovs>');
-			   WHILE l_key IS NOT NULL
-			   LOOP
-			      sys.dbms_lob.append(l_clob, '<lov><key><![CDATA[' || l_key || ']]></key><values>');
-			      FOR i IN 1 .. l_lovs(l_key).count
-			      LOOP
-			         sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>');
-			      END LOOP;
-			      sys.dbms_lob.append(l_clob, '</values></lov>');
-			      l_lovs.delete(l_key);
-			      l_key := l_lovs.first;
-			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</lovs>');
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val lovs = new HashMap<String, List<String>>()
-		var Document doc
-		if (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
-			doc = plsql.doc
-		}
-		if (doc !== null) {
-			val xmlLovs = doc.getElementsByTagName("lov")
-			if (xmlLovs.length > 0) {
-				for (var i = 0; i < xmlLovs.length; i++) {
-					val lov = xmlLovs.item(i) as Element
-					val key = lov.getElementsByTagName("key").item(0).textContent
-					val values = lov.getElementsByTagName("value")
-					val value = new ArrayList<String>()
-					for (var j = 0; j < values.length; j++) {
-						val valueElement = values.item(j) as Element
-						value.add(valueElement.textContent)
-					}
-					lovs.put(key, value)
-				}
-			}
-
-		}
-		return lovs
-	}
-
-	def getParamStates(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
-		// convert PL/SQL associative array to XML
-		val plsql = '''
-			DECLARE
-			   «IF metaData.hasGetParamStates2»
-			      l_params       «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_node         «metaData.generatorOwner».oddgen_types.r_node_type;
-			      l_nodes        «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			      l_param_states «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_key          «metaData.generatorOwner».oddgen_types.value_type;
-			   «ELSE»
-			      l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
-			      l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
-			      l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
-			   «ENDIF»
-			   l_clob         CLOB;
-			BEGIN
-			   sys.dbms_lob.createtemporary(l_clob, TRUE);
-			   «FOR key : params.keySet»
-			      l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
-			   «ENDFOR»
-			   «IF metaData.hasGetParamStates2»
-			      «nodes.toPlsql»
-			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
-			                           in_params => l_params,
-			                           in_nodes  => l_nodes
-			                        );
-			   «ELSE»
-			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».«IF metaData.hasGetParamStates1»get_param_states«ELSE»refresh_param_states«ENDIF»(
-			                           in_object_type => '«nodes.toObjectType»',
-			                           in_object_name => '«nodes.toObjectName»',
-			                           in_params      => l_params
-			                        );
-			   «ENDIF»
-			   l_key          := l_param_states.first;
-			   sys.dbms_lob.append(l_clob, '<paramStates>');
-			   WHILE l_key IS NOT NULL
-			   LOOP
-			      sys.dbms_lob.append(l_clob, '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>');
-			      l_param_states.delete(l_key);
-			      l_key := l_param_states.first;
-			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</paramStates>');
-			   ? := l_clob;
-			END;
-		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val paramStates = new HashMap<String, String>()
-		var Document doc
-		if (metaData.hasGetParamStates2 || metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
-			doc = plsql.doc
-		}
-		if (doc !== null) {
-			val xmlParamStates = doc.getElementsByTagName("paramState")
-			for (var i = 0; i < xmlParamStates.length; i++) {
-				val paramState = xmlParamStates.item(i) as Element
-				val key = paramState.getElementsByTagName("key").item(0).textContent
-				val value = paramState.getElementsByTagName("value").item(0).textContent
-				paramStates.put(key, value)
-			}
-		}
-		return paramStates
+	new(Connection conn) {
+		this.conn = conn
+		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+		this.dalTools = new DalTools(conn)
 	}
 
 	@Loggable
@@ -1080,9 +673,466 @@ class DatabaseGeneratorDao {
 		}
 		return dbgens
 	}
+	
+	def List<String> getFolders(DatabaseGeneratorMetaData metaData) {
+		// convert PL/SQL table to XML
+		val plsql = '''
+			DECLARE
+			   l_folders «metaData.generatorOwner».oddgen_types.t_value_type;
+			   l_clob    CLOB;
+			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
+			   l_folders := «metaData.generatorOwner».«metaData.generatorName».get_folders;
+			   sys.dbms_lob.append(l_clob, '<values>');
+			   FOR i IN 1 .. l_folders.count
+			   LOOP
+			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_folders(i) || ']]></value>');
+			   END LOOP;
+			   sys.dbms_lob.append(l_clob, '</values>');
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val folders = new ArrayList<String>()
+		var Document doc
+		if (metaData.hasGetFolders) {
+			try {
+				doc = plsql.doc
+			} catch (Exception e) {
+				// error has been logged, ignore it and return default
+			}
+		}
+		if (doc !== null) {
+			val values = doc.getElementsByTagName("value")
+			for (var i = 0; i < values.length; i++) {
+				val value = values.item(i) as Element
+				val type = value.textContent
+				folders.add(type)
+			}
+		} else {
+			folders.add("Database Server Generators")
+		}
+		return folders
+	}	
+
+	def getHelp(DatabaseGeneratorMetaData metaData) {
+		val plsql = '''
+			DECLARE
+			   l_clob CLOB;
+			BEGIN
+			   l_clob := «metaData.generatorOwner».«metaData.generatorName».get_help();
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		var String help = '<p>Help is not implemented for this generator.</p>';
+		if (metaData.hasGetHelp) {
+			try {
+				help = plsql.getString
+			} catch (Exception e) {
+				help = '''
+					<p>Got the following error when calling «metaData.generatorOwner».«metaData.generatorName».get_help():</p>
+					<p>«e.message»</p>
+				'''
+			}
+		}
+		return help
+	}
+
+	def getNodes(DatabaseGeneratorMetaData metaData, String parentNodeId) {
+		val plsql = '''
+			«IF metaData.hasGetNodes»
+				DECLARE
+				   t_nodes «metaData.generatorOwner».oddgen_types.t_node_type;
+				   l_key   «metaData.generatorOwner».oddgen_types.key_type;
+				   l_clob CLOB;
+				   -- 
+				   FUNCTION bool2string (in_bool BOOLEAN, in_default VARCHAR2) RETURN VARCHAR2 IS
+				   BEGIN
+				      IF in_bool IS NULL THEN
+				         RETURN in_default;
+				      ELSIF in_bool THEN
+				         RETURN 'true';
+				      ELSE
+				         RETURN 'false';
+				      END IF;
+				   END bool2string;
+				BEGIN
+				   sys.dbms_lob.createtemporary(l_clob, TRUE);
+				   t_nodes := «metaData.generatorOwner».«metaData.generatorName».get_nodes(in_parent_node_id => '«parentNodeId»');
+				   sys.dbms_lob.append(l_clob, '<nodes>');
+				   IF t_nodes.count > 0 THEN
+				      <<nodes>>
+				      FOR i IN 1..t_nodes.count LOOP
+				         sys.dbms_lob.append(l_clob, '<node>');
+				         sys.dbms_lob.append(l_clob, '<id>' || t_nodes(i).id || '</id>');
+				         sys.dbms_lob.append(l_clob, '<parent_id>' || t_nodes(i).parent_id || '</parent_id>');
+				         sys.dbms_lob.append(l_clob, '<name><![CDATA[' || t_nodes(i).name || ']]></name>');
+				         sys.dbms_lob.append(l_clob, '<description><![CDATA[' || t_nodes(i).description || ']]></description>');
+				         sys.dbms_lob.append(l_clob, '<icon_name>' || t_nodes(i).icon_name || '</icon_name>');
+				         sys.dbms_lob.append(l_clob, '<icon_base64>' || t_nodes(i).icon_base64 || '</icon_base64>');
+				         sys.dbms_lob.append(l_clob, '<params>');
+				         l_key := t_nodes(i).params.first;
+				         <<params>>
+				         WHILE l_key IS NOT NULL LOOP
+				            sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || t_nodes(i).params(l_key) || ']]></value></param>');
+				            t_nodes(i).params.delete(l_key);
+				            l_key := t_nodes(i).params.first;
+				         END LOOP params;
+				         sys.dbms_lob.append(l_clob, '</params>');
+				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
+				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, 'true') || '</generatable>');
+				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, 'true') || '</multiselectable>');
+				         sys.dbms_lob.append(l_clob, '</node>');
+				      END LOOP nodes;
+				   END IF;
+				   sys.dbms_lob.append(l_clob, '</nodes>');
+				   ? := l_clob;
+				END;
+			«ELSE»
+				«IF parentNodeId === null || parentNodeId.empty»
+					«IF metaData.hasGetObjectTypes»
+						DECLARE
+						   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
+						   l_clob CLOB;
+						BEGIN
+						   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR i IN 1 .. l_types.count
+						   LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>' || l_types(i) || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id/>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
+						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ELSE»
+						DECLARE
+						   l_clob CLOB;
+						BEGIN
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   sys.dbms_lob.append(l_clob, '<node>');
+						   sys.dbms_lob.append(l_clob, '<id>TABLE</id>');
+						   sys.dbms_lob.append(l_clob, '<parent_id/>');
+						   sys.dbms_lob.append(l_clob, '<params/>');
+						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						   sys.dbms_lob.append(l_clob, '</node>');
+						   sys.dbms_lob.append(l_clob, '<node>');
+						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
+						   sys.dbms_lob.append(l_clob, '<parent_id/>');
+						   sys.dbms_lob.append(l_clob, '<params/>');
+						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
+						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
+						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
+						   sys.dbms_lob.append(l_clob, '</node>');
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ENDIF»
+				«ELSE»
+					«IF metaData.hasGetObjectNames»
+						DECLARE
+						   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
+						   l_clob   CLOB;
+						BEGIN
+						   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«parentNodeId»');
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR i IN 1 .. l_names.count
+						   LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || l_names(i) || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
+						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ELSE»
+						DECLARE
+						   l_clob   CLOB;
+						BEGIN
+						   sys.dbms_lob.createtemporary(l_clob, TRUE);
+						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   FOR r IN (
+						      SELECT object_name
+						        FROM user_objects
+						       WHERE object_type = '«parentNodeId»'
+						         AND generated = 'N'
+						       ORDER BY object_name
+						   ) LOOP
+						      sys.dbms_lob.append(l_clob, '<node>');
+						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || r.object_name || '</id>');
+						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
+						      sys.dbms_lob.append(l_clob, '<params/>');
+						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
+						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
+						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
+						      sys.dbms_lob.append(l_clob, '</node>');
+						   END LOOP;
+						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   ? := l_clob;
+						END;
+					«ENDIF»
+				«ENDIF»
+			«ENDIF»
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val nodes = new ArrayList<Node>
+		var doc = plsql.doc
+		if (doc !== null) {
+			val xmlNodes = doc.getElementsByTagName("node")
+			for (var i = 0; i < xmlNodes.length; i++) {
+				val node = new Node
+				val xmlNode = xmlNodes.item(i) as Element
+				node.id = xmlNode.getElementsByTagName("id").item(0).textContent
+				node.parentId = xmlNode.getElementsByTagName("parent_id")?.item(0)?.textContent
+				node.name = xmlNode.getElementsByTagName("name")?.item(0)?.textContent
+				node.description = xmlNode.getElementsByTagName("description")?.item(0)?.textContent
+				node.iconName = xmlNode.getElementsByTagName("icon_name")?.item(0)?.textContent
+				node.iconBase64 = xmlNode.getElementsByTagName("icon_base64")?.item(0)?.textContent
+				val params = new LinkedHashMap<String, String>
+				val xmlParams = xmlNode.getElementsByTagName("param")
+				for (var j = 0; j < xmlParams.length; j++) {
+					val xmlParam = xmlParams.item(j) as Element
+					val key = xmlParam.getElementsByTagName("key").item(0).textContent
+					val value = xmlParam.getElementsByTagName("value").item(0).textContent
+					params.put(key, value)
+				}
+				node.params = params
+				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
+				node.generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent == "true"
+				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
+				nodes.add(node)
+			}
+			if (!metaData.hasGetNodes) {
+				// extend nodes with parameters
+				for (node : nodes) {
+					node.params = getParams(metaData, node.toObjectType, node.toObjectName)
+				}
+			}
+		}
+		return nodes
+	}
+
+
+	def getLov(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   «IF metaData.hasGetLov3»
+			      l_params «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			      l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
+			      l_key    «metaData.generatorOwner».oddgen_types.value_type;
+			      l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
+			   «ELSE»
+			      «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
+			          l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
+			      «ENDIF»
+			      l_lovs «metaData.generatorOwner».«metaData.generatorName».t_lov;
+			      l_key  «metaData.generatorOwner».«metaData.generatorName».param_type;
+			      l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
+			   «ENDIF»
+			   l_clob CLOB;
+			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
+			   «IF params !== null && (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov)»
+			      «FOR key : params.keySet»
+			         l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
+			      «ENDFOR»
+			   «ENDIF»
+			   «IF metaData.hasGetLov3»
+			      «nodes.toPlsql»
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_params => l_params, in_nodes => l_nodes);
+			   «ELSEIF metaData.hasGetLov2»
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
+			   «ELSEIF metaData.hasRefreshLov»
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».refresh_lov(in_object_type => '«nodes.toObjectType»', in_object_name => '«nodes.toObjectName»', in_params => l_params);
+			   «ELSEIF metaData.hasGetLov1»
+			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
+			   «ENDIF»
+			   l_key  := l_lovs.first;
+			   sys.dbms_lob.append(l_clob, '<lovs>');
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      sys.dbms_lob.append(l_clob, '<lov><key><![CDATA[' || l_key || ']]></key><values>');
+			      FOR i IN 1 .. l_lovs(l_key).count
+			      LOOP
+			         sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>');
+			      END LOOP;
+			      sys.dbms_lob.append(l_clob, '</values></lov>');
+			      l_lovs.delete(l_key);
+			      l_key := l_lovs.first;
+			   END LOOP;
+			   sys.dbms_lob.append(l_clob, '</lovs>');
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val lovs = new HashMap<String, List<String>>()
+		var Document doc
+		if (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov || metaData.hasGetLov1) {
+			doc = plsql.doc
+		}
+		if (doc !== null) {
+			val xmlLovs = doc.getElementsByTagName("lov")
+			if (xmlLovs.length > 0) {
+				for (var i = 0; i < xmlLovs.length; i++) {
+					val lov = xmlLovs.item(i) as Element
+					val key = lov.getElementsByTagName("key").item(0).textContent
+					val values = lov.getElementsByTagName("value")
+					val value = new ArrayList<String>()
+					for (var j = 0; j < values.length; j++) {
+						val valueElement = values.item(j) as Element
+						value.add(valueElement.textContent)
+					}
+					lovs.put(key, value)
+				}
+			}
+
+		}
+		return lovs
+	}
+
+	def getParamStates(DatabaseGeneratorMetaData metaData, LinkedHashMap<String, String> params, List<Node> nodes) {
+		// convert PL/SQL associative array to XML
+		val plsql = '''
+			DECLARE
+			   «IF metaData.hasGetParamStates2»
+			      l_params       «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_node         «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_nodes        «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			      l_param_states «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_key          «metaData.generatorOwner».oddgen_types.value_type;
+			   «ELSE»
+			      l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
+			      l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
+			      l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
+			   «ENDIF»
+			   l_clob         CLOB;
+			BEGIN
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
+			   «FOR key : params.keySet»
+			      l_params('«key»') := '«params.get(key).escapeSingleQuotes»';
+			   «ENDFOR»
+			   «IF metaData.hasGetParamStates2»
+			      «nodes.toPlsql»
+			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».get_param_states(
+			                           in_params => l_params,
+			                           in_nodes  => l_nodes
+			                        );
+			   «ELSE»
+			      l_param_states := «metaData.generatorOwner».«metaData.generatorName».«IF metaData.hasGetParamStates1»get_param_states«ELSE»refresh_param_states«ENDIF»(
+			                           in_object_type => '«nodes.toObjectType»',
+			                           in_object_name => '«nodes.toObjectName»',
+			                           in_params      => l_params
+			                        );
+			   «ENDIF»
+			   l_key          := l_param_states.first;
+			   sys.dbms_lob.append(l_clob, '<paramStates>');
+			   WHILE l_key IS NOT NULL
+			   LOOP
+			      sys.dbms_lob.append(l_clob, '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>');
+			      l_param_states.delete(l_key);
+			      l_key := l_param_states.first;
+			   END LOOP;
+			   sys.dbms_lob.append(l_clob, '</paramStates>');
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val paramStates = new HashMap<String, String>()
+		var Document doc
+		if (metaData.hasGetParamStates2 || metaData.hasGetParamStates1 || metaData.hasRefreshParamStates) {
+			doc = plsql.doc
+		}
+		if (doc !== null) {
+			val xmlParamStates = doc.getElementsByTagName("paramState")
+			for (var i = 0; i < xmlParamStates.length; i++) {
+				val paramState = xmlParamStates.item(i) as Element
+				val key = paramState.getElementsByTagName("key").item(0).textContent
+				val value = paramState.getElementsByTagName("value").item(0).textContent
+				paramStates.put(key, value)
+			}
+		}
+		return paramStates
+	}
+	
+	def generateProlog(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
+		val plsql = '''
+			DECLARE
+			   l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			   l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			   l_clob   CLOB;
+			BEGIN
+			   «nodes.toPlsql»
+			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate_prolog(
+			                in_nodes => l_nodes
+			             );
+			   ? := l_clob;
+			END;
+		'''
+		var String result = null
+		if (metaData.hasGenerateProlog) {
+			result = plsql.getClob('''Failed to generate prolog code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''') 
+		}
+		return result
+	}
+	
+	def generateSeparator(DatabaseGeneratorMetaData metaData) {
+		val plsql = '''
+		   DECLARE
+		      l_sep VARCHAR2(4000 CHAR);
+		   BEGIN
+		      l_sep := «metaData.generatorOwner».«metaData.generatorName».generate_separator;
+		      ? := l_sep;
+		   END;
+		'''
+		var String result = '\n';
+		if (metaData.hasGenerateSeparator) {
+			result = plsql.getString
+		}
+		return result
+	}
+
+	def generateEpilog(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
+		val plsql = '''
+			DECLARE
+			   l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			   l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			   l_clob   CLOB;
+			BEGIN
+			   «nodes.toPlsql»
+			   l_clob := «metaData.generatorOwner».«metaData.generatorName».generate_epilog(
+			                in_nodes => l_nodes
+			             );
+			   ? := l_clob;
+			END;
+		'''
+		var String result = null
+		if (metaData.hasGenerateEpilog) {
+			result = plsql.getClob('''Failed to generate epilog code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''') 
+		}
+		return result
+	}
 
 	def String generate(DatabaseGeneratorMetaData metaData, Node node) {
-		depth++
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGenerate3»
@@ -1095,7 +1145,7 @@ class DatabaseGeneratorDao {
 			   «IF metaData.hasGenerate3»
 			      «node.toPlsql»
 			      l_clob := «metaData.generatorOwner».«metaData.generatorName».generate(
-			                   node => l_node
+			                   in_node => l_node
 			                );
 			   «ELSE»
 			      «IF metaData.hasGenerate1»
@@ -1117,28 +1167,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		Logger.debug(this, "plsql: %s", plsql)
-		var String result;
-		try {
-			val resultClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
-				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
-					cs.registerOutParameter(1, Types.CLOB);
-					cs.execute
-					return cs.getClob(1);
-				}
-			})
-			result = resultClob.getSubString(1, resultClob.length as int)
-		} catch (Exception e) {
-			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
-				// catch : existing state of packages has been discarded
-				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
-				result = generate(metaData, node)
-			} else {
-				result = '''Failed to generate code for «node.id» via «metaData.generatorOwner».«metaData.generatorName». Got the following error: «e.cause?.message»'''
-				Logger.error(this, plsql + result)
-			}
-		} finally {
-			depth--
-		}
+		val result = plsql.getClob('''Failed to generate code for «node.id» via «metaData.generatorOwner».«metaData.generatorName»''')
 		return result
 	}
 

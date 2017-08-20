@@ -160,7 +160,7 @@
 		<!-- other dependencies -->
 		<dependency>
 			<!-- Xtend comes with some runtime dependencies... -->
-			<!-- cannot resolve plugin-dependencies for 2.10.0, fallback to ${xtend.version}  --> 
+			<!-- cannot resolve plugin-dependencies for 2.10.0, fallback to ${xtend.version} -->
 			<groupId>org.eclipse.xtend</groupId>
 			<artifactId>org.eclipse.xtend.lib</artifactId>
 			<version>${xtend.version}</version>
@@ -304,12 +304,12 @@
 					<execution>
 						<phase>prepare-package</phase>
 						<configuration>
-							<tasks>
+							<target>
 								<copy failonerror="true" file="sqldeveloper.xml" tofile="target/sqldeveloper.xml" />
 								<copy failonerror="true" file="bundle.xml" tofile="target/bundle.xml" />
 								<copy failonerror="true" file="extension.xml"
 									tofile="target/classes/META-INF/extension.xml" />
-							</tasks>
+							</target>
 						</configuration>
 						<goals>
 							<goal>run</goal>
@@ -417,6 +417,23 @@
 							org.oddgen.sqldev.model,
 							org.oddgen.sqldev.resources,
 						</Export-Package>
+						<_exportcontents>
+							org.aspectj.runtime.internal, 
+							org.oddgen.sqldev.generators, 
+							com.jcabi.aspects,
+							org.eclipse.xtext.xbase.lib, 
+							org.oddgen.sqldev.generators, 
+							org.oddgen.sqldev.generators.model,
+							org.aspectj.lang, 
+							org.aspectj.runtime,
+							org.oddgen.sqldev.dal,
+							com.google.common.collect, 
+							com.google.common.primitives, 
+							com.google.common.base,
+							org.aspectj.lang.reflect,
+							javax.annotation,
+							javax.annotation.meta
+						</_exportcontents>
 						<!-- TODO: remove unnecessary bundles, missing bundles might lead to 
 							strange runtime behavior, therefore the list is extensive -->
 						<Require-Bundle>

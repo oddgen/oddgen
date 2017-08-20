@@ -37,12 +37,12 @@ class GenerateDialogTest extends AbstractJdbcTest {
 		val gensel = new GeneratorSelection()
 		val type = new ObjectType()
 		type.generator = dbgen
-		type.name = "TABLE"
+		type.node = 	dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
 		val name = new ObjectName()
 		name.objectType = type
-		name.name = "EMP"
+		name.node = 	dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP"].get(0)
 		gensel.objectName = name
-		gensel.params = dbgen.getParams(dataSource.connection, objectType, objectName)
+		gensel.params = name.node.params
 		return gensel
 
 	}

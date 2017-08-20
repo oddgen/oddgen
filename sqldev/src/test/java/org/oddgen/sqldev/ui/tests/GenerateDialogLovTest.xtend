@@ -41,10 +41,10 @@ class GenerateDialogLovTest extends AbstractJdbcTest {
 		val gensel = new GeneratorSelection()
 		val type = new ObjectType()
 		type.generator = dbgen
-		type.name = "TABLE"
+		type.node = dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
 		val name = new ObjectName()
 		name.objectType = type
-		name.name = "SOME_TABLE"
+		name.node = dbgen.getNodes(dataSource.connection, "TABLE").get(0)
 		gensel.objectName = name
 		val gens = new ArrayList<GeneratorSelection>()
 		gens.add(gensel)

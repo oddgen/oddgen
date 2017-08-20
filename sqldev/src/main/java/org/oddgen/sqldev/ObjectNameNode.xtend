@@ -35,57 +35,50 @@ class ObjectNameNode extends DefaultContainer {
 	}
 
 	override getIcon() {
-		if (objectName.objectType.node.name.startsWith("TABLE") || objectName.objectType.node.name == "CLUSTER") {
+		val id = objectName.objectType.node.id
+		if (id.startsWith("TABLE") || id == "CLUSTER") {
 			return OddgenResources.getIcon("TABLE_ICON")
-		} else if (objectName.objectType.node.name == "VIEW") {
+		} else if (id == "VIEW") {
 			return OddgenResources.getIcon("VIEW_ICON")
-		} else if (objectName.objectType.node.name.startsWith("INDEX")) {
+		} else if (id.startsWith("INDEX")) {
 			return OddgenResources.getIcon("INDEX_ICON")
-		} else if (objectName.objectType.node.name == "SYNONYM") {
+		} else if (id == "SYNONYM") {
 			return OddgenResources.getIcon("SYNONYM_ICON")
-		} else if (objectName.objectType.node.name == "SEQUENCE") {
+		} else if (id == "SEQUENCE") {
 			return OddgenResources.getIcon("SEQUENCE_ICON")
-		} else if (objectName.objectType.node.name == "PROCEDURE") {
+		} else if (id == "PROCEDURE") {
 			return OddgenResources.getIcon("PROCEDURE_ICON")
-		} else if (objectName.objectType.node.name == "FUNCTION") {
+		} else if (id == "FUNCTION") {
 			return OddgenResources.getIcon("FUNCTION_ICON")
-		} else if (objectName.objectType.node.name.startsWith("PACKAGE")) {
+		} else if (id.startsWith("PACKAGE")) {
 			return OddgenResources.getIcon("PACKAGE_ICON")
-		} else if (objectName.objectType.node.name == "TRIGGER") {
+		} else if (id == "TRIGGER") {
 			return OddgenResources.getIcon("TRIGGER_ICON")
-		} else if (objectName.objectType.node.name.startsWith("TYPE")) {
+		} else if (id.startsWith("TYPE")) {
 			return OddgenResources.getIcon("TYPE_ICON")
-		} else if (objectName.objectType.node.name == "LIBRARY") {
+		} else if (id == "LIBRARY") {
 			return OddgenResources.getIcon("LIBRARY_ICON")
-		} else if (objectName.objectType.node.name == "DIRECTORY") {
+		} else if (id == "DIRECTORY") {
 			return OddgenResources.getIcon("DIRECTORY_ICON")
-		} else if (objectName.objectType.node.name == "QUEUE") {
+		} else if (id == "QUEUE") {
 			return OddgenResources.getIcon("QUEUE_ICON")
-		} else if (objectName.objectType.node.name.startsWith("JAVA")) {
+		} else if (id.startsWith("JAVA")) {
 			return OddgenResources.getIcon("JAVA_ICON")
-		} else if (objectName.objectType.node.name == "MATERIALIZED VIEW" ||
-			objectName.objectType.node.name == "REWRITE EQUIVALENCE") {
+		} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
 			return OddgenResources.getIcon("MATERIALIZED_VIEW_ICON")
-		} else if (objectName.objectType.node.name == "EDITION") {
+		} else if (id == "EDITION") {
 			return OddgenResources.getIcon("EDITION_ICON")
-		} else if (objectName.objectType.node.name.startsWith("JOB")) {
+		} else if (id.startsWith("JOB")) {
 			return OddgenResources.getIcon("JOB_ICON")
-		} else if (objectName.objectType.node.name == "DATABASE LINK") {
+		} else if (id == "DATABASE LINK") {
 			return OddgenResources.getIcon("DBLINK_ICON")
-		} else if (objectName.objectType.node.name == "CONSUMER GROUP" || objectName.objectType.node.name.contains("CONTEXT") ||
-			objectName.objectType.node.name == "DESTINATION" || objectName.objectType.node.name.startsWith("LOB") ||
-			objectName.objectType.node.name == "OPERATOR" || objectName.objectType.node.name == "PROGRAM" ||
-			objectName.objectType.node.name == "RESOURCE PLAN" || objectName.objectType.node.name.startsWith("RULE") ||
-			objectName.objectType.node.name.startsWith("SCHEDULE") || objectName.objectType.node.name == "UNIFIED AUDIT POLICY" ||
-			objectName.objectType.node.name == "WINDOW" || objectName.objectType.node.name == "XML SCHEMA" ||
-			objectName.objectType.node.name == "DIMENSION" || objectName.objectType.node.name == "SUBSCRIPTION" ||
-			objectName.objectType.node.name == "LOCATION" || objectName.objectType.node.name == "CAPTURE" ||
-			objectName.objectType.node.name == "APPLY" || objectName.objectType.node.name == "CHAIN" ||
-			objectName.objectType.node.name == "FILE GROUP" || objectName.objectType.node.name == "MINING MODEL" ||
-			objectName.objectType.node.name == "ASSEMBLY" || objectName.objectType.node.name == "CREDENTIAL" ||
-			objectName.objectType.node.name == "CUBE DIMENSION" || objectName.objectType.node.name == "CUBE" ||
-			objectName.objectType.node.name == "MEASURE FOLDER" || objectName.objectType.node.name == "CUBE BUILD PROCESS" ||
-			objectName.objectType.node.name == "FILE WATCHER" || objectName.objectType.node.name == "SQL TRANSLATION PROFILE") {
+		} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" || id.startsWith("LOB") ||
+			id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" || id.startsWith("RULE") ||
+			id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" || id == "WINDOW" || id == "XML SCHEMA" ||
+			id == "DIMENSION" || id == "SUBSCRIPTION" || id == "LOCATION" || id == "CAPTURE" || id == "APPLY" ||
+			id == "CHAIN" || id == "FILE GROUP" || id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" ||
+			id == "CUBE DIMENSION" || id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" ||
+			id == "FILE WATCHER" || id == "SQL TRANSLATION PROFILE") {
 			return OddgenResources.getIcon("OBJECT_ICON")
 		} else {
 			return OddgenResources.getIcon("UNKNOWN_ICON")

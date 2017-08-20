@@ -27,7 +27,7 @@ import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class ObjectTypeNode extends DefaultContainer {
-	val ObjectType objectType
+	var ObjectType objectType
 	var String displayName
 	val extension NodeTools nodeTools = new NodeTools
 
@@ -167,92 +167,88 @@ class ObjectTypeNode extends DefaultContainer {
 	}
 
 	override getIcon() {
-		if (objectType.node.name.startsWith("TABLE") || objectType.node.name == "CLUSTER") {
+		val id = objectType.node.id
+		if (id.startsWith("TABLE") || id == "CLUSTER") {
 			return OddgenResources.getIcon("TABLE_FOLDER_ICON")
-		} else if (objectType.node.name == "VIEW") {
+		} else if (id == "VIEW") {
 			return OddgenResources.getIcon("VIEW_FOLDER_ICON")
-		} else if (objectType.node.name.startsWith("INDEX")) {
+		} else if (id.startsWith("INDEX")) {
 			return OddgenResources.getIcon("INDEX_FOLDER_ICON")
-		} else if (objectType.node.name == "SYNONYM") {
+		} else if (id == "SYNONYM") {
 			return OddgenResources.getIcon("SYNONYM_FOLDER_ICON")
-		} else if (objectType.node.name == "SEQUENCE") {
+		} else if (id == "SEQUENCE") {
 			return OddgenResources.getIcon("SEQUENCE_FOLDER_ICON")
-		} else if (objectType.node.name == "PROCEDURE") {
+		} else if (id == "PROCEDURE") {
 			return OddgenResources.getIcon("PROCEDURE_FOLDER_ICON")
-		} else if (objectType.node.name == "FUNCTION") {
+		} else if (id == "FUNCTION") {
 			return OddgenResources.getIcon("FUNCTION_FOLDER_ICON")
-		} else if (objectType.node.name.startsWith("PACKAGE")) {
+		} else if (id.startsWith("PACKAGE")) {
 			return OddgenResources.getIcon("PACKAGE_FOLDER_ICON")
-		} else if (objectType.node.name == "TRIGGER") {
+		} else if (id == "TRIGGER") {
 			return OddgenResources.getIcon("TRIGGER_FOLDER_ICON")
-		} else if (objectType.node.name.startsWith("TYPE")) {
+		} else if (id.startsWith("TYPE")) {
 			return OddgenResources.getIcon("TYPE_FOLDER_ICON")
-		} else if (objectType.node.name == "LIBRARY") {
+		} else if (id == "LIBRARY") {
 			return OddgenResources.getIcon("LIBRARY_FOLDER_ICON")
-		} else if (objectType.node.name == "DIRECTORY") {
+		} else if (id == "DIRECTORY") {
 			return OddgenResources.getIcon("DIRECTORY_FOLDER_ICON")
-		} else if (objectType.node.name == "QUEUE") {
+		} else if (id == "QUEUE") {
 			return OddgenResources.getIcon("QUEUE_FOLDER_ICON")
-		} else if (objectType.node.name.startsWith("JAVA")) {
+		} else if (id.startsWith("JAVA")) {
 			return OddgenResources.getIcon("JAVA_FOLDER_ICON")
-		} else if (objectType.node.name == "MATERIALIZED VIEW" || objectType.node.name == "REWRITE EQUIVALENCE") {
+		} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
 			return OddgenResources.getIcon("MATERIALIZED_VIEW_FOLDER_ICON")
-		} else if (objectType.node.name == "EDITION") {
+		} else if (id == "EDITION") {
 			return OddgenResources.getIcon("EDITION_FOLDER_ICON")
-		} else if (objectType.node.name.startsWith("JOB")) {
+		} else if (id.startsWith("JOB")) {
 			return OddgenResources.getIcon("JOB_FOLDER_ICON")
-		} else if (objectType.node.name == "DATABASE LINK") {
+		} else if (id == "DATABASE LINK") {
 			return OddgenResources.getIcon("DBLINK_FOLDER_ICON")
-		} else if (objectType.node.name == "CONSUMER GROUP" || objectType.node.name.contains("CONTEXT") ||
-			objectType.node.name == "DESTINATION" || objectType.node.name.startsWith("LOB") || objectType.node.name == "OPERATOR" ||
-			objectType.node.name == "PROGRAM" || objectType.node.name == "RESOURCE PLAN" || objectType.node.name.startsWith("RULE") ||
-			objectType.node.name.startsWith("SCHEDULE") || objectType.node.name == "UNIFIED AUDIT POLICY" ||
-			objectType.node.name == "WINDOW" || objectType.node.name == "XML SCHEMA" || objectType.node.name == "DIMENSION" ||
-			objectType.node.name == "SUBSCRIPTION" || objectType.node.name == "LOCATION" || objectType.node.name == "CAPTURE" ||
-			objectType.node.name == "APPLY" || objectType.node.name == "CHAIN" || objectType.node.name == "FILE GROUP" ||
-			objectType.node.name == "MINING MODEL" || objectType.node.name == "ASSEMBLY" || objectType.node.name == "CREDENTIAL" ||
-			objectType.node.name == "CUBE DIMENSION" || objectType.node.name == "CUBE" || objectType.node.name == "MEASURE FOLDER" ||
-			objectType.node.name == "CUBE BUILD PROCESS" || objectType.node.name == "FILE WATCHER" ||
-			objectType.node.name == "SQL TRANSLATION PROFILE") {
-				return OddgenResources.getIcon("OBJECT_FOLDER_ICON")
-			} else {
-				return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
-			}
+		} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" || id.startsWith("LOB") ||
+			id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" || id.startsWith("RULE") ||
+			id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" || id == "WINDOW" || id == "XML SCHEMA" ||
+			id == "DIMENSION" || id == "SUBSCRIPTION" || id == "LOCATION" || id == "CAPTURE" || id == "APPLY" ||
+			id == "CHAIN" || id == "FILE GROUP" || id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" ||
+			id == "CUBE DIMENSION" || id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" ||
+			id == "FILE WATCHER" || id == "SQL TRANSLATION PROFILE") {
+			return OddgenResources.getIcon("OBJECT_FOLDER_ICON")
+		} else {
+			return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
 		}
-
-		def openBackground() {
-			val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-			if (conn !== null) {
-				for (node : objectType.generator.getNodes(conn, objectType.node.id)) {
-					val objectName = new ObjectName()
-					objectName.objectType = objectType
-					objectName.node = node
-					val navigatorNode = new ObjectNameNode(URLFactory.newURL(this.URL, objectName.node.id), objectName)
-					this.add(navigatorNode)
-				}
-			}
-			UpdateMessage.fireStructureChanged(this)
-			this.markDirty(false)
-		}
-
-		override openImpl() {
-			val Runnable runnable = [|openBackground]
-			val thread = new Thread(runnable)
-			thread.name = "oddgen Open Object Type"
-			thread.start
-		}
-
-		override getLongLabel() {
-			return displayName
-		}
-
-		override getShortLabel() {
-			return displayName
-		}
-
-		override getToolTipText() {
-			return displayName
-		}
-
 	}
-	
+
+	def openBackground() {
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		if (conn !== null) {
+			for (node : objectType.generator.getNodes(conn, objectType.node.id)) {
+				val objectName = new ObjectName()
+				objectName.objectType = objectType
+				objectName.node = node
+				val navigatorNode = new ObjectNameNode(URLFactory.newURL(this.URL, objectName.node.id), objectName)
+				this.add(navigatorNode)
+			}
+		}
+		UpdateMessage.fireStructureChanged(this)
+		this.markDirty(false)
+	}
+
+	override openImpl() {
+		val Runnable runnable = [|openBackground]
+		val thread = new Thread(runnable)
+		thread.name = "oddgen Open Object Type"
+		thread.start
+	}
+
+	override getLongLabel() {
+		return displayName
+	}
+
+	override getShortLabel() {
+		return displayName
+	}
+
+	override getToolTipText() {
+		return displayName
+	}
+
+}

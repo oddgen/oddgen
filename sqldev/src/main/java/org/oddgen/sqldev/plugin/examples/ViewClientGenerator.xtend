@@ -16,15 +16,17 @@
 package org.oddgen.sqldev.plugin.examples
 
 import java.sql.Connection
-import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.generators.model.Node
+import org.oddgen.sqldev.generators.model.NodeTools
+import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
-class ViewClientGenerator implements OddgenGenerator {
+class ViewClientGenerator implements OddgenGenerator2 {
 
 	public static var VIEW_SUFFIX = "View suffix"
 	public static var TABLE_SUFFIX = "Table suffix to be replaced"
@@ -34,9 +36,8 @@ class ViewClientGenerator implements OddgenGenerator {
 	static int MAX_OBJ_LEN = 30
 
 	var Connection conn;
-	var String objectType;
-	var String objectName;
-	var LinkedHashMap<String, String> params
+	var Node node;
+	var extension NodeTools nodeTools = new NodeTools
 
 	override getName(Connection conn) {
 		return "1:1 View"
@@ -46,101 +47,125 @@ class ViewClientGenerator implements OddgenGenerator {
 		return "Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger."
 	}
 
-	override getObjectTypes(Connection conn) {
-		val objectTypes = new ArrayList<String>()
-		objectTypes.add("TABLE")
-		return objectTypes
+	override getFolders(Connection conn) {
+		return #["Client Generators", "Examples"]
 	}
 
-	override getObjectNames(Connection conn, String objectType) {
-		val sql = '''
-			SELECT object_name
-			  FROM user_objects
-			 WHERE object_type = ?
-			   AND generated = 'N'
-			ORDER BY object_name
-		'''
-		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
-		return objectNames
+	override getHelp(Connection conn) {
+		return "<p>Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger.</p>"
 	}
 
-	override getParams(Connection conn, String objectType, String objectName) {
+	override getNodes(Connection conn, String parentNodeId) {
+		// lazy loading implementation
 		val params = new LinkedHashMap<String, String>()
 		params.put(VIEW_SUFFIX, "_V")
 		params.put(TABLE_SUFFIX, "_T")
 		params.put(GEN_IOT, "Yes")
 		params.put(IOT_SUFFIX, "_TRG")
-		return params
+		if (parentNodeId === null || parentNodeId.empty) {
+			// object type TABLE only
+			val node = new Node
+			node.id = "TABLE"
+			node.params = params
+			node.leaf = false
+			node.generatable = true
+			node.multiselectable = false // not feasible with a single node
+			return #[node]
+		} else {
+			// tables
+			val sql = '''
+				SELECT object_type || '.' || object_name AS id,
+				       object_type AS parent_id,
+				       1 AS leaf,
+				       1 AS generatable,
+				       1 AS multiselectable
+				  FROM user_objects
+				 WHERE object_type = ?
+				   AND generated = 'N'
+			'''
+			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+			val nodes = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Node>(Node), #[parentNodeId])
+			for (node : nodes) {
+				node.params = params // same params instance for each node is OK
+			}
+			return nodes
+		}
 	}
 
-	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	override HashMap<String, List<String>> getLov(Connection conn, LinkedHashMap<String, String> params,
+		List<Node> nodes) {
 		val lov = new HashMap<String, List<String>>()
 		lov.put(GEN_IOT, #["Yes", "No"])
 		return lov
 	}
 
-	override getParamStates(Connection conn, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
+	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
 		val paramStates = new HashMap<String, Boolean>()
 		paramStates.put(IOT_SUFFIX, params.get(GEN_IOT) == "Yes")
 		return paramStates
 	}
 
-	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	override generateProlog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generateSeparator(Connection conn) {
+		return "\n"
+	}
+
+	override generateEpilog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generate(Connection conn, Node node) {
 		this.conn = conn;
-		this.objectType = objectType
-		this.objectName = objectName
-		this.params = params
+		this.node = node;
 		try {
 			checkParams
 			val result = '''
 				«generateView»
-				«IF params.get(GEN_IOT) == "Yes"»
+				«IF node.params.get(GEN_IOT) == "Yes"»
 					«generateInsteadOfTrigger»
 				«ENDIF»
 			'''
 			return result;
 
-		} catch(Exception e) {
+		} catch (Exception e) {
 			return e.message
 		}
 	}
 
 	private def void checkParams() {
-		if(objectType != "TABLE") {
-			throw new RuntimeException('''<«objectType»> is not a supported object type. Please use TABLE.''')
+		if (node.parentId != "TABLE") {
+			throw new RuntimeException('''<«node.parentId»> is not a supported object type. Please use TABLE.''')
 		}
-		val defaultParams = getParams(conn, objectType, objectName)
+		val defaultParams = conn.getNodes(null).get(0).params
 		for (key : defaultParams.keySet) {
-			if(params.get(key) == null) {
+			if (node.params.get(key) === null) {
 				throw new RuntimeException('''Parameter <«key»> is missing.''')
 			}
 		}
-		for (key : params.keySet) {
-			if(defaultParams.get(key) == null) {
+		for (key : node.params.keySet) {
+			if (defaultParams.get(key) === null) {
 				throw new RuntimeException('''Parameter <«key»> is not known.''')
 			}
 		}
-		val lov = getLov(conn, objectType, objectName, params)
+		val lov = getLov(conn, node.params, #[node])
 		for (key : lov.keySet) {
-			if(!(lov.get(key).contains(
-				params.get(
-				key)))) {
-				throw new RuntimeException('''Invalid value <«params.get(key)»> for parameter <«key»>. Valid values are: «FOR value : lov.get(key) SEPARATOR ", "»«value»«ENDFOR».''')
+			if (!(lov.get(key).contains(
+				node.params.get(key)))) {
+				throw new RuntimeException('''Invalid value <«node.params.get(key)»> for parameter <«key»>. Valid values are: «FOR value : lov.get(key) SEPARATOR ", "»«value»«ENDFOR».''')
 			}
 		}
-		if(columns.size == 0) {
-			throw new RuntimeException('''Table «objectName» not found.''')
+		if (columns.size == 0) {
+			throw new RuntimeException('''Table «node.toObjectName» not found.''')
 		}
-		if(viewName ==
-			objectName) {
+		if (viewName == node.toObjectName) {
 			throw new RuntimeException('''Change <«VIEW_SUFFIX»>. The target view must be named differently than its base table.''')
 		}
-		if(params.get(GEN_IOT) == "Yes") {
-			if(primaryKeyColumns.size ==
-				0) {
-				throw new RuntimeException('''No primary key found in table «objectName». Cannot generate instead-of-trigger.''')
+		if (node.params.get(GEN_IOT) == "Yes") {
+			if (primaryKeyColumns.size == 0) {
+				throw new RuntimeException('''No primary key found in table «node.toObjectName». Cannot generate instead-of-trigger.''')
 			}
 		}
 	}
@@ -150,7 +175,7 @@ class ViewClientGenerator implements OddgenGenerator {
 			-- create 1:1 view for demonstration purposes
 			CREATE OR REPLACE VIEW «viewName» AS
 			   SELECT «FOR col : columns SEPARATOR ",\n       "»«col»«ENDFOR»
-			     FROM «objectName»;
+			     FROM «node.toObjectName»;
 		'''
 		return result
 	}
@@ -162,7 +187,7 @@ class ViewClientGenerator implements OddgenGenerator {
 			   INSTEAD OF INSERT OR UPDATE OR DELETE ON «viewName»
 			BEGIN
 			   IF INSERTING THEN
-			      INSERT INTO «objectName» (
+			      INSERT INTO «node.toObjectName» (
 			         «FOR col : columns SEPARATOR ","»
 			         	«col»
 			         «ENDFOR»
@@ -172,11 +197,11 @@ class ViewClientGenerator implements OddgenGenerator {
 			         «ENDFOR»
 			      );
 			   ELSIF UPDATING THEN
-			      UPDATE «objectName»
+			      UPDATE «node.toObjectName»
 			         SET «FOR col : columns SEPARATOR ",\n    "»«col» = :NEW.«col»«ENDFOR»
 			       «FOR col : primaryKeyColumns BEFORE "WHERE " SEPARATOR "\n  AND " AFTER ";"»«col» = :OLD.«col»«ENDFOR»
 			   ELSIF DELETING THEN
-			      DELETE FROM «objectName»
+			      DELETE FROM «node.toObjectName»
 			       «FOR col : primaryKeyColumns BEFORE "WHERE " SEPARATOR "\n  AND " AFTER ";"»«col» = :OLD.«col»«ENDFOR»
 			   END IF;
 			END;
@@ -193,7 +218,7 @@ class ViewClientGenerator implements OddgenGenerator {
 			ORDER BY column_id
 		'''
 		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		val columns = jdbcTemplate.queryForList(sql, String, objectName)
+		val columns = jdbcTemplate.queryForList(sql, String, node.toObjectName)
 		return columns
 	}
 
@@ -208,21 +233,21 @@ class ViewClientGenerator implements OddgenGenerator {
 			 ORDER BY cols.position
 		'''
 		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		val columns = jdbcTemplate.queryForList(sql, String, objectName)
+		val columns = jdbcTemplate.queryForList(sql, String, node.toObjectName)
 		return columns
 	}
 
 	private def getViewName() {
-		return params.get(VIEW_SUFFIX).name
+		return node.params.get(VIEW_SUFFIX).name
 	}
 
 	private def getInsteadOfTriggerName() {
-		return params.get(IOT_SUFFIX).name
+		return node.params.get(IOT_SUFFIX).name
 	}
 
 	private def getName(String suffix) {
 		val sb = new StringBuffer()
-		if(baseName.length + suffix.length > MAX_OBJ_LEN) {
+		if (baseName.length + suffix.length > MAX_OBJ_LEN) {
 			sb.append(baseName.substring(0, MAX_OBJ_LEN - suffix.length))
 		} else {
 			sb.append(baseName)
@@ -233,11 +258,11 @@ class ViewClientGenerator implements OddgenGenerator {
 
 	private def getBaseName() {
 		var String baseName
-		val suffix = params.get(TABLE_SUFFIX)
-		if(suffix != null && suffix.length > 0 && objectName.endsWith(suffix)) {
-			baseName = objectName.substring(0, objectName.length - suffix.length)
+		val suffix = node.params.get(TABLE_SUFFIX)
+		if (suffix !== null && suffix.length > 0 && node.toObjectName.endsWith(suffix)) {
+			baseName = node.toObjectName.substring(0, node.toObjectName.length - suffix.length)
 		} else {
-			baseName = objectName
+			baseName = node.toObjectName
 		}
 		return baseName
 	}

@@ -57,21 +57,20 @@ class OddgenNavigatorController extends ShowNavigatorController {
 	}
 
 	def static synchronized getInstance() {
-		if (INSTANCE == null) {
+		if (INSTANCE === null) {
 			INSTANCE = new OddgenNavigatorController()
 		}
 		return INSTANCE
 	}
 
 	def selectedDatabaseGenerators(Context context) {
-		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		val gens = new ArrayList<GeneratorSelection>
 		for (selection : context.selection) {
 			val node = selection as ObjectNameNode
 			val objectName = node.data as ObjectName
 		 	val sel = new GeneratorSelection()
 		 	sel.objectName = objectName
-		 	sel.params = objectName.objectType.generator.getParams(conn, objectName.objectType.name, objectName.name)
+		 	sel.params = objectName.node.params
 			gens.add(sel)
 		}
 		return gens
@@ -85,8 +84,9 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
 			result = '''
 				«FOR gen : gens SEPARATOR '\n'»
-					«Logger.debug(this, "Generating %1$s.%2$s to string...", gen.objectName.objectType.name, gen.objectName.name)»
-					«gen.objectName.objectType.generator.generate(conn, gen.objectName.objectType.name, gen.objectName.name, gen.params)»
+					«Logger.debug(this, "Generating %1$s.%2$s to string...", gen.objectName.node.id)»
+					«gen.objectName.node.params = gen.params»
+					«gen.objectName.objectType.generator.generate(conn, gen.objectName.node)»
 				«ENDFOR»
 			'''
 		} finally {
@@ -141,7 +141,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 	}
 
 	override handleEvent(IdeAction action, Context context) {
-		if (action != null) {
+		if (action !== null) {
 			if (action.commandId == SHOW_ODDGEN_NAVIGATOR_CMD_ID) {
 				if (!initialized) {
 					initialized = true

@@ -20,15 +20,15 @@ import java.net.URL
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.model.ObjectType
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class GeneratorNode extends DefaultContainer {
-	private OddgenGenerator generator
+	private OddgenGenerator2 generator
 
-	new(URL url, OddgenGenerator generator) {
+	new(URL url, OddgenGenerator2 generator) {
 		super(url)
 		this.generator = generator
 	}
@@ -55,12 +55,12 @@ class GeneratorNode extends DefaultContainer {
 	override openImpl() {
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		val gen = generator
-		for (name : gen.getObjectTypes(conn)) {
+		for (node : gen.getNodes(conn, null).filter[it.parentId === null || it.parentId.empty]) {
 			val objectType = new ObjectType()
 			objectType.generator = generator
-			objectType.name = name
-			val node = new ObjectTypeNode(URLFactory.newURL(this.URL, objectType.name), objectType)
-			this.add(node)
+			objectType.node = node
+			val navigatorNode = new ObjectTypeNode(URLFactory.newURL(this.URL, node.id), objectType)
+			this.add(navigatorNode)
 		}
 		UpdateMessage.fireStructureChanged(this)
 		this.markDirty(false)

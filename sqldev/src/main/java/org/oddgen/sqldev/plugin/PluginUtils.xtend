@@ -21,7 +21,7 @@ import java.io.FilenameFilter
 import java.net.URL
 import java.net.URLClassLoader
 import org.oddgen.sqldev.LoggableConstants
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.ConfigurationBuilder
@@ -42,7 +42,7 @@ class PluginUtils {
 
 	static def getSqlDevExtensionDir() {
 		var file = ResourceUtils.getFile(PluginUtils.protectionDomain.codeSource.location)
-		if (file != null && file.name.endsWith(".jar")) {
+		if (file !== null && file.name.endsWith(".jar")) {
 			return file.parentFile
 		} else {
 			for (d : SQLDEV_HOME_DIRS) {
@@ -60,7 +60,7 @@ class PluginUtils {
 	}
 
 	static def findJars(File dir) {
-		if (dir == null || !dir.exists) {
+		if (dir === null || !dir.exists) {
 			val URL[] emptyJarArray = newArrayOfSize(0)
 			return emptyJarArray
 		} else {
@@ -87,7 +87,7 @@ class PluginUtils {
 		val classLoader = new URLClassLoader(jars, PluginUtils.classLoader)
 		val reflections = new Reflections(
 			new ConfigurationBuilder().addUrls(jars).addClassLoader(classLoader).addScanners(new SubTypesScanner()))
-		val gens = reflections.getSubTypesOf(OddgenGenerator).filter[hasDefaultConstructor]
+		val gens = reflections.getSubTypesOf(OddgenGenerator2).filter[hasDefaultConstructor]
 		return gens.toList
 	}
 }

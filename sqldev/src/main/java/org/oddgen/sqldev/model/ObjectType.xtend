@@ -16,10 +16,11 @@
 package org.oddgen.sqldev.model
 
 import org.eclipse.xtend.lib.annotations.Accessors
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.generators.model.Node
 
 @Accessors
 class ObjectType extends AbstractModel {
-	OddgenGenerator generator
-	String name
+	OddgenGenerator2 generator
+	Node node
 }

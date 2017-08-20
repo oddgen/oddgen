@@ -414,25 +414,24 @@
 						</Include-Resource>
 						<Export-Package>
 							org.oddgen.sqldev,
-							org.oddgen.sqldev.model,
-							org.oddgen.sqldev.resources,
-						</Export-Package>
-						<_exportcontents>
-							org.aspectj.runtime.internal, 
-							org.oddgen.sqldev.generators, 
-							com.jcabi.aspects,
-							org.eclipse.xtext.xbase.lib, 
+							org.oddgen.sqldev.dal,
 							org.oddgen.sqldev.generators, 
 							org.oddgen.sqldev.generators.model,
-							org.aspectj.lang, 
-							org.aspectj.runtime,
-							org.oddgen.sqldev.dal,
+							org.oddgen.sqldev.model,
+							org.oddgen.sqldev.resources
+						</Export-Package>
+						<_exportcontents>
+							com.google.common.base,
 							com.google.common.collect, 
 							com.google.common.primitives, 
-							com.google.common.base,
-							org.aspectj.lang.reflect,
+							com.jcabi.aspects,
 							javax.annotation,
-							javax.annotation.meta
+							javax.annotation.meta,
+							org.aspectj.lang, 
+							org.aspectj.lang.reflect,
+							org.aspectj.runtime,
+							org.aspectj.runtime.internal, 
+							org.eclipse.xtext.xbase.lib
 						</_exportcontents>
 						<!-- TODO: remove unnecessary bundles, missing bundles might lead to 
 							strange runtime behavior, therefore the list is extensive -->

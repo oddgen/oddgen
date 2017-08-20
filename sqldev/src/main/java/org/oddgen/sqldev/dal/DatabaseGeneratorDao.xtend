@@ -1088,7 +1088,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		var String result = null
+		var String result = ""
 		if (metaData.hasGenerateProlog) {
 			result = plsql.getClob('''Failed to generate prolog code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''') 
 		}
@@ -1125,7 +1125,7 @@ class DatabaseGeneratorDao {
 			   ? := l_clob;
 			END;
 		'''
-		var String result = null
+		var String result = ""
 		if (metaData.hasGenerateEpilog) {
 			result = plsql.getClob('''Failed to generate epilog code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''') 
 		}

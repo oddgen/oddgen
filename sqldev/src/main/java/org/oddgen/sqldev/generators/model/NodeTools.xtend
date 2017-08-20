@@ -94,5 +94,16 @@ class NodeTools {
 		}
 		return objectName
 	}
+	
+	def getDisplayName(Node node) {
+		var String ret
+		if (node.name !== null) {
+			ret = node.name
+		} else {
+			val parts = node.id.split("\\.")
+			ret = parts.get(parts.size-1).toLowerCase.toFirstUpper
+		}
+		return ret
+	}
 
 }

@@ -28,8 +28,8 @@ class NodeTools {
 	}
 	
 	def CharSequence toPlsql(Node node) '''
-		l_node.id              := «IF node.id === null»NULL«ELSE»'«node.id»'«ENDIF»;
-		l_node.parent_id       := «IF node.parentId === null»NULL«ELSE»'«node.parentId»'«ENDIF»;
+		l_node.id              := «IF node.id === null»NULL«ELSE»'«node.id.escapeSingleQuotes»'«ENDIF»;
+		l_node.parent_id       := «IF node.parentId === null»NULL«ELSE»'«node.parentId.escapeSingleQuotes»'«ENDIF»;
 		l_node.name            := «IF node.name === null»NULL«ELSE»'«node.name.escapeSingleQuotes»'«ENDIF»;
 		l_node.description     := «IF node.description === null»NULL«ELSE»'«node.description.escapeSingleQuotes»'«ENDIF»;
 		l_node.icon_name       := «IF node.iconName === null»NULL«ELSE»'«node.iconName»'«ENDIF»;

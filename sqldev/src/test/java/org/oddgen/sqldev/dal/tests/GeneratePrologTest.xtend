@@ -42,7 +42,7 @@ class GeneratePrologTest extends AbstractJdbcTest {
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val result = dbgen.generateProlog(dataSource.connection, nodes)
-		Assert.assertEquals(null, result)
+		Assert.assertEquals("", result)
 	}
 
 	@BeforeClass

@@ -42,7 +42,7 @@ class GenerateEpilogTest extends AbstractJdbcTest {
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		val result = dbgen.generateEpilog(dataSource.connection, nodes)
-		Assert.assertEquals(null, result)
+		Assert.assertEquals("", result)
 	}
 
 	@BeforeClass

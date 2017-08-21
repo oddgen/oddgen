@@ -27,7 +27,7 @@ import java.util.List
  * @since v0.2.0
  * @deprecated use {@link OddgenGenerator2} instead.
  */
-@Deprecated
+//@Deprecated
 interface OddgenGenerator {
 	public static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]	
 	public static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]

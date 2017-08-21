@@ -28,15 +28,12 @@ import oracle.dbtools.raptor.utils.Connections
 import oracle.dbtools.raptor.utils.DisconnectVetoException
 import oracle.dbtools.worksheet.editor.ConnComboBox
 import oracle.ide.Context
-import oracle.ide.config.Preferences
 import oracle.ide.controller.ContextMenu
 import oracle.ide.controls.Toolbar
-import oracle.ide.model.UpdateMessage
 import oracle.ide.util.MnemonicSolver
 import oracle.ide.util.PropertyAccess
 import oracle.ideri.navigator.DefaultNavigatorWindow
 import oracle.javatools.ui.table.ToolbarButton
-import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
@@ -69,10 +66,8 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 		if (tb !== null) {
 			tb.removeAll
 			tb.dispose
-			RootNode.instance.clientGenerators.removeAll(true)
-			RootNode.instance.clientGenerators.markDirty(false)
-			RootNode.instance.dbServerGenerators.removeAll(true)
-			RootNode.instance.dbServerGenerators.markDirty(false)
+			RootNode.instance.removeAll(true)
+			RootNode.instance.markDirty(false)
 		}
 		connComboBox = new ConnComboBox()
 		refreshButton = new ToolbarButton(OddgenResources.getIcon("REFRESH_ICON"))
@@ -135,7 +130,9 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 			}
 		} else if (e.source == refreshButton) {
 			repopulateConnections
-			refreshConnection
+			if (selection !== null) {
+				refreshConnection
+			}
 		} else if (e.source == collapseallButton) {
 			RootNode.instance.collapseall
 		}
@@ -178,17 +175,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	}
 
 	def refreshConnection() {
-		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
-		RootNode.instance.clientGenerators.openImpl
-		if (preferences.discoverDbServerGenerators) {
-			RootNode.instance.dbServerGenerators.openImpl
-		} else {
-			val folder = RootNode.instance.dbServerGenerators
-			folder.removeAll
-			folder.close
-			UpdateMessage.fireStructureChanged(folder)
-			folder.markDirty(false)
-		}
+		RootNode.instance.openImpl
 	}
 
 	def repopulateConnections() {

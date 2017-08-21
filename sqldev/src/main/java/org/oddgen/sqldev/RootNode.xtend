@@ -17,7 +17,8 @@ package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
-import java.io.IOException
+import java.net.URL
+import java.util.HashMap
 import javax.swing.JTree
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
@@ -26,18 +27,15 @@ import oracle.ide.model.Subject
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
+import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class RootNode extends DefaultContainer {
 	private static String ROOT_NODE_NAME = OddgenResources.getString("ROOT_NODE_LONG_LABEL")
-	private static String CLIENT_GEN_NAME = OddgenResources.getString("CLIENT_GEN_NODE_LONG_LABEL")
-	private static String DBSERVER_GEN_NAME = OddgenResources.getString("DBSERVER_GEN_NODE_LONG_LABEL")
 	private static RootNode INSTANCE
 	private boolean initialized = false
-	private GeneratorFolderNode clientGenerators
-	private GeneratorFolderNode dbServerGenerators
 
 	def static synchronized getInstance() {
 		if (INSTANCE === null) {
@@ -53,24 +51,6 @@ class RootNode extends DefaultContainer {
 			Logger.error(this, "root node URL is null")
 		}
 		setURL(url)
-	}
-
-	def getClientGenerators() {
-		try {
-			open()
-		} catch (IOException e) {
-			Logger.error(this, e.message)
-		}
-		return clientGenerators
-	}
-
-	def getDbServerGenerators() {
-		try {
-			open()
-		} catch (IOException e) {
-			Logger.error(this, e.message)
-		}
-		return dbServerGenerators
 	}
 
 	override getShortLabel() {
@@ -89,8 +69,67 @@ class RootNode extends DefaultContainer {
 		return OddgenResources.getIcon("ODDGEN_FOLDER_ICON")
 	}
 
-	override protected openImpl() {
-		val Runnable runnable = [|initialize]
+	@Loggable
+	def void openBackground() {
+		var DefaultContainer folder = this
+		val allFolders = new HashMap<URL, GeneratorFolderNode>
+		folder.removeAll
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		if (conn !== null) {
+			val dao = new DatabaseGeneratorDao(conn)
+			val dbgens = dao.findAll
+			Logger.info(this, "discovered %d database generators", dbgens.size)
+			for (dbgen : dbgens) {
+				folder = this
+				val folderNames = dbgen.getFolders(conn)
+				var GeneratorFolderNode generatorFolderNode
+				for (folderName : folderNames) {
+					val generatorFolder = new GeneratorFolder
+					generatorFolder.name = folderName
+					val url = URLFactory.newURL(folder.URL, folderName)
+					generatorFolderNode = allFolders.get(url)
+					if (generatorFolderNode === null) {
+						generatorFolderNode = new GeneratorFolderNode(url, generatorFolder)
+						allFolders.put(url, generatorFolderNode)
+						folder.add(generatorFolderNode)
+						UpdateMessage.fireStructureChanged(folder)
+						folder.markDirty(false)
+					}
+					folder = generatorFolderNode
+				}
+				val generatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
+				folder.add(generatorNode)
+				UpdateMessage.fireStructureChanged(folder)
+				folder.markDirty(false)
+			}
+// 			} else if (folder == RootNode.instance.clientGenerators) {
+//				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars).
+//				Logger.info(this, "discovered %d client generators", cgens.size)
+//				val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+//				for (cgen : cgens) {
+//					if (preferences.showClientGeneratorExamples &&
+//						cgen.name != "org.oddgen.sqldev.generators.DatabaseGenerator" ||
+//						cgen.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
+//							cgen.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator")
+//								try {
+//									val gen = cgen.newInstance
+//									val navigatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
+//									folder.add(navigatorNode)
+//								} catch (Exception e) {
+//									Logger.error(this, "Cannot populate client generator %s1 node due to %s2",
+//										cgen.name, e.message)
+//								}
+//						}
+//					}
+//				} 
+		}
+		UpdateMessage.fireStructureChanged(this)
+		//folder.expandNode
+		this.markDirty(false)
+	}
+
+	override openImpl() {
+		val Runnable runnable = [|openBackground]
 		val thread = new Thread(runnable)
 		thread.name = "oddgen Tree Opener"
 		thread.start
@@ -110,9 +149,6 @@ class RootNode extends DefaultContainer {
 
 	def initialize() {
 		if (!initialized) {
-			clientGenerators = addFolder(CLIENT_GEN_NAME)
-			dbServerGenerators = addFolder(DBSERVER_GEN_NAME)
-			// refresh tree
 			UpdateMessage.fireStructureChanged(this as Subject)
 			markDirty(false)
 			Logger.info(this, "RootNode initialized.")

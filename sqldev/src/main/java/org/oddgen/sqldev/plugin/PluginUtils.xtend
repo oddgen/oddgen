@@ -16,11 +16,15 @@
 package org.oddgen.sqldev.plugin
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.io.File
 import java.io.FilenameFilter
 import java.net.URL
 import java.net.URLClassLoader
+import java.util.ArrayList
 import org.oddgen.sqldev.LoggableConstants
+import org.oddgen.sqldev.generators.ClientGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
@@ -30,9 +34,9 @@ import org.springframework.util.ResourceUtils
 @Loggable(LoggableConstants.DEBUG)
 class PluginUtils {
 	public static val SQLDEV_HOME_DIRS = #[
-		"/Applications/SQLDeveloper4.1.3.app/Contents/Resources/sqldeveloper",
+		"/Applications/SQLDeveloper17.2.0.app/Contents/Resources/sqldeveloper",
 		"/Applications/SQLDeveloper.app/Contents/Resources/sqldeveloper",
-		"C:/app/sqldeveloper4.1.3",
+		"C:/app/sqldeveloper17.2.0",
 		"C:/app/sqldeveloper",
 		"C:/Program Files/sqldeveloper",
 		"C:/Program Files (x86)/sqldeveloper"
@@ -64,8 +68,7 @@ class PluginUtils {
 			val URL[] emptyJarArray = newArrayOfSize(0)
 			return emptyJarArray
 		} else {
-			val jarFiles = dir.listFiles(
-			new FilenameFilter() {
+			val jarFiles = dir.listFiles(new FilenameFilter() {
 				override accept(File dir, String name) {
 					return name.endsWith(".jar") && !name.startsWith("oracle.sqldeveloper") &&
 						!name.startsWith("oracle.datamodeler") && !name.startsWith("oracle.dmt.dataminer") &&
@@ -78,16 +81,48 @@ class PluginUtils {
 			return jarArray
 		}
 	}
-	
+
 	static def hasDefaultConstructor(Class<?> clazz) {
 		return clazz.constructors.filter[parameterTypes.size == 0].toList.size == 1
 	}
-	
+
 	static def findOddgenGenerators(URL[] jars) {
 		val classLoader = new URLClassLoader(jars, PluginUtils.classLoader)
 		val reflections = new Reflections(
 			new ConfigurationBuilder().addUrls(jars).addClassLoader(classLoader).addScanners(new SubTypesScanner()))
-		val gens = reflections.getSubTypesOf(OddgenGenerator2).filter[hasDefaultConstructor]
-		return gens.toList
+		val gens = reflections.getSubTypesOf(OddgenGenerator).filter [
+			it.hasDefaultConstructor && it.getName != "DatabaseGenerator"
+		]
+		val result = new ArrayList<OddgenGenerator2>
+		for (g : gens) {
+			try {
+				val gen = new ClientGenerator(g.newInstance)
+				result.add(gen)
+			} catch (Exception e) {
+				Logger.error(PluginUtils, "Cannot populate version 1 client generator %s1 node due to %s2", g.name,
+					e.message)
+			}
+		}
+		return result
+	}
+
+	static def findOddgenGenerators2(URL[] jars) {
+		val classLoader = new URLClassLoader(jars, PluginUtils.classLoader)
+		val reflections = new Reflections(
+			new ConfigurationBuilder().addUrls(jars).addClassLoader(classLoader).addScanners(new SubTypesScanner()))
+		val gens = reflections.getSubTypesOf(OddgenGenerator2).filter [
+			it.hasDefaultConstructor && it.getName != "DatabaseGenerator" && it.getName != "ClientGenerator"
+		]
+		val result = new ArrayList<OddgenGenerator2>
+		for (g : gens) {
+			try {
+				val gen = g.newInstance
+				result.add(gen)
+			} catch (Exception e) {
+				Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2", g.name,
+					e.message)
+			}
+		}
+		return result
 	}
 }

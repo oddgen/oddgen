@@ -34,10 +34,10 @@ import org.w3c.dom.Element
 
 @Loggable(LoggableConstants.DEBUG)
 class DatabaseGeneratorDao {
-	private Connection conn
-	private JdbcTemplate jdbcTemplate
-	private extension DalTools dalTools
-	private extension NodeTools nodeTools = new NodeTools
+	var Connection conn
+	var JdbcTemplate jdbcTemplate
+	var extension DalTools dalTools
+	val extension NodeTools nodeTools = new NodeTools
 
 	private def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// convert PL/SQL associative array to XML
@@ -693,7 +693,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		Logger.debug(this, "plsql: %s", plsql)
-		val folders = new ArrayList<String>()
+		val folders = new ArrayList<String>
 		var Document doc
 		if (metaData.hasGetFolders) {
 			try {

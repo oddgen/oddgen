@@ -27,7 +27,7 @@ import oracle.ide.model.Subject
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
-import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.OddgenGeneratorUtils
 import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -72,24 +72,23 @@ class RootNode extends DefaultContainer {
 	@Loggable
 	def void openBackground() {
 		var DefaultContainer folder = this
-		val allFolders = new HashMap<URL, GeneratorFolderNode>
+		val allFolders = new HashMap<URL, FolderNode>
 		folder.removeAll
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		if (conn !== null) {
-			val dao = new DatabaseGeneratorDao(conn)
-			val dbgens = dao.findAll
-			Logger.info(this, "discovered %d database generators", dbgens.size)
-			for (dbgen : dbgens) {
+			val gens = OddgenGeneratorUtils.findAll(conn)
+			Logger.info(this, "discovered %d generators", gens.size)
+			for (gen : gens) {
 				folder = this
-				val folderNames = dbgen.getFolders(conn)
-				var GeneratorFolderNode generatorFolderNode
+				val folderNames = gen.getFolders(conn)
+				var FolderNode generatorFolderNode
 				for (folderName : folderNames) {
 					val generatorFolder = new GeneratorFolder
 					generatorFolder.name = folderName
 					val url = URLFactory.newURL(folder.URL, folderName)
 					generatorFolderNode = allFolders.get(url)
 					if (generatorFolderNode === null) {
-						generatorFolderNode = new GeneratorFolderNode(url, generatorFolder)
+						generatorFolderNode = new FolderNode(url, generatorFolder)
 						allFolders.put(url, generatorFolderNode)
 						folder.add(generatorFolderNode)
 						UpdateMessage.fireStructureChanged(folder)
@@ -97,34 +96,13 @@ class RootNode extends DefaultContainer {
 					}
 					folder = generatorFolderNode
 				}
-				val generatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, dbgen.getName(conn)), dbgen)
+				val generatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
 				folder.add(generatorNode)
 				UpdateMessage.fireStructureChanged(folder)
 				folder.markDirty(false)
 			}
-// 			} else if (folder == RootNode.instance.clientGenerators) {
-//				val cgens = PluginUtils.findOddgenGenerators(PluginUtils.findJars).
-//				Logger.info(this, "discovered %d client generators", cgens.size)
-//				val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
-//				for (cgen : cgens) {
-//					if (preferences.showClientGeneratorExamples &&
-//						cgen.name != "org.oddgen.sqldev.generators.DatabaseGenerator" ||
-//						cgen.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
-//							cgen.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator")
-//								try {
-//									val gen = cgen.newInstance
-//									val navigatorNode = new GeneratorNode(URLFactory.newURL(folder.URL, gen.getName(conn)), gen)
-//									folder.add(navigatorNode)
-//								} catch (Exception e) {
-//									Logger.error(this, "Cannot populate client generator %s1 node due to %s2",
-//										cgen.name, e.message)
-//								}
-//						}
-//					}
-//				} 
 		}
 		UpdateMessage.fireStructureChanged(this)
-		//folder.expandNode
 		this.markDirty(false)
 	}
 
@@ -140,7 +118,7 @@ class RootNode extends DefaultContainer {
 		folder.name = name
 		folder.description = name
 		val folderUrl = URLFactory.newURL(getURL(), name)
-		val folderNode = new GeneratorFolderNode(folderUrl, folder)
+		val folderNode = new FolderNode(folderUrl, folder)
 		_children.add(folderNode)
 		UpdateMessage.fireChildAdded(this as Subject, folderNode)
 		return folderNode

@@ -26,7 +26,7 @@ import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
-class GeneratorFolderNode extends DefaultContainer {
+class FolderNode extends DefaultContainer {
 	GeneratorFolder folder;
 
 	new(URL url, GeneratorFolder folder) {

@@ -121,17 +121,17 @@ class GetParamsTest extends AbstractJdbcTest {
 		Assert.assertEquals("table.emp two", result.get("Second parameter"))
 		Assert.assertEquals("table.emp three", result.get("Third parameter"))
 		Assert.assertEquals("table.emp four", result.get("Fourth parameter"))
-		nodes = dbgen.getNodes(dataSource.connection, "VIEW")
-		result = nodes.findFirst[it.id=="VIEW.EMP_VIEW1"].params
+		nodes = dbgen.getNodes(dataSource.connection, "TABLE")
+		result = nodes.findFirst[it.id=="TABLE.DEPT"].params
 		Assert.assertEquals(4, result.size)
 		Assert.assertEquals("First parameter", result.keySet.get(3))
 		Assert.assertEquals("Second parameter", result.keySet.get(2))
 		Assert.assertEquals("Third parameter", result.keySet.get(1))
 		Assert.assertEquals("Fourth parameter", result.keySet.get(0))
-		Assert.assertEquals("view.emp_view1 one", result.get("First parameter"))
-		Assert.assertEquals("view.emp_view1 two", result.get("Second parameter"))
-		Assert.assertEquals("view.emp_view1 three", result.get("Third parameter"))
-		Assert.assertEquals("view.emp_view1 four", result.get("Fourth parameter"))
+		Assert.assertEquals("table.dept one", result.get("First parameter"))
+		Assert.assertEquals("table.dept two", result.get("Second parameter"))
+		Assert.assertEquals("table.dept three", result.get("Third parameter"))
+		Assert.assertEquals("table.dept four", result.get("Fourth parameter"))
 	}
 
 	@Test
@@ -152,7 +152,6 @@ class GetParamsTest extends AbstractJdbcTest {
 		createPlsqlDummy3
 		createPlsqlDummy4
 		createPlsqlDummy5
-		createEmpView1
 	}
 
 	@AfterClass
@@ -162,7 +161,6 @@ class GetParamsTest extends AbstractJdbcTest {
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy3")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy4")
 		jdbcTemplate.execute("DROP PACKAGE plsql_dummy5")
-		jdbcTemplate.execute("DROP VIEW emp_view1")
 	}
 
 	def static createPlsqlDummy1() {
@@ -373,7 +371,7 @@ class GetParamsTest extends AbstractJdbcTest {
 			   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
 			      RETURN t_string IS
 			   BEGIN
-			      IF in_object_type = 'TABLE' THEN
+			      IF in_object_name = 'EMP' THEN
 			         RETURN NEW t_string('First parameter', 'Second parameter', 'Third parameter', 'Fourth parameter');
 			      ELSE
 			         RETURN NEW t_string('Fourth parameter', 'Third parameter', 'Second parameter', 'First parameter');
@@ -386,11 +384,6 @@ class GetParamsTest extends AbstractJdbcTest {
 			      RETURN NULL;
 			   END generate;
 			END plsql_dummy5;
-		''')
-	}
-	def static createEmpView1() {
-		jdbcTemplate.execute('''
-			CREATE OR REPLACE VIEW emp_view1 AS SELECT * FROM emp
 		''')
 	}
 

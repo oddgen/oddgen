@@ -28,7 +28,6 @@ import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
 import org.oddgen.sqldev.generators.OddgenGeneratorUtils
-import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
@@ -83,12 +82,10 @@ class RootNode extends DefaultContainer {
 				val folderNames = gen.getFolders(conn)
 				var FolderNode generatorFolderNode
 				for (folderName : folderNames) {
-					val generatorFolder = new GeneratorFolder
-					generatorFolder.name = folderName
 					val url = URLFactory.newURL(folder.URL, folderName)
 					generatorFolderNode = allFolders.get(url)
 					if (generatorFolderNode === null) {
-						generatorFolderNode = new FolderNode(url, generatorFolder)
+						generatorFolderNode = new FolderNode(url, folderName)
 						allFolders.put(url, generatorFolderNode)
 						folder.add(generatorFolderNode)
 						UpdateMessage.fireStructureChanged(folder)
@@ -114,11 +111,8 @@ class RootNode extends DefaultContainer {
 	}
 
 	def protected addFolder(String name) {
-		val folder = new GeneratorFolder()
-		folder.name = name
-		folder.description = name
 		val folderUrl = URLFactory.newURL(getURL(), name)
-		val folderNode = new FolderNode(folderUrl, folder)
+		val folderNode = new FolderNode(folderUrl, name)
 		_children.add(folderNode)
 		UpdateMessage.fireChildAdded(this as Subject, folderNode)
 		return folderNode

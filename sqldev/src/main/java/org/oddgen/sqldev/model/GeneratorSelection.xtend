@@ -1,10 +1,11 @@
 package org.oddgen.sqldev.model
 
-import java.util.LinkedHashMap
 import org.eclipse.xtend.lib.annotations.Accessors
+import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.generators.model.Node
 
 @Accessors
 class GeneratorSelection {
-	private ObjectName objectName
-	private LinkedHashMap<String, String> params
+	private OddgenGenerator2 generator
+	private Node node
 }

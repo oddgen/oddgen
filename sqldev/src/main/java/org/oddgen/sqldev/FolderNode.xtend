@@ -22,16 +22,15 @@ import javax.swing.tree.TreePath
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ideimpl.explorer.ExplorerNode
-import org.oddgen.sqldev.model.GeneratorFolder
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class FolderNode extends DefaultContainer {
-	GeneratorFolder folder;
+	String name;
 
-	new(URL url, GeneratorFolder folder) {
+	new(URL url, String name) {
 		super(url)
-		this.folder = folder
+		this.name = name
 	}
 
 	override getIcon() {
@@ -39,19 +38,15 @@ class FolderNode extends DefaultContainer {
 	}
 
 	override getLongLabel() {
-		return folder?.getDescription
+		return this.name;
 	}
 
 	override getShortLabel() {
-		return folder?.name
+		return this.name;
 	}
 
 	override getToolTipText() {
-		return folder?.tooltip
-	}
-
-	def getFolder() {
-		return folder
+		return this.name;
 	}
 
 	@Loggable

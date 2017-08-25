@@ -28,23 +28,14 @@ import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.model.GeneratorSelection
-import org.oddgen.sqldev.model.ObjectName
-import org.oddgen.sqldev.model.ObjectType
 
 class GenerateDialogTest extends AbstractJdbcTest {
 
 	def getDatabaseSelection(DatabaseGenerator dbgen, String objectType, String objectName) {
 		val gensel = new GeneratorSelection()
-		val type = new ObjectType()
-		type.generator = dbgen
-		type.node = 	dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
-		val name = new ObjectName()
-		name.objectType = type
-		name.node = 	dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP"].get(0)
-		gensel.objectName = name
-		gensel.params = name.node.params
+		gensel.generator = dbgen
+		gensel.node = 	dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
 		return gensel
-
 	}
 
 	@Test

@@ -35,7 +35,7 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 
 	override handleDefaultAction(Context context) {
 		Logger.debug(this, "handleDefaultAction context: %s", context)
-		if (context.element instanceof ObjectNameNode) {
+		if (context.element instanceof NodeNode) {
 			OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION.performAction
 			return true
 		}

@@ -29,8 +29,6 @@ import org.oddgen.sqldev.GenerateDialog
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
 import org.oddgen.sqldev.dal.tests.AbstractJdbcTest
 import org.oddgen.sqldev.model.GeneratorSelection
-import org.oddgen.sqldev.model.ObjectName
-import org.oddgen.sqldev.model.ObjectType
 
 class GenerateDialogLovTest extends AbstractJdbcTest {
 
@@ -39,13 +37,8 @@ class GenerateDialogLovTest extends AbstractJdbcTest {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst[it.metaData.generatorName == 'PLSQL_DUMMY']
 		val gensel = new GeneratorSelection()
-		val type = new ObjectType()
-		type.generator = dbgen
-		type.node = dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
-		val name = new ObjectName()
-		name.objectType = type
-		name.node = dbgen.getNodes(dataSource.connection, "TABLE").get(0)
-		gensel.objectName = name
+		gensel.generator = dbgen
+		gensel.node = dbgen.getNodes(dataSource.connection, null).filter[it.id == "TABLE"].get(0)
 		val gens = new ArrayList<GeneratorSelection>()
 		gens.add(gensel)
 		val frame = new JFrame("Main")

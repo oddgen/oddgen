@@ -33,7 +33,6 @@ import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
 import org.oddgen.sqldev.model.GeneratorSelection
-import org.oddgen.sqldev.model.ObjectName
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
@@ -66,12 +65,9 @@ class OddgenNavigatorController extends ShowNavigatorController {
 	def selectedDatabaseGenerators(Context context) {
 		val gens = new ArrayList<GeneratorSelection>
 		for (selection : context.selection) {
-			val node = selection as ObjectNameNode
-			val objectName = node.data as ObjectName
-		 	val sel = new GeneratorSelection()
-		 	sel.objectName = objectName
-		 	sel.params = objectName.node.params
-			gens.add(sel)
+			val nodeNode = selection as NodeNode
+			val gensel = nodeNode.data as GeneratorSelection
+			gens.add(gensel)
 		}
 		return gens
 	}
@@ -84,9 +80,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
 			result = '''
 				«FOR gen : gens SEPARATOR '\n'»
-					«Logger.debug(this, "Generating %1$s.%2$s to string...", gen.objectName.node.id)»
-					«gen.objectName.node.params = gen.params»
-					«gen.objectName.objectType.generator.generate(conn, gen.objectName.node)»
+					«Logger.debug(this, "Generating %1$s to string...", gen.node.id)»
+					«gen.generator.generate(conn, gen.node)»
 				«ENDFOR»
 			'''
 		} finally {
@@ -131,7 +126,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			id == GENERATE_DIALOG_CMD_ID) {
 			action.enabled = false
 			if (context.selection.length > 0) {
-				if (context.selection.get(0) instanceof ObjectNameNode) {
+				if (context.selection.get(0) instanceof NodeNode) {
 					action.enabled = true
 					Logger.debug(this, "enable generator command.")
 				}

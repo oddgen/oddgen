@@ -150,7 +150,7 @@ class OddgenNavigatorWindow extends DefaultNavigatorWindow implements ActionList
 	}
 
 	def getConnectionName() {
-		return connComboBox.JComboBox.selectedItem as String
+		return connComboBox?.JComboBox?.selectedItem as String
 	}
 
 	def getConnection() {

@@ -18,12 +18,14 @@ package org.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import java.io.ByteArrayInputStream
 import java.net.URL
+import java.util.List
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 import javax.xml.bind.DatatypeConverter
 import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
+import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
@@ -155,16 +157,34 @@ class NodeNode extends DefaultContainer {
 		}
 	}
 
+	def void openEagerlyLoadedChildren(List<Node> nodes) {
+		for (node : nodes.filter[it.parentId == gensel.node.id]) {
+			val GeneratorSelection gs = new GeneratorSelection
+			gs.generator = gensel.generator
+			gs.node = node
+			val nodeNode = new NodeNode(URLFactory.newURL(this.URL, gs.node.id), gs)
+			this.add(nodeNode)
+			if (!gs.node.isLeaf) {
+				nodeNode.openEagerlyLoadedChildren(nodes)
+			}
+		}
+		UpdateMessage.fireStructureChanged(this)
+		this.markDirty(false)
+	}
+
 	def openBackground() {
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		if (conn !== null) {
-			// TODO: support eager loading only if enabled via preferences
-			for (n : gensel.generator.getNodes(conn, gensel.node.id).filter[it.parentId == gensel.node.id]) {
+			val nodes = gensel.generator.getNodes(conn, gensel.node.id)
+			for (n : nodes.filter[it.parentId == gensel.node.id]) {
 				val gs = new GeneratorSelection
 				gs.generator = gensel.generator
 				gs.node = n
 				val nodeNode = new NodeNode(URLFactory.newURL(this.URL, gs.node.id), gs)
 				this.add(nodeNode)
+				if (!gs.node.isLeaf) {
+					nodeNode.openEagerlyLoadedChildren(nodes)
+				}
 			}
 		}
 		UpdateMessage.fireStructureChanged(this)
@@ -172,7 +192,7 @@ class NodeNode extends DefaultContainer {
 	}
 
 	override openImpl() {
-		if (!gensel.node.leaf) {
+		if (!gensel.node.leaf && !this.children.hasNext) {
 			val Runnable runnable = [|openBackground]
 			val thread = new Thread(runnable)
 			thread.name = "oddgen non-leaf node"

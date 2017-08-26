@@ -21,12 +21,14 @@ import oracle.ide.model.DefaultContainer
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class GeneratorNode extends DefaultContainer {
-	private OddgenGenerator2 generator
+	val OddgenGenerator2 generator
+	val extension NodeTools nodeTools = new NodeTools
 
 	new(URL url, OddgenGenerator2 generator) {
 		super(url)
@@ -52,18 +54,29 @@ class GeneratorNode extends DefaultContainer {
 		return generator?.getDescription(conn)
 	}
 
-	override openImpl() {
+	def openBackground() {
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		val gen = generator
-		for (node : gen.getNodes(conn, null).filter[it.parentId === null || it.parentId.empty]) {
+		val nodes = gen.getNodes(conn, null)
+		for (node : nodes.filter[it.parentId === null || it.parentId.empty]) {
 			val GeneratorSelection gensel = new GeneratorSelection
 			gensel.generator = gen
 			gensel.node = node
 			val nodeNode = new NodeNode(URLFactory.newURL(this.URL, gensel.node.id), gensel)
 			this.add(nodeNode)
+			if (!gensel.node.isLeaf) {
+				nodeNode.openEagerlyLoadedChildren(nodes)
+			}
 		}
 		UpdateMessage.fireStructureChanged(this)
 		this.markDirty(false)
+	}
+
+	override openImpl() {
+		val Runnable runnable = [|openBackground]
+		val thread = new Thread(runnable)
+		thread.name = "oddgen generator node"
+		thread.start
 	}
 
 }

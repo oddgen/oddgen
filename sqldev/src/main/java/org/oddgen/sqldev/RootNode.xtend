@@ -23,7 +23,6 @@ import javax.swing.JTree
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 import oracle.ide.model.DefaultContainer
-import oracle.ide.model.Subject
 import oracle.ide.model.UpdateMessage
 import oracle.ide.net.URLFactory
 import oracle.ideimpl.explorer.ExplorerNode
@@ -34,7 +33,6 @@ import org.oddgen.sqldev.resources.OddgenResources
 class RootNode extends DefaultContainer {
 	private static String ROOT_NODE_NAME = OddgenResources.getString("ROOT_NODE_LONG_LABEL")
 	private static RootNode INSTANCE
-	private boolean initialized = false
 
 	def static synchronized getInstance() {
 		if (INSTANCE === null) {
@@ -108,24 +106,6 @@ class RootNode extends DefaultContainer {
 		val thread = new Thread(runnable)
 		thread.name = "oddgen Tree Opener"
 		thread.start
-	}
-
-	def protected addFolder(String name) {
-		val folderUrl = URLFactory.newURL(getURL(), name)
-		val folderNode = new FolderNode(folderUrl, name)
-		_children.add(folderNode)
-		UpdateMessage.fireChildAdded(this as Subject, folderNode)
-		return folderNode
-
-	}
-
-	def initialize() {
-		if (!initialized) {
-			UpdateMessage.fireStructureChanged(this as Subject)
-			markDirty(false)
-			Logger.info(this, "RootNode initialized.")
-			initialized = true
-		}
 	}
 
 	def protected void collapseall(JTree tree, TreePath parent, TreePath root) {

@@ -91,6 +91,9 @@ class HelloWorldClientGenerator implements OddgenGenerator2 {
 		val result = '''
 			BEGIN
 			   -- «nodes.size» nodes selected.
+			   «IF nodes.size == 0»
+			      NULL;
+			   «ENDIF»
 		'''
 		return result
 	}

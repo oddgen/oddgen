@@ -34,11 +34,12 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 	}
 
 	override handleDefaultAction(Context context) {
-		Logger.debug(this, "handleDefaultAction context: %s", context)
-		if (context.element instanceof NodeNode) {
+		if (OddgenNavigatorController.allowGenerate(context)) {
+			Logger.debug(this, "Default action allowed for context: %s", context)
 			OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION.performAction
 			return true
 		}
+		Logger.debug(this, "Default action not allowed for context: %s", context)
 		return false
 	}
 

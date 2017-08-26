@@ -61,8 +61,26 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return INSTANCE
 	}
+	
+	def static allowGenerate(Context context) {
+		var boolean allowGenerate = false
+		val hasOtherNodes = context.selection.findFirst[!(it instanceof NodeNode)] !== null
+		if (!hasOtherNodes && context.selection.length > 0) {
+			val List<GeneratorSelection> gensels = context.selection.toList.filter[it instanceof NodeNode].map [
+				(it as NodeNode).data as GeneratorSelection
+			].toList
+			val hasNonGeneratables = gensels.findFirst[!it.node.generatable] !== null
+			if (!hasNonGeneratables) {
+				val hasNonMultiselectables = gensels.findFirst[!it.node.multiselectable] !== null
+				if (gensels.size == 1 || !hasNonMultiselectables) {
+					allowGenerate = true
+				}
+			}
+		}
+		return allowGenerate		
+	}
 
-	def selectedDatabaseGenerators(Context context) {
+	def selectedGenerators(Context context) {
 		val gens = new ArrayList<GeneratorSelection>
 		for (selection : context.selection) {
 			val nodeNode = selection as NodeNode
@@ -125,21 +143,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			action.enabled = true
 		} else if (id == GENERATE_TO_WORKSHEET_CMD_ID || id == GENERATE_TO_CLIPBOARD_CMD_ID ||
 			id == GENERATE_DIALOG_CMD_ID) {
-			action.enabled = false
-			val hasOtherNodes = context.selection.findFirst[!(it instanceof NodeNode)] !== null
-			if (!hasOtherNodes && context.selection.length > 0) {
-				val List<GeneratorSelection> gensels = context.selection.toList.filter[it instanceof NodeNode].map [
-					(it as NodeNode).data as GeneratorSelection
-				].toList
-				val hasNonGeneratables = gensels.findFirst[!it.node.generatable] !== null
-				if (!hasNonGeneratables) {
-					val hasNonMultiselectables = gensels.findFirst[!it.node.multiselectable] !== null
-					if (gensels.size == 1 || !hasNonMultiselectables) {
-						action.enabled = true
-						Logger.debug(this, "enable generator command.")
-					}
-				}
-			}
+			action.enabled = allowGenerate(context)
+			Logger.debug(this, '''generate actions are «IF !action.enabled»not «ENDIF»enabled.''')
 		}
 		return action.enabled
 	}
@@ -156,7 +161,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				return true
 			} else if (action.commandId == GENERATE_TO_WORKSHEET_CMD_ID) {
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				val dbgens = selectedDatabaseGenerators(context)
+				val dbgens = selectedGenerators(context)
 				val Runnable runnable = [|dbgens.generateToWorksheet(conn)]
 				val thread = new Thread(runnable)
 				thread.name = "oddgen Worksheet Generator"
@@ -164,14 +169,14 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				return true
 			} else if (action.commandId == GENERATE_TO_CLIPBOARD_CMD_ID) {
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				val dbgens = selectedDatabaseGenerators(context)
+				val dbgens = selectedGenerators(context)
 				val Runnable runnable = [|dbgens.generateToClipboard(conn)]
 				val thread = new Thread(runnable)
 				thread.name = "oddgen Clipboard Generator"
 				thread.start
 				return true
 			} else if (action.commandId == GENERATE_DIALOG_CMD_ID) {
-				val dbgens = selectedDatabaseGenerators(context)
+				val dbgens = selectedGenerators(context)
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, dbgens, conn)
 				return true

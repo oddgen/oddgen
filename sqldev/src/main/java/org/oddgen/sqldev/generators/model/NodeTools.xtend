@@ -47,8 +47,9 @@ class NodeTools {
 			«ENDIF»
 		«ENDIF»
 		l_node.leaf            := «IF node.leaf === null»TRUE«ELSE»«IF node.leaf»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
-		l_node.generatable     := «IF node.generatable === null»TRUE«ELSE»«IF node.generatable»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
-		l_node.multiselectable := «IF node.multiselectable === null»FALSE«ELSE»«IF node.multiselectable»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
+		l_node.generatable     := «IF node.generatable === null»l_node.leaf«ELSE»«IF node.generatable»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
+		l_node.multiselectable := «IF node.multiselectable === null»l_node.leaf«ELSE»«IF node.multiselectable»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
+		l_node.relevant        := «IF node.relevant === null»l_node.leaf«ELSE»«IF node.relevant»TRUE«ELSE»FLSE«ENDIF»«ENDIF»;
 	'''
 
 	def CharSequence toPlsql(List<Node> nodes) '''
@@ -234,6 +235,46 @@ class NodeTools {
 			}
 		}
 		return displayName
+	}
+	
+	def getDisplayDescription(Node node) {
+		if (node.description !== null) {
+			return node.description
+		} else {
+			return node.displayName
+		}
+	}	
+	
+	def isLeaf (Node node) {
+		if (node.leaf === null) {
+			return false
+		} else {
+			return node.leaf
+		}
+	}
+	
+	def isGeneratable (Node node) {
+		if (node.generatable === null) {
+			return node.isLeaf
+		} else {
+			return node.generatable
+		}
+	}
+	
+	def isMultiselectable (Node node) {
+		if (node.multiselectable === null) {
+			return node.isLeaf
+		} else {
+			return node.multiselectable
+		}
+	}
+	
+	def isRelevant (Node node) {
+		if (node.relevant === null) {
+			return node.isLeaf
+		} else {
+			return node.relevant
+		}
 	}
 
 }

@@ -22,10 +22,12 @@ import java.io.FilenameFilter
 import java.net.URL
 import java.net.URLClassLoader
 import java.util.ArrayList
+import oracle.ide.config.Preferences
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.ClientGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.model.PreferenceModel
 import org.reflections.Reflections
 import org.reflections.scanners.SubTypesScanner
 import org.reflections.util.ConfigurationBuilder
@@ -107,6 +109,7 @@ class PluginUtils {
 	}
 
 	static def findOddgenGenerators2(URL[] jars) {
+		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 		val classLoader = new URLClassLoader(jars, PluginUtils.classLoader)
 		val reflections = new Reflections(
 			new ConfigurationBuilder().addUrls(jars).addClassLoader(classLoader).addScanners(new SubTypesScanner()))
@@ -115,14 +118,19 @@ class PluginUtils {
 		]
 		val result = new ArrayList<OddgenGenerator2>
 		for (g : gens) {
-			try {
-				val gen = g.newInstance
-				result.add(gen)
-			} catch (Exception e) {
-				Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2", g.name,
-					e.message)
+			if (preferences.showClientGeneratorExamples ||
+				g.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
+					g.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator") {
+						try {
+							val gen = g.newInstance
+							result.add(gen)
+						} catch (Exception e) {
+							Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2",
+								g.name, e.message)
+						}
+					}
+				}
+				return result
 			}
 		}
-		return result
-	}
-}
+		

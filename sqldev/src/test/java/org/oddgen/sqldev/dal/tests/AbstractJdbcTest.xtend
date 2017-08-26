@@ -121,11 +121,12 @@ class AbstractJdbcTest {
 			   /**
 			   * Record type to represent a node in the SQL Developer navigator tree.
 			   * Icon is evaluated as follows:
-			   *    a) by icon_base64, if defined and valid
-			   *    b) by icon_name, if defined and valid
-			   *    c) by params('Object type'), if defined and known
-			   *    d) UNKNOWN_ICON, if leaf node
-			   *    e) UNKNOWN_FOLDER_ICON
+			   *    a) by icon_name, if defined
+			   *    b) by icon_base64, if defined
+			   *    c) by parent_id, if leaf node and parent_id is a known object type (normal icon)
+			   *    d) by id, if non-leaf node and id is a known object type (folder icon)
+			   *    e) UNKNOWN_ICON, if leaf node
+			   *    f) UNKNOWN_FOLDER_ICON, if non-leaf node
 			   *
 			   * @since v0.3
 			   */
@@ -138,8 +139,9 @@ class AbstractJdbcTest {
 			      icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
 			      params           t_param_type,         -- array of parameters, e.g. OBJECT_TYPE=TABLE, OBJECT_NAME=EMP
 			      leaf             BOOLEAN,              -- Is this a leaf node? true|false, default false
-			      generatable      BOOLEAN,              -- Is the node with all its children generatable? true|false, default true
-			      multiselectable  BOOLEAN               -- May this node be part of a multiselection? true|false, default true
+			      generatable      BOOLEAN,              -- Is the node with all its children generatable? true|false, default leaf
+			      multiselectable  BOOLEAN,              -- May this node be part of a multiselection? true|false, default leaf
+			      relevant         BOOLEAN               -- Pass node to the generator? true|false, default leaf
 			   );
 			
 			   /**

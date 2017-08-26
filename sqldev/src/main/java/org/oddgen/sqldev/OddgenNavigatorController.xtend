@@ -94,7 +94,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		val result = gens.generateToString(conn)
 		SwingUtilities.invokeAndWait(new Runnable() {
 			override run() {
-				val worksheet = OpenWorksheetWizard.openNewTempWorksheet(OddgenResources.getString("WORKSHEET_TITLE"), result) as Worksheet
+				val worksheet = OpenWorksheetWizard.openNewTempWorksheet(OddgenResources.getString("WORKSHEET_TITLE"),
+					result) as Worksheet
 				worksheet.comboConnection = null
 			}
 		});
@@ -102,19 +103,19 @@ class OddgenNavigatorController extends ShowNavigatorController {
 
 	def generateToClipboard(List<GeneratorSelection> gens, Connection conn) {
 		val result = gens.generateToString(conn)
-		SwingUtilities.invokeAndWait(
-			new Runnable() {
-				override run() {
-					val selection = new StringSelection(result)
-					val clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
-					clipboard.setContents(selection, null)
-					// dialog properties are managed in $HOME/.sqldeveloper/system*/o.ide.*/.oracle_javatools_msgdlg.properties
-					// TODO: find out how to manage these properties via SQL Developer					
-					MessageDialog.optionalInformation("oddgen: confirm generate to clipboard",
-						OddgenNavigatorManager.instance.navigatorWindow.GUI, OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_MESSAGE"),
-						OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_TITLE"), null);
-				}
-			});
+		SwingUtilities.invokeAndWait(new Runnable() {
+			override run() {
+				val selection = new StringSelection(result)
+				val clipboard = Toolkit.getDefaultToolkit().getSystemClipboard()
+				clipboard.setContents(selection, null)
+				// dialog properties are managed in $HOME/.sqldeveloper/system*/o.ide.*/.oracle_javatools_msgdlg.properties
+				// TODO: find out how to manage these properties via SQL Developer					
+				MessageDialog.optionalInformation("oddgen: confirm generate to clipboard",
+					OddgenNavigatorManager.instance.navigatorWindow.GUI,
+					OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_MESSAGE"),
+					OddgenResources.getString("MESSAGE_DIALOG_CONFIRM_GENERATE_TO_CLIPBOARD_TITLE"), null);
+			}
+		});
 	}
 
 	override update(IdeAction action, Context context) {
@@ -125,10 +126,18 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		} else if (id == GENERATE_TO_WORKSHEET_CMD_ID || id == GENERATE_TO_CLIPBOARD_CMD_ID ||
 			id == GENERATE_DIALOG_CMD_ID) {
 			action.enabled = false
-			if (context.selection.length > 0) {
-				if (context.selection.get(0) instanceof NodeNode) {
-					action.enabled = true
-					Logger.debug(this, "enable generator command.")
+			val hasOtherNodes = context.selection.findFirst[!(it instanceof NodeNode)] !== null
+			if (!hasOtherNodes && context.selection.length > 0) {
+				val List<GeneratorSelection> gensels = context.selection.toList.filter[it instanceof NodeNode].map [
+					(it as NodeNode).data as GeneratorSelection
+				].toList
+				val hasNonGeneratables = gensels.findFirst[!it.node.generatable] !== null
+				if (!hasNonGeneratables) {
+					val hasNonMultiselectables = gensels.findFirst[!it.node.multiselectable] !== null
+					if (gensels.size == 1 || !hasNonMultiselectables) {
+						action.enabled = true
+						Logger.debug(this, "enable generator command.")
+					}
 				}
 			}
 		}

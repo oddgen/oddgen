@@ -158,6 +158,7 @@ class NodeNode extends DefaultContainer {
 	def openBackground() {
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		if (conn !== null) {
+			// TODO: support eager loading only if enabled via preferences
 			for (n : gensel.generator.getNodes(conn, gensel.node.id).filter[it.parentId == gensel.node.id]) {
 				val gs = new GeneratorSelection
 				gs.generator = gensel.generator

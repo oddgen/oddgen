@@ -29,7 +29,7 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource
 class HelloWorldClientGenerator implements OddgenGenerator2 {
 
 	var extension NodeTools nodeTools = new NodeTools	
-	var long startTimeMillis = System.currentTimeMillis
+	var double startTimeNanos = System.nanoTime
 	
 	override getName(Connection conn) {
 		return "Hello World"
@@ -87,7 +87,7 @@ class HelloWorldClientGenerator implements OddgenGenerator2 {
 	}
 	
 	override generateProlog(Connection conn, List<Node> nodes) {
-		startTimeMillis = System.currentTimeMillis
+		startTimeNanos = System.nanoTime
 		val result = '''
 			BEGIN
 			   -- «nodes.size» nodes selected.
@@ -104,7 +104,7 @@ class HelloWorldClientGenerator implements OddgenGenerator2 {
 
 	override generateEpilog(Connection conn, List<Node> nodes) {
 		val result = '''
-			«'   '»-- «nodes.size» nodes generated in «System.currentTimeMillis - startTimeMillis» ms.
+			«'   '»-- «nodes.size» nodes generated in «String.format("%.3f", (System.nanoTime - startTimeNanos) / 1000000)» ms.
 			END;
 			/
 		'''

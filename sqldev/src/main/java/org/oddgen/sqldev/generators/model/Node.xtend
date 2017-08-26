@@ -46,9 +46,12 @@ class Node extends AbstractModel {
 	/** Is this a leaf node? true|false, default false */
 	Boolean leaf
 	
-	/** Is the node with all its children generatable? true|false, default true */
+	/** Is the node with all its children generatable? true|false, default leaf */
 	Boolean generatable
 	
-	/** May this node be part of a multiselection? true|false, default true */
+	/** May this node be part of a multiselection? true|false, default leaf */
 	Boolean multiselectable
+	
+	/** Pass node to the generator? true|false, default leaf */
+	Boolean relevant
 }

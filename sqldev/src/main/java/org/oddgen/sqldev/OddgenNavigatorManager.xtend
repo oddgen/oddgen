@@ -87,7 +87,6 @@ class OddgenNavigatorManager extends DefaultNavigatorManager {
 	}
 
 	override HelpInfo getHelpInfo() {
-		// TODO: provide some help
 		return super.helpInfo
 	}
 }

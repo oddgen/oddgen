@@ -188,11 +188,11 @@ class NodeNode extends DefaultContainer {
 	}
 
 	override getToolTipText() {
-		return gensel.node.displayName
+		return gensel.node.displayDescription
 	}
 
 	override mayHaveChildren() {
-		return !gensel.node.leaf
+		return !gensel.node.isLeaf
 	}
 
 	override getData() {

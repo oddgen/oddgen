@@ -101,7 +101,7 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 			/
 		'''
 		val result = gen.generateEpilog(dataSource.connection, nodes)
-		Assert.assertEquals(expected, result.replaceAll("[0-9]+ ms", "... ms"))		
+		Assert.assertEquals(expected, result.replaceAll("[0-9.]+ ms", "... ms"))		
 	}
 
 	@Test
@@ -135,7 +135,7 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 			«ENDFOR»
 			«gen.generateEpilog(dataSource.connection, nodes)»
 		'''
-		Assert.assertEquals(expected, result.replaceAll("[0-9]+ ms", "... ms"))
+		Assert.assertEquals(expected, result.replaceAll("[0-9.]+ ms", "... ms"))
 	}
 
 	@BeforeClass

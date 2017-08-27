@@ -22,6 +22,19 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    */
 
    /**
+   * oddgen PL/SQL database server generator.
+   * complete interface.
+   * PL/SQL package specification only.
+   * PL/SQL package body is not part of the interface definition.
+   * Requires the ODDGEN_TYPES package specification to be installed in 
+   * the same schema. 
+   *
+   * @headcom
+   */
+   
+   TYPE t_vc_type IS TABLE OF VARCHAR2(128);
+
+   /**
    * Get the name of the generator, used in tree view
    * If this function is not implemented, the package name will be used.
    *
@@ -40,6 +53,21 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * @since v0.1
    */
    FUNCTION get_description RETURN VARCHAR2;
+   
+   /**
+   * Get the list of folder names. The first entry in the list is the folder 
+   * under 'All Generators', the second one is the subfolder under the 
+   * first one and so on. The generator will be visible in the last folder
+   * of the list.
+   * If this function is not implemented, the default will be determined
+   * based on the generator type. For generators stored in the database 
+   * this will be oddgen_types.t_value_type('Database Server Generators').
+   *
+   * @returns the list of folders under 'All Generators'
+   *
+   * @since v0.3
+   */
+   FUNCTION get_folders RETURN oddgen_types.t_value_type;
 
    /**
    * Get the help of the generator.
@@ -50,7 +78,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * @since v0.3
    */
    FUNCTION get_help RETURN CLOB;
-   
+
    /**
    * Get the group of an object type. 
    * Function to be used in SQL, it is not part of the oddgen iterface.
@@ -87,7 +115,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * @since v0.3
    */
    FUNCTION get_ordered_params RETURN oddgen_types.t_value_type;
-   
+
    /**
    * Get the list of values per parameter, if such a LOV is applicable.
    * If this function is not implemented, then the parameters cannot be validated in the GUI.
@@ -125,7 +153,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * If this function is not implemented, no prolog will be generated.
    * Called once for all selected nodes at the very beginning of the processing.
    *
-   * @param in_nodes table of selected nodes to be generated.
+   * @param in_nodes table of selected nodes to be generated
    * @returns generator prolog
    *
    * @since v0.3
@@ -137,7 +165,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    /**
    * Generates the separator between generate calls.
    * If this function is not implemented, an empty line will be generated.
-   * Called once, but used between generator calls.
+   * Called once, but applied between generator calls.
    *
    * @returns generator separator
    *
@@ -150,7 +178,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * If this function is not implemented, no epilog will be generated.
    * Called once for all selected nodes at the very end of the processing.
    *
-   * @param in_nodes table of selected nodes to be generated.
+   * @param in_nodes table of selected nodes to be generated
    * @returns generator epilog
    *
    * @since v0.3
@@ -163,7 +191,7 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * Generates the result.
    * This function must be implemented.
    * Called for every selected node.
-   * Non-leaf nodes are not resolved by oddgen.
+   * Children of nodes are not resolved by oddgen.
    *
    * @param in_node node to be generated
    * @returns generator output
@@ -172,16 +200,6 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    */
    FUNCTION generate(
       in_node IN oddgen_types.r_node_type
-   ) RETURN CLOB;
-   
-   /**
-   * Wrapper to test the generator from SQL.
-   * Not part of the oddgen interface.
-   *
-   * @param in_id e.g. CODE, CODE.PACKAGE, DATA.TABLE.EMP
-   */
-   FUNCTION generate(
-      in_id IN VARCHAR2
    ) RETURN CLOB;
    
 END dropall;

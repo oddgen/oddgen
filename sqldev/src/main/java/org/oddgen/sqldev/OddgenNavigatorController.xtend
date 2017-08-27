@@ -192,24 +192,24 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				return true
 			} else if (action.commandId == GENERATE_TO_WORKSHEET_CMD_ID) {
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				val dbgens = selectedGenerators(context)
-				val Runnable runnable = [|dbgens.generateToWorksheet(conn)]
+				val gens = selectedGenerators(context)
+				val Runnable runnable = [|gens.generateToWorksheet(conn)]
 				val thread = new Thread(runnable)
 				thread.name = "oddgen Worksheet Generator"
 				thread.start
 				return true
 			} else if (action.commandId == GENERATE_TO_CLIPBOARD_CMD_ID) {
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				val dbgens = selectedGenerators(context)
-				val Runnable runnable = [|dbgens.generateToClipboard(conn)]
+				val gens = selectedGenerators(context)
+				val Runnable runnable = [|gens.generateToClipboard(conn)]
 				val thread = new Thread(runnable)
 				thread.name = "oddgen Clipboard Generator"
 				thread.start
 				return true
 			} else if (action.commandId == GENERATE_DIALOG_CMD_ID) {
-				val dbgens = selectedGenerators(context)
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
-				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, dbgens, conn)
+				val gens = selectedGenerators(context)
+				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, gens, conn)
 				return true
 			}
 		}

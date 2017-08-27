@@ -28,23 +28,23 @@ class OddgenGeneratorUtils {
 	/**
 	 * Finds all generators
 	 * 
-	 * @param conn Connection used to find generators in the database
+	 * @param conn Connection used to find generators in the database and more
 	 * @return list of generators implementing the OddgenGenerator2 interface
 	 */
 	def static findAll(Connection conn) {
 		val result = new  HashMap<String, OddgenGenerator2>
 		// 1st priority
 		for (gen : PluginUtils.findOddgenGenerators2(PluginUtils.findJars)) {
-			result.put(gen.getName(conn), gen)
+			result.put(gen.class.name, gen)
 		}		
-		// 2nd priority (do not add generators with existing name)
+		// 2nd priority (do not add generators with same class name)
 		for (gen : PluginUtils.findOddgenGenerators(PluginUtils.findJars)) {
-			result.put(gen.getName(conn), gen)
+			result.put(gen.class.name, gen)
 		}
-		// 3rd priority (do not add generators with existing name)
+		// 3rd priority
 		val dao = new DatabaseGeneratorDao(conn)
 		for (gen : dao.findAll) {
-			result.put(gen.getName(conn), gen)
+			result.put('''«gen.metaData.generatorOwner».«gen.metaData.generatorName»''', gen)
 		}
 		return result.values
 	}

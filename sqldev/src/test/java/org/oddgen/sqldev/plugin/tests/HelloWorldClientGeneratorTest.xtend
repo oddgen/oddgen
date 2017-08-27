@@ -37,7 +37,7 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 	
 	@Test
 	def getFolders() {
-		Assert.assertEquals(#["Client Generators", "Examples"], gen.getFolders(dataSource.connection))
+		Assert.assertEquals(#["Examples", "Xtend"], gen.getFolders(dataSource.connection))
 	}	
 
 	@Test

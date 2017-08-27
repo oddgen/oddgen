@@ -781,9 +781,9 @@ class DatabaseGeneratorDao {
 				         END LOOP params;
 				         sys.dbms_lob.append(l_clob, '</params>');
 				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
-				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, 'true') || '</generatable>');
-				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, 'true') || '</multiselectable>');
-				         sys.dbms_lob.append(l_clob, '<relevant>' || bool2string(t_nodes(i).relevant, 'true') || '</relevant>');
+				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, NULL) || '</generatable>');
+				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, NULL) || '</multiselectable>');
+				         sys.dbms_lob.append(l_clob, '<relevant>' || bool2string(t_nodes(i).relevant, NULL) || '</relevant>');
 				         sys.dbms_lob.append(l_clob, '</node>');
 				      END LOOP nodes;
 				   END IF;
@@ -907,15 +907,15 @@ class DatabaseGeneratorDao {
 				node.params = params
 				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
 				val generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent
-				if (generatable !== null) {
+				if (generatable !== null && !generatable.empty) {
 					node.generatable = generatable == "true"
 				}
 				val multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent
-				if (multiselectable !== null) {
+				if (multiselectable !== null && !multiselectable.empty) {
 					node.multiselectable = multiselectable == "true"
 				}
 				val relevant = xmlNode.getElementsByTagName("relevant").item(0)?.textContent
-				if (relevant !== null) {
+				if (relevant !== null && !relevant.empty) {
 					node.relevant = relevant == "true"
 				}
 				nodes.add(node)

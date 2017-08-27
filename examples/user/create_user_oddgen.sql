@@ -30,8 +30,9 @@ PROMPT ====================================================================
 PROMPT User
 PROMPT ====================================================================
 CREATE USER oddgen IDENTIFIED BY oddgen
-  DEFAULT TABLESPACE system
-  TEMPORARY TABLESPACE TEMP;
+  DEFAULT TABLESPACE USERS
+  TEMPORARY TABLESPACE TEMP
+  QUOTA UNLIMITED ON users;
   
 PROMPT ====================================================================
 PROMPT Common grants

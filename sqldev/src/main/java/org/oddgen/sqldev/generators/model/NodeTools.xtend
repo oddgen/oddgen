@@ -99,7 +99,7 @@ class NodeTools {
 	
 	def getDisplayName(Node node) {
 		var String displayName
-		if (node.name !== null) {
+		if (node.name !== null && !node.name.empty) {
 			displayName = node.name
 		} else {
 			val parts = node.id.split("\\.")

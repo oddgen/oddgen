@@ -125,6 +125,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
 			val gen = gens.get(0).generator
 			val nodes = gens.addDeepNodes(conn).filter[it.isRelevant].toList
+			nodes.forEach[it.params = gens.get(0).node.params]
 			result = '''
 				«gen.generateProlog(conn, nodes)»
 				«FOR node : nodes SEPARATOR gen.generateSeparator(conn)»

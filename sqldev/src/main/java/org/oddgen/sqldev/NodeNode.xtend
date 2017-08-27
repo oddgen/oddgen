@@ -41,9 +41,9 @@ class NodeNode extends DefaultContainer {
 	}
 
 	override getIcon() {
-		if (gensel.node.iconName !== null) {
+		if (gensel.node.iconName !== null && !gensel.node.iconName.empty) {
 			return OddgenResources.getIcon(gensel.node.iconName)
-		} else if (gensel.node.iconBase64 !== null) {
+		} else if (gensel.node.iconBase64 !== null && !gensel.node.iconBase64.empty) {
 			var icon = new ImageIcon
 			val decodedBytes = DatatypeConverter.parseBase64Binary(gensel.node.iconBase64);
 			val bis = new ByteArrayInputStream(decodedBytes);
@@ -201,7 +201,7 @@ class NodeNode extends DefaultContainer {
 	}
 
 	override getLongLabel() {
-		return gensel.node.displayName
+		return gensel.node.displayDescription
 	}
 
 	override getShortLabel() {

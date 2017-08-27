@@ -67,8 +67,6 @@ class ClientGenerator implements OddgenGenerator2 {
 				node.id = objectType
 				node.params = gen.getParams(conn, objectType, null)
 				node.leaf = false
-				node.generatable = false
-				node.multiselectable = false
 				nodes.add(node)
 			}
 		} else {
@@ -79,8 +77,6 @@ class ClientGenerator implements OddgenGenerator2 {
 				node.parentId = parentNodeId
 				node.params = gen.getParams(conn, parentNodeId, objectName)
 				node.leaf = true
-				node.generatable = true
-				node.multiselectable = true
 				nodes.add(node)
 			}
 		}

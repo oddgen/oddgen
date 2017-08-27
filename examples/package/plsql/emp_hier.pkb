@@ -103,7 +103,7 @@ create or replace PACKAGE BODY emp_hier AS
          in_parent_id   IN oddgen_types.key_type,
          in_name        IN oddgen_types.key_type,
          in_description IN oddgen_types.key_type,
-         in_is_leaf     IN INTEGER
+         in_leaf        IN INTEGER
       ) IS
          l_node oddgen_types.r_node_type;
       BEGIN
@@ -113,7 +113,7 @@ create or replace PACKAGE BODY emp_hier AS
          l_node.description                   := in_description;
          l_node.icon_base64                   := co_similing_face_emoji;
          l_node.params(co_include_commission) := 'YES';
-         l_node.leaf                          := in_is_leaf = 1;
+         l_node.leaf                          := in_leaf = 1;
          l_node.generatable                   := TRUE;
          l_node.multiselectable               := TRUE;
          l_node.relevant                      := TRUE;
@@ -130,7 +130,7 @@ create or replace PACKAGE BODY emp_hier AS
                  job,
                  sal,
                  comm,
-                 connect_by_isleaf AS is_leaf
+                 connect_by_isleaf AS leaf
             FROM emp
          CONNECT BY PRIOR empno = mgr
            START WITH mgr IS NULL
@@ -145,7 +145,7 @@ create or replace PACKAGE BODY emp_hier AS
                               || ', salary: ' || r.sal 
                               || ', commission: ' || NVL(r.comm, 0) 
                               || ')',
-            in_is_leaf     => r.is_leaf
+            in_leaf        => r.leaf
          );
       END LOOP emps;
       RETURN t_nodes;
@@ -190,8 +190,9 @@ create or replace PACKAGE BODY emp_hier AS
    FUNCTION generate_epilog(
       in_nodes IN oddgen_types.t_node_type
    ) RETURN CLOB IS
-      l_epilog CLOB;
-      l_total  NUMBER := 0;
+      l_epilog          CLOB;
+      l_total           NUMBER := 0;
+      l_with_or_without VARCHAR2(7 CHAR);
    BEGIN
       <<nodes>>
       FOR i in 1 .. in_nodes.count LOOP
@@ -207,10 +208,17 @@ create or replace PACKAGE BODY emp_hier AS
             END IF;
          END LOOP emps;
       END LOOP nodes;
+      IF in_nodes(1).params(co_include_commission) = 'YES' THEN
+         l_with_or_without := 'with';
+      ELSE
+         l_with_or_without := 'without';
+      END IF;
 l_epilog := 
 '               ------
 Total of ' || rpad(in_nodes.count, 5) || to_char(l_total, '999990') || '
-               ======';
+               ======
+
+Salaries ' || l_with_or_without || ' commissions.';
       RETURN l_epilog;
    END generate_epilog;
 

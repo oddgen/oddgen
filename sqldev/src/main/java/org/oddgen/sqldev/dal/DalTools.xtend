@@ -92,7 +92,11 @@ class DalTools {
 					return cs.getClob(1);
 				}
 			})
-			result = resultClob.getSubString(1, resultClob.length as int) 
+			if (resultClob !== null) {
+				result = resultClob.getSubString(1, resultClob.length as int) 
+			} else {
+				result = ""
+			}
 		} catch (Exception e) {
 			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
 				// catch : existing state of packages has been discarded

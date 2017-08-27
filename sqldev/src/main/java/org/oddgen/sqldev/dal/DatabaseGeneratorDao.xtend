@@ -783,6 +783,7 @@ class DatabaseGeneratorDao {
 				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
 				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, 'true') || '</generatable>');
 				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, 'true') || '</multiselectable>');
+				         sys.dbms_lob.append(l_clob, '<relevant>' || bool2string(t_nodes(i).relevant, 'true') || '</relevant>');
 				         sys.dbms_lob.append(l_clob, '</node>');
 				      END LOOP nodes;
 				   END IF;
@@ -806,8 +807,6 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<parent_id/>');
 						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
 						      sys.dbms_lob.append(l_clob, '</node>');
 						   END LOOP;
 						   sys.dbms_lob.append(l_clob, '</nodes>');
@@ -824,16 +823,12 @@ class DatabaseGeneratorDao {
 						   sys.dbms_lob.append(l_clob, '<parent_id/>');
 						   sys.dbms_lob.append(l_clob, '<params/>');
 						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
 						   sys.dbms_lob.append(l_clob, '</node>');
 						   sys.dbms_lob.append(l_clob, '<node>');
 						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
 						   sys.dbms_lob.append(l_clob, '<parent_id/>');
 						   sys.dbms_lob.append(l_clob, '<params/>');
 						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '<generatable>false</generatable>');
-						   sys.dbms_lob.append(l_clob, '<multiselectable>false</multiselectable>');
 						   sys.dbms_lob.append(l_clob, '</node>');
 						   sys.dbms_lob.append(l_clob, '</nodes>');
 						   ? := l_clob;
@@ -855,8 +850,6 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
 						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
 						      sys.dbms_lob.append(l_clob, '</node>');
 						   END LOOP;
 						   sys.dbms_lob.append(l_clob, '</nodes>');
@@ -880,8 +873,6 @@ class DatabaseGeneratorDao {
 						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
 						      sys.dbms_lob.append(l_clob, '<params/>');
 						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '<generatable>true</generatable>');
-						      sys.dbms_lob.append(l_clob, '<multiselectable>true</multiselectable>');
 						      sys.dbms_lob.append(l_clob, '</node>');
 						   END LOOP;
 						   sys.dbms_lob.append(l_clob, '</nodes>');
@@ -915,8 +906,18 @@ class DatabaseGeneratorDao {
 				}
 				node.params = params
 				node.leaf = xmlNode.getElementsByTagName("leaf")?.item(0)?.textContent == "true"
-				node.generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent == "true"
-				node.multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent == "true"
+				val generatable = xmlNode.getElementsByTagName("generatable")?.item(0)?.textContent
+				if (generatable !== null) {
+					node.generatable = generatable == "true"
+				}
+				val multiselectable = xmlNode.getElementsByTagName("multiselectable")?.item(0)?.textContent
+				if (multiselectable !== null) {
+					node.multiselectable = multiselectable == "true"
+				}
+				val relevant = xmlNode.getElementsByTagName("relevant").item(0)?.textContent
+				if (relevant !== null) {
+					node.relevant = relevant == "true"
+				}
 				nodes.add(node)
 			}
 			if (!metaData.hasGetNodes) {

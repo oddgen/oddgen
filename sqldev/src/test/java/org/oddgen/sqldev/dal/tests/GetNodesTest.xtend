@@ -20,14 +20,17 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
+import org.oddgen.sqldev.generators.model.NodeTools
 
 class GetNodesTest extends AbstractJdbcTest {
+	val extension NodeTools nodeTools = new NodeTools
 
 	@Test
 	def getNodes1() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, null)
 		Assert.assertEquals(2, nodes.size)
@@ -63,7 +66,8 @@ class GetNodesTest extends AbstractJdbcTest {
 	def getNodes2() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "DATA.TABLE")
 		Assert.assertEquals(4, nodes.size)
@@ -86,7 +90,8 @@ class GetNodesTest extends AbstractJdbcTest {
 	def getNodes3() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "")
 		Assert.assertEquals(2, nodes.size)
@@ -99,8 +104,9 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, table.iconBase64)
 		Assert.assertEquals(0, table.params.size)
 		Assert.assertEquals(false, table.leaf)
-		Assert.assertEquals(false, table.generatable)
-		Assert.assertEquals(false, table.multiselectable)
+		Assert.assertEquals(false, table.isGeneratable)
+		Assert.assertEquals(false, table.isMultiselectable)
+		Assert.assertEquals(false, table.isRelevant)
 		val view = nodes.get(1)
 		Assert.assertEquals("VIEW", view.id)
 		Assert.assertEquals("", view.parentId)
@@ -110,15 +116,18 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, view.iconBase64)
 		Assert.assertEquals(0, view.params.size)
 		Assert.assertEquals(false, view.leaf)
-		Assert.assertEquals(false, view.generatable)
-		Assert.assertEquals(false, view.multiselectable)
+		Assert.assertEquals(false, view.isGeneratable)
+		Assert.assertEquals(false, view.isMultiselectable)
+		Assert.assertEquals(false, view.isGeneratable)
+		Assert.assertEquals(false, view.isRelevant)
 	}
 
 	@Test
 	def getNodes4() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		Assert.assertEquals(4, nodes.size)
@@ -131,15 +140,17 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, bonus.iconBase64)
 		Assert.assertEquals(0, bonus.params.size)
 		Assert.assertEquals(true, bonus.leaf)
-		Assert.assertEquals(true, bonus.generatable)
-		Assert.assertEquals(true, bonus.multiselectable)
+		Assert.assertEquals(true, bonus.isGeneratable)
+		Assert.assertEquals(true, bonus.isMultiselectable)
+		Assert.assertEquals(true, bonus.isRelevant)
 	}
 
 	@Test
 	def getNodes5() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "")
 		Assert.assertEquals(1, nodes.size)
@@ -152,15 +163,17 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, table.iconBase64)
 		Assert.assertEquals(0, table.params.size)
 		Assert.assertEquals(false, table.leaf)
-		Assert.assertEquals(false, table.generatable)
-		Assert.assertEquals(false, table.multiselectable)
+		Assert.assertEquals(false, table.isGeneratable)
+		Assert.assertEquals(false, table.isMultiselectable)
+		Assert.assertEquals(false, table.isRelevant)
 	}
 
 	@Test
 	def getNodes6() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		Assert.assertEquals(4, nodes.size)
@@ -173,15 +186,17 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, bonus.iconBase64)
 		Assert.assertEquals(0, bonus.params.size)
 		Assert.assertEquals(true, bonus.leaf)
-		Assert.assertEquals(true, bonus.generatable)
-		Assert.assertEquals(true, bonus.multiselectable)
+		Assert.assertEquals(true, bonus.isGeneratable)
+		Assert.assertEquals(true, bonus.isMultiselectable)
+		Assert.assertEquals(true, bonus.isRelevant)
 	}
 
 	@Test
 	def getNodes7() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "")
 		Assert.assertEquals(1, nodes.size)
@@ -194,15 +209,17 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, table.iconBase64)
 		Assert.assertEquals(0, table.params.size)
 		Assert.assertEquals(false, table.leaf)
-		Assert.assertEquals(false, table.generatable)
-		Assert.assertEquals(false, table.multiselectable)
+		Assert.assertEquals(false, table.isGeneratable)
+		Assert.assertEquals(false, table.isMultiselectable)
+		Assert.assertEquals(false, table.isRelevant)
 	}
 
 	@Test
 	def getNodes8() {
 		val dao = new DatabaseGeneratorDao(dataSource.connection)
 		val dbgen = dao.findAll.findFirst [
-			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
+			it.getMetaData.generatorOwner == dataSource.username.toUpperCase &&
+				it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
 		val nodes = dbgen.getNodes(dataSource.connection, "TABLE")
 		Assert.assertEquals(4, nodes.size)
@@ -215,8 +232,9 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(null, bonus.iconBase64)
 		Assert.assertEquals(0, bonus.params.size)
 		Assert.assertEquals(true, bonus.leaf)
-		Assert.assertEquals(true, bonus.generatable)
-		Assert.assertEquals(true, bonus.multiselectable)
+		Assert.assertEquals(true, bonus.isGeneratable)
+		Assert.assertEquals(true, bonus.isMultiselectable)
+		Assert.assertEquals(true, bonus.isRelevant)
 	}
 
 	@BeforeClass
@@ -241,13 +259,13 @@ class GetNodesTest extends AbstractJdbcTest {
 			   FUNCTION get_object_group(
 			      in_object_type IN VARCHAR2
 			   ) RETURN VARCHAR2;
-
+			
 			   FUNCTION get_nodes(
-			      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+			   in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
 			   ) RETURN oddgen_types.t_node_type;
-
+			
 			   FUNCTION generate(
-			      in_node IN oddgen_types.r_node_type
+			   in_node IN oddgen_types.r_node_type
 			   ) RETURN CLOB;
 			   
 			END plsql_dummy1;
@@ -262,12 +280,12 @@ class GetNodesTest extends AbstractJdbcTest {
 			   co_object_type  CONSTANT oddgen_types.key_type := 'Object type';
 			   co_object_name  CONSTANT oddgen_types.key_type := 'Object name';
 			   co_purge        CONSTANT oddgen_types.key_type := 'Purge?'; -- for tables only
-
+			
 			   --
 			   -- get_object_group
 			   --
 			   FUNCTION get_object_group(
-			      in_object_type IN VARCHAR2
+			   in_object_type IN VARCHAR2
 			   ) RETURN VARCHAR2 IS
 			      l_object_group oddgen_types.key_type;
 			   BEGIN

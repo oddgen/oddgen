@@ -52,7 +52,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 
 	public static final int SHOW_ODDGEN_NAVIGATOR_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_SHOW_NAVIGATOR")
 	private boolean initialized = false
-	val extension NodeTools nodeTools = new NodeTools
+	val static extension NodeTools nodeTools = new NodeTools
 
 	def private static IdeAction getAction(int actionId) {
 		val action = IdeAction.get(actionId)
@@ -74,9 +74,9 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			val List<GeneratorSelection> gensels = context.selection.toList.filter[it instanceof NodeNode].map [
 				(it as NodeNode).data as GeneratorSelection
 			].toList
-			val hasNonGeneratables = gensels.findFirst[!it.node.generatable] !== null
+			val hasNonGeneratables = gensels.findFirst[!it.node.isGeneratable] !== null
 			if (!hasNonGeneratables) {
-				val hasNonMultiselectables = gensels.findFirst[!it.node.multiselectable] !== null
+				val hasNonMultiselectables = gensels.findFirst[!it.node.isMultiselectable] !== null
 				if (gensels.size == 1 || !hasNonMultiselectables) {
 					allowGenerate = true
 				}

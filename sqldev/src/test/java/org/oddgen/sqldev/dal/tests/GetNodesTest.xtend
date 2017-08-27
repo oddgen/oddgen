@@ -45,8 +45,8 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(#["Object group", "Purge?"], code.params.keySet.toList)
 		Assert.assertEquals(#["CODE", "No"], code.params.values.toList)
 		Assert.assertEquals(false, code.leaf)
-		Assert.assertEquals(true, code.generatable)
-		Assert.assertEquals(true, code.multiselectable)
+		Assert.assertEquals(true, code.isGeneratable)
+		Assert.assertEquals(true, code.isMultiselectable)
 		val data = nodes.get(1)
 		Assert.assertEquals("", data.parentId)
 		Assert.assertEquals("DATA", data.id)
@@ -58,8 +58,8 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(#["Object group", "Purge?"], data.params.keySet.toList)
 		Assert.assertEquals(#["DATA", "No"], data.params.values.toList)
 		Assert.assertEquals(false, data.leaf)
-		Assert.assertEquals(true, data.generatable)
-		Assert.assertEquals(true, data.multiselectable)
+		Assert.assertEquals(true, data.isGeneratable)
+		Assert.assertEquals(true, data.isMultiselectable)
 	}
 
 	@Test
@@ -82,8 +82,8 @@ class GetNodesTest extends AbstractJdbcTest {
 		Assert.assertEquals(#["Object group", "Object name", "Object type", "Purge?"], bonus.params.keySet.toList)
 		Assert.assertEquals(#["DATA", "BONUS", "TABLE", "No"], bonus.params.values.toList)
 		Assert.assertEquals(true, bonus.leaf)
-		Assert.assertEquals(true, bonus.generatable)
-		Assert.assertEquals(true, bonus.multiselectable)
+		Assert.assertEquals(true, bonus.isGeneratable)
+		Assert.assertEquals(true, bonus.isMultiselectable)
 	}
 
 	@Test

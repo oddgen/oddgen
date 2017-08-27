@@ -155,7 +155,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_hello_world IS
       l_object_name oddgen_types.key_type;
    BEGIN
       l_object_type := in_node.parent_id;
-      l_object_name := regexP_substr(in_node.id, '[A-Z_$#]+', 1, 2);
+      l_object_name := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
       RETURN '   sys.dbms_output.put_line(''Hello ' || l_object_type || ' ' || l_object_name || '!'');';
    END generate;
 

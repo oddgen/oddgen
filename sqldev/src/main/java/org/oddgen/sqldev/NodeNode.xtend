@@ -18,6 +18,7 @@ package org.oddgen.sqldev
 import com.jcabi.aspects.Loggable
 import java.io.ByteArrayInputStream
 import java.net.URL
+import java.util.Arrays
 import java.util.List
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
@@ -51,9 +52,10 @@ class NodeNode extends DefaultContainer {
 			bis.close();
 			return icon
 		} else {
+			val entries = Arrays.asList(gensel.node.id.split("\\."))
 			if (gensel.node.leaf) {
 				// assuming that a node is an object name and parent is an object type
-				val id = gensel.node.parentId
+				val id = if (entries.size >= 2) {entries.get(entries.size - 2)} else {gensel.node.parentId}
 				if (id.startsWith("TABLE") || id == "CLUSTER") {
 					return OddgenResources.getIcon("TABLE_ICON")
 				} else if (id == "VIEW") {
@@ -104,7 +106,7 @@ class NodeNode extends DefaultContainer {
 				}
 			} else {
 				// assuming that a node is an object type
-				val id = gensel.node.id
+				val id = if (entries.size >= 1) {entries.get(entries.size - 1)} else {gensel.node.id}
 				if (id.startsWith("TABLE") || id == "CLUSTER") {
 					return OddgenResources.getIcon("TABLE_FOLDER_ICON")
 				} else if (id == "VIEW") {

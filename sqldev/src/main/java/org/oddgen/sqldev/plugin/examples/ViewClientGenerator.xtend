@@ -48,7 +48,7 @@ class ViewClientGenerator implements OddgenGenerator2 {
 	}
 
 	override getFolders(Connection conn) {
-		return #["Client Generators", "Examples"]
+		return #["Examples", "Xtend"]
 	}
 
 	override getHelp(Connection conn) {

@@ -47,7 +47,6 @@ import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 import org.oddgen.sqldev.generators.OddgenGenerator2
-import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -65,8 +64,6 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 	var HashMap<String, Component> params = new HashMap<String, Component>()
 	var HashMap<String, List<String>> lovs;
 	var HashMap<String, Boolean> paramStates;
-	
-	var extension NodeTools nodeTools = new NodeTools
 
 	def static createAndShow(Component parent, List<GeneratorSelection> gens, Connection conn) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -99,8 +96,7 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			val c = new GridBagConstraints();
 
 			// description pane
-			val paneDescription = new JPanel(
-				new BorderLayout());
+			val paneDescription = new JPanel(new BorderLayout());
 			val textDescription = new JLabel('''<html><p>«gens.get(0).generator.getDescription(conn)»</p></html>''')
 			paneDescription.add(textDescription, BorderLayout.NORTH);
 			c.gridx = 0;
@@ -115,12 +111,13 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 
 			// Parameters pane
 			paneParams = new JPanel(new GridBagLayout())
-			addParam(OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM"))
-			addParam(OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM"))
+			addParam(OddgenResources.getString("DIALOG_NODE_ID_PARAM"))
 			loadLov
 			loadParamStates
-			for (param : gens.get(0).node.params.keySet) {
-				param.addParam
+			if (gens.get(0).node.params !== null) {
+				for (param : gens.get(0).node.params.keySet) {
+					param.addParam
+				}
 			}
 			val scrollPaneParameters = new JScrollPane(paneParams)
 			scrollPaneParameters.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
@@ -213,16 +210,11 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			c.gridx = 1
 			c.insets = new Insets(10, 10, 0, 10); // top, left, bottom, right
 			c.weightx = 1
-			if (name == OddgenResources.getString("DIALOG_OBJECT_TYPE_PARAM")) {
-				val textObjectType = new JTextField(gen.node.toObjectType)
-				textObjectType.editable = false
-				textObjectType.enabled = false
-				paneParams.add(textObjectType, c);
-			} else if (name == OddgenResources.getString("DIALOG_OBJECT_NAME_PARAM")) {
-				val textObjectName = new JTextField(if(gens.size > 1) "***" else gen.node.toObjectName)
-				textObjectName.editable = false
-				textObjectName.enabled = false
-				paneParams.add(textObjectName, c);
+			if (name == OddgenResources.getString("DIALOG_NODE_ID_PARAM")) {
+				val textNodeId = new JTextField(if(gens.size > 1) "***" else gen.node.id)
+				textNodeId.editable = false
+				textNodeId.enabled = false
+				paneParams.add(textNodeId, c);
 			} else {
 				val lovs = this.lovs?.get(name)
 				if (name.isCheckBox) {
@@ -260,28 +252,30 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 
 		def updateDatabaseGenerators(boolean first) {
 			for (gen : gens.filter[!first || it == gens.get(0)]) {
-				for (name : gen.node.params.keySet) {
-					val component = params.get(name)
-					var String value
-					if (component instanceof JTextField) {
-						value = component.text
-					} else if (component instanceof JCheckBox) {
-						val lovs = this.lovs?.get(name)
-						if (lovs.size == 1) {
-							value = lovs.get(0)
-						} else {
-							if (component.selected && OddgenGenerator2.BOOLEAN_TRUE.findFirst [
-								it == lovs.get(0).toLowerCase
-							] !== null) {
+				if (gen.node.params !== null) {
+					for (name : gen.node.params.keySet) {
+						val component = params.get(name)
+						var String value
+						if (component instanceof JTextField) {
+							value = component.text
+						} else if (component instanceof JCheckBox) {
+							val lovs = this.lovs?.get(name)
+							if (lovs.size == 1) {
 								value = lovs.get(0)
 							} else {
-								value = lovs.get(1)
+								if (component.selected && OddgenGenerator2.BOOLEAN_TRUE.findFirst [
+									it == lovs.get(0).toLowerCase
+								] !== null) {
+									value = lovs.get(0)
+								} else {
+									value = lovs.get(1)
+								}
 							}
+						} else {
+							value = (component as JComboBox<String>).selectedItem as String
 						}
-					} else {
-						value = (component as JComboBox<String>).selectedItem as String
+						gen.node.params.put(name, value)
 					}
-					gen.node.params.put(name, value)
 				}
 			}
 		}
@@ -304,12 +298,12 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 
 		def loadLov() {
 			val gen = gens.get(0)
-			this.lovs = gen.generator.getLov(conn, gen.node.params, #[gen.node]) // TODO: pass list of nodes
+			this.lovs = gen.generator.getLov(conn, gen.node.params, gens.map[it.node])
 		}
 
 		def loadParamStates() {
 			val gen = gens.get(0)
-			this.paramStates = gen.generator.getParamStates(conn, gen.node.params, #[gen.node]) // TODO: pass list of nodes
+			this.paramStates = gen.generator.getParamStates(conn, gen.node.params, gens.map[it.node])
 		}
 
 		def refresh() {

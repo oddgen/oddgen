@@ -55,23 +55,6 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
    END get_help;
 
    --
-   -- get_object_group
-   --
-   FUNCTION get_object_group(
-      in_object_type IN VARCHAR2
-   ) RETURN VARCHAR2 IS
-      l_object_group oddgen_types.key_type;
-   BEGIN
-      IF in_object_type IN ('FUNCTION', 'PACKAGE', 'PACKAGE BODY', 'PROCEDURE', 'TRIGGER', 'TYPE', 'TYPE BODY')
-      THEN
-         l_object_group := 'CODE';
-      ELSE
-         l_object_group := 'DATA';
-      END IF;
-      RETURN l_object_group;
-   END get_object_group;
-
-   --
    -- get_nodes
    --
    FUNCTION get_nodes(
@@ -103,54 +86,61 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
    BEGIN
       t_nodes := oddgen_types.t_node_type();
       IF in_parent_node_id IS NULL THEN
-         -- generator root nodes
-         <<object_groups>>
-         FOR r IN (
-            SELECT DISTINCT dropall.get_object_group(in_object_type => object_type) AS object_group
-              FROM user_objects
-             WHERE generated = 'N'
-             ORDER BY object_group
-         ) LOOP
-            add_node(
-               in_id        => r.object_group,
-               in_parent_id => NULL,
-               in_leaf      => false
-            );
-         END LOOP object_groups;
+         -- group names (root nodes)
+         add_node(
+            in_id        => 'CODE',
+            in_parent_id => NULL,
+            in_leaf      => FALSE
+         );
+         add_node(
+            in_id        => 'DATA',
+            in_parent_id => NULL,
+            in_leaf      => FALSE
+         );
       ELSIF in_parent_node_id NOT LIKE '%.%' THEN
-         -- object type nodes
-         <<object_types>>
+         -- object types (parent nodes are group names) 
+         <<nodes>>
          FOR r IN (
+            WITH 
+               base AS (
+                  SELECT CASE 
+                            WHEN object_type IN ('FUNCTION', 'PACKAGE', 'PACKAGE BODY',
+                               'PROCEDURE', 'SYNONYM', 'TRIGGER', 'TYPE', 'TYPE BODY')
+                            THEN
+                               'CODE'
+                            ELSE
+                               'DATA'
+                         END AS group_name,
+                         object_type
+                    FROM user_objects
+                   WHERE generated = 'N'
+                     AND object_type NOT IN ('INDEX PARTITION', 'LOB', 'TABLE PARTITION')
+                   GROUP BY object_type
+               )
             SELECT object_type
-              FROM user_objects
-             WHERE generated = 'N'
-               AND dropall.get_object_group(in_object_type => object_type) = in_parent_node_id
-             GROUP BY object_type
-             ORDER BY object_type
+              FROM base
+             WHERE group_name = in_parent_node_id
          ) LOOP
             add_node(
                in_id        => in_parent_node_id || '.' || r.object_type,
                in_parent_id => in_parent_node_id,
-               in_leaf      => false
+               in_leaf      => FALSE
             );
-         END LOOP object_types;
+         END LOOP nodes;
       ELSE
-         -- object name nodes
-         <<object_names>>
+         -- object names (parent nodes are object types)
+         <<nodes>>
          FOR r IN (
-            SELECT object_type,
-                   object_name
+            SELECT object_name
               FROM user_objects
-             WHERE object_type = substr(in_parent_node_id, INSTR(in_parent_node_id, '.') + 1)
-               AND generated = 'N'
-              ORDER BY object_name
+             WHERE object_type = regexp_substr(in_parent_node_id, '[^\.]+', 1, 2)
          ) LOOP
             add_node(
                in_id        => in_parent_node_id || '.' || r.object_name,
                in_parent_id => in_parent_node_id,
-               in_leaf      => true
+               in_leaf      => TRUE
             );
-         END LOOP object_names;
+         END LOOP nodes;
       END IF;
       RETURN t_nodes;
    END get_nodes;
@@ -195,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
    FUNCTION generate_prolog(
       in_nodes IN oddgen_types.t_node_type
    ) RETURN CLOB IS
-      t_vc dropall.t_vc_type := dropall.t_vc_type();
+      l_ids    CLOB;
       l_result CLOB;
       --
       FUNCTION get_param(
@@ -244,47 +234,63 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
             )
          );
       END gen_drop_object_name;
+      --
+      PROCEDURE populate_ids IS
+      BEGIN
+         sys.dbms_lob.createtemporary(l_ids, TRUE);
+         sys.dbms_lob.append(l_ids, '<ids>');
+         <<nodes>>
+         FOR i in 1 .. in_nodes.count LOOP
+            sys.dbms_lob.append(l_ids, '<id>' || in_nodes(i).id || '</id>');
+         END LOOP nodes;
+         sys.dbms_lob.append(l_ids, '</ids>');
+      END populate_ids;
+      --
+      PROCEDURE populate_result IS
+      BEGIN
+         sys.dbms_lob.createtemporary(l_result, TRUE);
+         <<nodes>>
+         FOR r in (
+            WITH
+               nodes AS (
+                  SELECT regexp_substr(id, '[^\.]+', 1, 1) object_group,
+                         regexp_substr(id, '[^\.]+', 1, 2) object_type,
+                         regexp_substr(id, '[^\.]+', 1, 3) object_name
+                    FROM XMLTABLE(
+                            '/ids/id'
+                            PASSING XMLTYPE(l_ids)
+                            COLUMNS id VARCHAR2(4000) PATH '.'
+                         )
+               )
+            SELECT object_type, object_name
+              FROM nodes
+             ORDER by object_group,
+                      CASE object_type
+                         WHEN 'VIEW'              THEN 101
+                         WHEN 'PROCEDURE'         THEN 102
+                         WHEN 'FUNCTION'          THEN 103
+                         WHEN 'PACKAGE BODY'      THEN 104
+                         WHEN 'PACKAGE'           THEN 105
+                         WHEN 'JAVA SOURCE'       THEN 106
+                         WHEN 'TYPE BODY'         THEN 107
+                         WHEN 'TYPE'              THEN 108
+                         WHEN 'INDEX'             THEN 210
+                         WHEN 'MATERIALIZED VIEW' THEN 211
+                         WHEN 'TABLE'             THEN 212
+                         WHEN 'SEQUENCE'          THEN 213
+                         ELSE                          300
+                      END,
+                      object_name
+         ) LOOP
+            gen_drop_object_name (
+              in_object_type => r.object_type,
+              in_object_name => r.object_name
+            );
+         END LOOP nodes;
+      END populate_result;
    BEGIN
-      sys.dbms_lob.createtemporary(l_result, TRUE);
-      <<populate_nodes>>
-      FOR i in 1 .. in_nodes.count LOOP
-         t_vc.extend;
-         t_vc(t_vc.count) := in_nodes(i).id;
-      END LOOP populate_nodes;
-      <<process_nodes>>
-      FOR r in (
-         WITH
-            nodes AS (
-               SELECT regexp_substr(column_value, '[A-Z_$# ]+', 1, 1) object_group,
-                      regexp_substr(column_value, '[A-Z_$# ]+', 1, 2) object_type,
-                      regexp_substr(column_value, '[A-Z_$# ]+', 1, 3) object_name
-                 FROM TABLE(t_vc)
-            )
-         SELECT object_type, object_name
-           FROM nodes
-          ORDER by object_group,
-                   CASE object_type
-                      WHEN 'VIEW'              THEN 101
-                      WHEN 'PROCEDURE'         THEN 102
-                      WHEN 'FUNCTION'          THEN 103
-                      WHEN 'PACKAGE BODY'      THEN 104
-                      WHEN 'PACKAGE'           THEN 105
-                      WHEN 'JAVA SOURCE'       THEN 106
-                      WHEN 'TYPE BODY'         THEN 107
-                      WHEN 'TYPE'              THEN 108
-                      WHEN 'INDEX'             THEN 210
-                      WHEN 'MATERIALIZED VIEW' THEN 211
-                      WHEN 'TABLE'             THEN 212
-                      WHEN 'SEQUENCE'          THEN 213
-                      ELSE                          300
-                   END,
-                   object_name
-      ) LOOP
-         gen_drop_object_name (
-           in_object_type => r.object_type,
-           in_object_name => r.object_name
-         );
-      END LOOP process_nodes;
+      populate_ids;
+      populate_result;
       RETURN l_result;
    END generate_prolog;
 

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE plsql_hello_world IS
+CREATE OR REPLACE PACKAGE plsql_hello_world AUTHID CURRENT_USER IS
    /*
    * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *

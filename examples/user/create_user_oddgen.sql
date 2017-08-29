@@ -72,5 +72,8 @@ PROMPT   required for invoker rights database server generators only
 PROMPT ====================================================================
 PROMPT 
 GRANT INHERIT PRIVILEGES ON USER oddgen TO PUBLIC;
+-- optional, enables invoker-right generators for SYS and SYSTEM 
+GRANT INHERIT PRIVILEGES ON USER sys    TO oddgen;
+GRANT INHERIT PRIVILEGES ON USER system TO oddgen;
 
 SPOOL OFF

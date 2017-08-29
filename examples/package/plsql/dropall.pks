@@ -32,8 +32,6 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * @headcom
    */
    
-   TYPE t_vc_type IS TABLE OF VARCHAR2(128);
-
    /**
    * Get the name of the generator, used in tree view
    * If this function is not implemented, the package name will be used.
@@ -78,17 +76,6 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    * @since v0.3
    */
    FUNCTION get_help RETURN CLOB;
-
-   /**
-   * Get the group of an object type. 
-   * Function to be used in SQL, it is not part of the oddgen iterface.
-   *
-   * @param in_object_type object_type according user_objects
-   * @returns the group of object type, either CODE or DATA
-   */
-   FUNCTION get_object_group(
-      in_object_type IN VARCHAR2
-   ) RETURN VARCHAR2;
 
    /**
    * Get the list of nodes shown to be shown in the SQL Developer navigator tree.

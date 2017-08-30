@@ -1,4 +1,4 @@
-create or replace PACKAGE BODY emp_hier AS
+CREATE OR REPLACE PACKAGE BODY emp_hier AS
    /*
    * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
@@ -247,5 +247,5 @@ Salaries ' || l_with_or_without || ' commissions.';
       RETURN l_result;
    END generate;
 
-end emp_hier;
+END emp_hier;
 /

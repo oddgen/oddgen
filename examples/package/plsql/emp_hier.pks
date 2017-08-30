@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE emp_hier AUTHID CURRENT_USER IS
    /*
-   * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -18,16 +18,17 @@ CREATE OR REPLACE PACKAGE emp_hier AUTHID CURRENT_USER IS
    /**
    * oddgen PL/SQL database server generator 
    * Implementing a subset of the interface version 0.3.0.
+   * Missing functions: get_help, get_ordered_params, get_param_states
    *
-   * Shows employee hierarchy of table EMP in SQL Developer navigator.
-   * Calculates the summary based on selected employees considering the
-   * hierarchy.
+   * Shows employees of table EMP in the SQL Developer navigator.
+   * Generates a employee salary report.
    *
    * @headcom
    */
 
    /**
    * Get the name of the generator, used in tree view
+   * If this function is not implemented, the package name will be used.
    *
    * @returns name of the generator
    *

@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE plsql_hello_world AUTHID CURRENT_USER IS
    /*
-   * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -15,9 +15,13 @@ CREATE OR REPLACE PACKAGE plsql_hello_world AUTHID CURRENT_USER IS
    * limitations under the License.
    */
 
-   /** 
-   * oddgen PL/SQL hello world example.
+   /**
+   * oddgen PL/SQL database server generator 
    * Implementing a subset of the interface version 0.3.0.
+   * Missing functions: get_description, get_lov
+   *
+   * Shows tables and views in the SQL Developer navigator.
+   * Generates an anonymous PL/SQL block printing a "Hello World" message.
    *
    * @headcom
    */

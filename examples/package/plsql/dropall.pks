@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    /*
-   * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -16,22 +16,15 @@ CREATE OR REPLACE PACKAGE dropall AUTHID CURRENT_USER IS
    */
 
    /**
-   * oddgen PL/SQL example to generates Drop statements for selected objects in the current schema.
+   * oddgen PL/SQL database server generator 
+   * Implementing the interface version 0.3.0.
+   * 
+   * Shows objects in the SQL Developer navigator.
+   * Generates drop statements.
    *
    * @headcom
    */
 
-   /**
-   * oddgen PL/SQL database server generator.
-   * complete interface.
-   * PL/SQL package specification only.
-   * PL/SQL package body is not part of the interface definition.
-   * Requires the ODDGEN_TYPES package specification to be installed in 
-   * the same schema. 
-   *
-   * @headcom
-   */
-   
    /**
    * Get the name of the generator, used in tree view
    * If this function is not implemented, the package name will be used.

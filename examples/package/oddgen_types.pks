@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
    /*
-   * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
    */
 
    /**
-   * Keys, restricted to a reasonable size.
+   * Keys, generic string values, honouring SQL limitations
    *
    * @since v0.3
    */
-   SUBTYPE key_type    IS VARCHAR2(128 CHAR);
+   SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
 
    /**
    * Values, typically short strings, but may contain larger values, e.g. for JSON content or similar.
@@ -74,7 +74,7 @@ CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
       id               key_type,             -- node identifier, case-sensitive, e.g. EMP
       parent_id        key_type,             -- parent node identifier, NULL for root nodes, e.g. TABLE
       name             key_type,             -- name of the node, e.g. Emp
-      description      VARCHAR2(4000 BYTE),  -- description of the node, e.g. Table Emp
+      description      key_type,             -- description of the node, e.g. Table Emp
       icon_name        key_type,             -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
       icon_base64      VARCHAR2(32767 BYTE), -- Base64 encoded icon, size 16x16 pixels
       params           t_param_type,         -- array of parameters, e.g. OBJECT_TYPE=TABLE, OBJECT_NAME=EMP

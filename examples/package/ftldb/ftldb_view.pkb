@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE BODY ftldb_view IS
    /*
-   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -101,23 +101,37 @@ $END
    --
    -- parameter names used also as labels in the GUI
    --
-   co_view_suffix  CONSTANT param_type := 'View suffix';
-   co_table_suffix CONSTANT param_type := 'Table suffix to be replaced';
-   co_iot_suffix   CONSTANT param_type := 'Instead-of-trigger suffix';
-   co_gen_iot      CONSTANT param_type := 'Generate instead-of-trigger?';
+   co_view_suffix  CONSTANT oddgen_types.value_type := 'View suffix';
+   co_table_suffix CONSTANT oddgen_types.value_type := 'Table suffix to be replaced';
+   co_iot_suffix   CONSTANT oddgen_types.value_type := 'Instead-of-trigger suffix';
+   co_gen_iot      CONSTANT oddgen_types.value_type := 'Generate instead-of-trigger?';
 
    --
    -- other constants
    --
-   co_max_obj_len  CONSTANT pls_integer := 30;
-   co_oddgen_error CONSTANT pls_integer := -20501;
+   co_newline      CONSTANT oddgen_types.key_type := chr(10);
+   co_max_obj_len  CONSTANT PLS_INTEGER           := 30;
+   co_oddgen_error CONSTANT PLS_INTEGER           := -20501;
+   
+   --
+   -- get_default_params (private)
+   --
+   FUNCTION get_default_params RETURN oddgen_types.t_param_type IS
+      l_params oddgen_types.t_param_type;
+   BEGIN
+      l_params(co_view_suffix)  := '_V';
+      l_params(co_table_suffix) := '_T';
+      l_params(co_iot_suffix)   := '_TRG';
+      l_params(co_gen_iot)      := 'Yes';
+      RETURN l_params;
+   END get_default_params;
 
    --
    -- get_name
    --
    FUNCTION get_name RETURN VARCHAR2 IS
    BEGIN
-      RETURN '1:1 View (FTLDB)';
+      RETURN '1:1 View';
    END get_name;
 
    --
@@ -125,76 +139,107 @@ $END
    --
    FUNCTION get_description RETURN VARCHAR2 IS
    BEGIN
-      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The FTLDB template is defined in a conditional PL/SQL block.';
+      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.';
    END get_description;
 
    --
-   -- get_object_types
+   -- get_folders
    --
-   FUNCTION get_object_types RETURN t_string IS
+   FUNCTION get_folders RETURN oddgen_types.t_value_type IS
    BEGIN
-      RETURN NEW t_string('TABLE');
-   END get_object_types;
+      RETURN NEW oddgen_types.t_value_type('Examples', 'PL/SQL (FTLDB)');
+   END get_folders;
 
    --
-   -- get_object_names
+   -- get_help
    --
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string IS
-      l_object_names t_string;
+   FUNCTION get_help RETURN CLOB IS
    BEGIN
-      SELECT object_name
-        BULK COLLECT
-        INTO l_object_names
-        FROM dba_objects
-       WHERE object_type = in_object_type
-         AND owner = USER
-         AND generated = 'N'
-       ORDER BY object_name;
-      RETURN l_object_names;
-   END get_object_names;
+      RETURN 'Not yet available.';
+   END get_help;
 
    --
-   -- get_params
+   -- get_nodes
    --
-   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_param IS
-      l_params t_param;
+   FUNCTION get_nodes(
+      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+   ) RETURN oddgen_types.t_node_type IS
+      t_nodes oddgen_types.t_node_type;
+      --
+      PROCEDURE add_node (
+         in_id          IN oddgen_types.key_type,
+         in_parent_id   IN oddgen_types.key_type,
+         in_leaf        IN BOOLEAN
+      ) IS
+         l_node oddgen_types.r_node_type;
+      BEGIN
+         l_node.id              := in_id;
+         l_node.parent_id       := in_parent_id;
+         l_node.params          := get_default_params;
+         l_node.leaf            := in_leaf;
+         l_node.generatable     := TRUE;
+         l_node.multiselectable := TRUE;
+         t_nodes.extend;
+         t_nodes(t_nodes.count) := l_node;         
+      END add_node;
    BEGIN
-      l_params(co_view_suffix) := '_V';
-      l_params(co_table_suffix) := '_T';
-      l_params(co_iot_suffix) := '_TRG';
-      l_params(co_gen_iot) := 'Yes';
-      RETURN l_params;
-   END get_params;
-   
+      t_nodes := oddgen_types.t_node_type();
+      IF in_parent_node_id IS NULL THEN
+         -- object types
+         add_node(
+            in_id        => 'TABLE',
+            in_parent_id => NULL,
+            in_leaf      => FALSE
+         );
+      ELSE
+         -- object names
+         <<nodes>>
+         FOR r IN (
+            SELECT object_name
+              FROM dba_objects
+             WHERE owner = USER 
+               AND object_type = in_parent_node_id
+               AND generated = 'N'
+         ) LOOP
+            add_node(
+               in_id        => in_parent_node_id || '.' || r.object_name,
+               in_parent_id => in_parent_node_id,
+               in_leaf      => TRUE
+            );
+         END LOOP nodes;
+      END IF;
+      RETURN t_nodes;
+   END get_nodes;
+
    --
    -- get_ordered_params
    --
-   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_string IS
+   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type IS
    BEGIN
-      RETURN NEW t_string(co_view_suffix, co_table_suffix, co_gen_iot);
+      RETURN NEW oddgen_types.t_value_type(co_view_suffix, co_table_suffix, co_gen_iot);
    END get_ordered_params;
 
    --
    -- get_lov
    --
-   FUNCTION get_lov(in_object_type IN VARCHAR2,
-                    in_object_name IN VARCHAR2,
-                    in_params      IN t_param) RETURN t_lov IS
-      l_lov t_lov;
+   FUNCTION get_lov(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_lov_type IS
+      l_lov oddgen_types.t_lov_type;
    BEGIN
-      l_lov(co_gen_iot) := NEW t_string('Yes', 'No');
+      l_lov(co_gen_iot) := NEW oddgen_types.t_value_type('Yes', 'No');
       RETURN l_lov;
    END get_lov;
 
    --
    -- get_param_states
    --
-   FUNCTION get_param_states(in_object_type IN VARCHAR2,
-                             in_object_name IN VARCHAR2,
-                             in_params      IN t_param) RETURN t_param IS
-      l_param_states t_param;
+   FUNCTION get_param_states(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_param_type IS
+      l_param_states oddgen_types.t_param_type;
    BEGIN
       IF in_params(co_gen_iot) = 'Yes' THEN
          l_param_states(co_iot_suffix) := '1'; -- enable
@@ -205,114 +250,183 @@ $END
    END get_param_states;
 
    --
-   -- generate (1)
+   -- generate_prolog
    --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2,
-                     in_params      IN t_param) RETURN CLOB IS
-      l_args   varchar2_nt;
-      l_result CLOB;
-      l_params t_param;
+   FUNCTION generate_prolog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB IS
+   BEGIN
+      RETURN NULL;
+   END generate_prolog;
+
+   --
+   -- generate_separator
+   --
+   FUNCTION generate_separator RETURN VARCHAR2 IS
+   BEGIN
+      RETURN co_newline;
+   END generate_separator;
+
+   --
+   -- generate_epilog
+   --
+   FUNCTION generate_epilog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB IS
+   BEGIN
+      RETURN NULL;
+   END generate_epilog;
+
+   --
+   -- generate
+   --
+   FUNCTION generate(
+      in_node IN oddgen_types.r_node_type
+   ) RETURN CLOB IS
+      l_object_type oddgen_types.key_type;
+      l_object_name oddgen_types.key_type;
+      t_params      oddgen_types.t_param_type;
+      l_args varchar2_nt;
+      l_result      CLOB;
+      --
+      CURSOR c_columns IS
+         SELECT column_name,
+                CASE
+                    WHEN column_id = min_column_id THEN
+                     1
+                    ELSE
+                     0
+                 END AS is_first,
+                CASE
+                    WHEN column_id = max_column_id THEN
+                     1
+                    ELSE
+                     0
+                 END AS is_last
+           FROM (SELECT column_name,
+                        column_id,
+                        MIN(column_id) over() AS min_column_id,
+                        MAX(column_id) over() AS max_column_id
+                   FROM dba_tab_columns
+                  WHERE owner = USER
+                    AND table_name = l_object_name)
+          ORDER BY column_id;
+      --
+      CURSOR c_pk_columns IS
+         SELECT column_name,
+                CASE
+                    WHEN position = min_position THEN
+                     1
+                    ELSE
+                     0
+                 END AS is_first
+           FROM (SELECT cols.column_name,
+                        cols.position,
+                        MIN(cols.position) over() AS min_position
+                   FROM dba_constraints pk
+                   JOIN dba_cons_columns cols
+                     ON cols.owner = pk.owner
+                        AND cols.constraint_name = pk.constraint_name
+                  WHERE pk.owner = USER
+                    AND pk.constraint_type = 'P'
+                    AND pk.table_name = l_object_name)
+          ORDER BY position;
       --
       FUNCTION get_base_name RETURN VARCHAR2 IS
-         l_base_name string_type;
+         l_base_name oddgen_types.key_type;
       BEGIN
-         IF l_params(co_table_suffix) IS NOT NULL AND
-            length(l_params(co_table_suffix)) > 0 AND
-            substr(in_object_name,
-                   length(in_object_name) - length(l_params(co_table_suffix))) =
-            l_params(co_table_suffix) THEN
-            l_base_name := substr(in_object_name,
+         IF t_params(co_table_suffix) IS NOT NULL AND
+            length(t_params(co_table_suffix)) > 0 AND
+            substr(in_node.id,
+                   length(l_object_name) - length(t_params(co_table_suffix))) =
+            t_params(co_table_suffix) THEN
+            l_base_name := substr(l_object_name,
                                   1,
-                                  length(in_object_name) -
-                                  length(l_params(co_table_suffix)));
+                                  length(l_object_name) -
+                                  length(t_params(co_table_suffix)));
          ELSE
-            l_base_name := in_object_name;
+            l_base_name := l_object_name;
          END IF;
          RETURN l_base_name;
       END get_base_name;
       --
-      FUNCTION get_name(suffix_in IN VARCHAR2) RETURN VARCHAR2 IS
-         l_name string_type;
+      FUNCTION get_name(in_suffix IN VARCHAR2) RETURN VARCHAR2 IS
+         l_name oddgen_types.key_type;
       BEGIN
          l_name := get_base_name;
-         IF length(l_name) + length(suffix_in) > co_max_obj_len THEN
-            l_name := substr(l_name, 1, co_max_obj_len - length(suffix_in));
+         IF length(l_name) + length(in_suffix) > co_max_obj_len THEN
+            l_name := substr(l_name, 1, co_max_obj_len - length(in_suffix));
          END IF;
-         l_name := l_name || suffix_in;
+         l_name := l_name || in_suffix;
          RETURN l_name;
       END get_name;
       --
       FUNCTION get_view_name RETURN VARCHAR2 IS
       BEGIN
-         RETURN get_name(l_params(co_view_suffix));
+         RETURN get_name(t_params(co_view_suffix));
       END get_view_name;
       --
       FUNCTION get_iot_name RETURN VARCHAR2 IS
       BEGIN
-         RETURN get_name(l_params(co_iot_suffix));
+         RETURN get_name(t_params(co_iot_suffix));
       END get_iot_name;
       --
       PROCEDURE check_params IS
-         l_found INTEGER;
+         l_found  BOOLEAN;
+         r_col    c_columns%ROWTYPE;
+         r_pk_col c_pk_columns%ROWTYPE;
       BEGIN
-         SELECT COUNT(*)
-           INTO l_found
-           FROM dba_tables
-          WHERE table_name = in_object_name
-            AND owner = USER;
-         IF l_found = 0 THEN
+         OPEN c_columns;
+         FETCH c_columns
+            INTO r_col;
+         l_found := c_columns%FOUND;
+         CLOSE c_columns;
+         IF NOT l_found THEN
             raise_application_error(co_oddgen_error,
-                                    'Table ' || in_object_name ||
-                                    ' not found.');
+                                    'Table ' || l_object_name || ' not found.');
          END IF;
-         IF get_view_name = in_object_name THEN
+         IF get_view_name = l_object_name THEN
             raise_application_error(co_oddgen_error,
                                     'Change <' || co_view_suffix ||
                                     '>. The target view must be named differently than its base table.');
          END IF;
-         IF l_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
+         IF t_params(co_gen_iot) NOT IN ('Yes', 'No') THEN
             raise_application_error(co_oddgen_error,
-                                    'Invalid value <' ||
-                                    l_params(co_gen_iot) ||
+                                    'Invalid value <' || t_params(co_gen_iot) ||
                                     '> for parameter <' || co_gen_iot ||
                                     '>. Valid are Yes and No.');
          END IF;
-         IF l_params(co_gen_iot) = 'Yes' THEN
-            IF get_iot_name = get_view_name OR
-               get_iot_name = in_object_name THEN
+         IF t_params(co_gen_iot) = 'Yes' THEN
+            IF get_iot_name = get_view_name OR get_iot_name = l_object_name THEN
                raise_application_error(co_oddgen_error,
                                        'Change <' || co_iot_suffix ||
                                        '>. The target instead-of-trigger must be named differently than its base view and base table.');
             END IF;
-            SELECT COUNT(*)
-              INTO l_found
-              FROM dba_constraints
-             WHERE constraint_type = 'P'
-                   AND table_name = in_object_name
-                   AND owner = USER;
-            IF l_found = 0 THEN
+            OPEN c_pk_columns;
+            FETCH c_pk_columns
+               INTO r_pk_col;
+            l_found := c_pk_columns%FOUND;
+            CLOSE c_pk_columns;
+            IF NOT l_found THEN
                raise_application_error(co_oddgen_error,
-                                       'No primary key found in table ' ||
-                                       in_object_name ||
+                                       'No primary key found in table ' || l_object_name ||
                                        '. Cannot generate instead-of-trigger.');
             END IF;
          END IF;
       END check_params;
       --
       PROCEDURE init_params IS
-         i string_type;
+         i oddgen_types.key_type;
       BEGIN
-         l_params := get_params(in_object_type => in_object_type,
-                                in_object_name => in_object_name);
-         IF in_params.count() > 0 THEN
-            i := in_params.first();
+         t_params := get_default_params;
+         IF in_node.params.count() > 0 THEN
+            i := in_node.params.first();
             <<input_params>>
             WHILE (i IS NOT NULL)
             LOOP
-               IF l_params.exists(i) THEN
-                  l_params(i) := in_params(i);
-                  i := in_params.next(i);
+               IF t_params.exists(i) THEN
+                  t_params(i) := in_node.params(i);
+                  i := in_node.params.next(i);
                ELSE
                   raise_application_error(co_oddgen_error,
                                           'Parameter <' || i || '> is not known.');
@@ -322,33 +436,29 @@ $END
          check_params;
       END init_params;
    BEGIN
-      IF in_object_type = 'TABLE' THEN
+      l_object_type := in_node.parent_id;
+      l_object_name := regexp_substr(in_node.id, '[^\.]+', 1, 2);
+      IF l_object_type = 'TABLE' THEN
          init_params;
-         l_args   := NEW varchar2_nt(in_object_type,
-                                           in_object_name,
-                                           get_view_name,
-                                           get_iot_name,
-                                           l_params(co_gen_iot));
-         l_result := ftldb_api.process_to_clob(in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
-                                               in_templ_args => l_args);
+         l_args   := NEW varchar2_nt(
+                            l_object_type,
+                            l_object_name,
+                            get_view_name,
+                            get_iot_name,
+                            t_params(co_gen_iot)
+                     );
+         l_result := ftldb_api.process_to_clob(
+                        in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
+                        in_templ_args => l_args
+                     );
       ELSE
-         raise_application_error(co_oddgen_error,
-                                 '<' || in_object_type ||
-                                 '> is not a supported object type. Please use TABLE.');
+         raise_application_error(
+            co_oddgen_error,
+            '<' || l_object_type || '> is not a supported object type. Please use TABLE.'
+         );
       END IF;
       RETURN l_result;
    END generate;
 
-   --
-   -- generate (2)
-   --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB IS
-      l_params t_param;
-   BEGIN
-      RETURN generate(in_object_type => in_object_type,
-                      in_object_name => in_object_name,
-                      in_params      => l_params);
-   END generate;
 END ftldb_view;
 /

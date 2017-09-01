@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE BODY ftldb_hello_world IS
    /*
-   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -17,27 +17,187 @@ CREATE OR REPLACE PACKAGE BODY ftldb_hello_world IS
 
 -- use ${"/"} instead of plain slash (/) to ensure that IDEs such as PL/SQL Developer do not interpret it as command terminator
 $IF FALSE $THEN
+
+--%begin generate_prolog_ftl
+<#assign node_count = template_args[0]/>
+BEGIN
+   -- ${node_count} nodes selected.
+<#if node_count?number == 0>
+   NULL;
+</#if>
+--%end generate_prolog_ftl
+
 --%begin generate_ftl
 <#assign object_type = template_args[0]/>
 <#assign object_name = template_args[1]/>
-BEGIN
    sys.dbms_output.put_line('Hello ${object_type} ${object_name}!');
+--%end generate_ftl
+
+--%begin generate_epilog_ftl
+<#assign node_count = template_args[0]/>
+<#assign runtime = template_args[1]/>
+   -- ${node_count} nodes generated in ${runtime?number?string("####0.000")} ms.
 END;
 ${"/"}
---%end generate_ftl
+--%end generate_epilog_ftl
+
 $END
+   
+   --
+   -- private declarations
+   --
+   g_start_time TIMESTAMP(6)         := SYSTIMESTAMP;
+   co_newline   CONSTANT VARCHAR2(2) := chr(10);
+   
+   --
+   -- get_runtime
+   --
+   FUNCTION get_runtime RETURN NUMBER IS
+      l_stmt    CLOB;
+      l_runtime INTERVAL DAY TO SECOND(6);
+      l_millis  NUMBER;
+   BEGIN
+      l_runtime := systimestamp - g_start_time;
+      l_millis := (extract(second from l_runtime)
+                   + extract(minute from l_runtime) * 60
+                   + extract(hour from l_runtime) * 60 * 60
+                   + extract(day from l_runtime) * 24 * 60 * 60) * 1000;
+      RETURN l_millis;
+   END get_runtime;
+
+   --
+   -- get_name
+   --
+   FUNCTION get_name RETURN VARCHAR2 IS
+   BEGIN
+      RETURN 'Hello World';
+   END get_name;
+   
+   --
+   -- get_folders
+   --
+   FUNCTION get_folders RETURN oddgen_types.t_value_type IS
+   BEGIN
+      RETURN NEW oddgen_types.t_value_type('Examples', 'PL/SQL (FTLDB)');
+   END get_folders;
+
+   --
+   -- get_nodes
+   --
+   FUNCTION get_nodes(
+      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+   ) RETURN oddgen_types.t_node_type IS
+      t_nodes oddgen_types.t_node_type := oddgen_types.t_node_type();
+      --
+      PROCEDURE add_node (
+         in_id          IN oddgen_types.key_type,
+         in_parent_id   IN oddgen_types.key_type,
+         in_leaf     IN INTEGER
+      ) IS
+         l_node oddgen_types.r_node_type;
+      BEGIN
+         l_node.id                            := in_id;
+         l_node.parent_id                     := in_parent_id;
+         l_node.leaf                          := in_leaf = 1;
+         l_node.generatable                   := TRUE;
+         l_node.multiselectable               := TRUE;
+         t_nodes.extend;
+         t_nodes(t_nodes.count) := l_node;         
+      END add_node;
+   BEGIN
+      -- load all objects eagerly
+      <<objects>>
+      FOR r IN (
+			SELECT 'TABLE' AS id,
+			       NULL AS parent_id,
+			       0 AS leaf
+			  FROM dual
+			UNION ALL
+			SELECT 'VIEW' AS id,
+			       NULL AS parent_id,
+			       0 AS leaf
+			  FROM dual
+			UNION ALL
+			SELECT object_type || '.' || object_name AS id,
+			       object_type AS parent_id,
+			       1 AS leaf
+			  FROM dba_objects
+			 WHERE object_type IN ('TABLE', 'VIEW')
+            AND owner = USER
+			   AND generated = 'N'
+      ) LOOP
+         add_node(
+            in_id        => r.id,
+            in_parent_id => r.parent_id,
+            in_leaf      => r.leaf
+         );
+      END LOOP objects;
+      RETURN t_nodes;
+   END get_nodes;
+
+   --
+   -- generate_prolog
+   --
+   FUNCTION generate_prolog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB is
+      l_result CLOB;
+      l_args varchar2_nt;
+   BEGIN
+      g_start_time := SYSTIMESTAMP;
+      l_args := NEW varchar2_nt(in_nodes.count, get_runtime);
+      l_result := ftldb_api.process_to_clob(
+                     in_templ_name => $$PLSQL_UNIT || '%generate_prolog_ftl',
+                     in_templ_args => l_args
+                  );
+      RETURN l_result;
+   END generate_prolog;
+
+   --
+   -- generate_separator
+   --
+   FUNCTION generate_separator RETURN VARCHAR2 IS
+   BEGIN
+      RETURN NULL;
+   END generate_separator;
+   
+   --
+   -- generate_epilog
+   --
+   FUNCTION generate_epilog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB IS
+      l_result CLOB;
+      l_args varchar2_nt;
+   BEGIN
+      l_args := NEW varchar2_nt(in_nodes.count, get_runtime);
+      l_result := ftldb_api.process_to_clob(
+                     in_templ_name => $$PLSQL_UNIT || '%generate_epilog_ftl',
+                     in_templ_args => l_args
+                  );
+      RETURN l_result;
+   END generate_epilog;
 
    --
    -- generate
    --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2) RETURN CLOB IS
-      l_result CLOB;
+   FUNCTION generate(
+      in_node IN oddgen_types.r_node_type
+   ) RETURN CLOB IS
+      l_object_type oddgen_types.key_type;
+      l_object_name oddgen_types.key_type;
       l_args varchar2_nt;
+      l_result CLOB;
    BEGIN
-      l_args := NEW varchar2_nt(in_object_type, in_object_name);
-      l_result := ftldb_api.process_to_clob(in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
-                                            in_templ_args => l_args);
+      l_object_type := in_node.parent_id;
+      l_object_name := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
+      l_args := NEW varchar2_nt(l_object_type, l_object_name);
+      l_result := trim(
+                     ftldb_api.process_to_clob(
+                        in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
+                        in_templ_args => l_args
+                     )
+                  );
       RETURN l_result;
    END generate;
 END ftldb_hello_world;

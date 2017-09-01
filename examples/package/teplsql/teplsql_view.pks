@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE teplsql_view IS
    /*
-   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -15,118 +15,172 @@ CREATE OR REPLACE PACKAGE teplsql_view IS
    * limitations under the License.
    */
 
-   /** 
-   * oddgen PL/SQL example to generate a 1:1 view based on an existing table.
+   /**
+   * oddgen PL/SQL database server generator using tePLSQL
+   * Implementing the interface version 0.3.0.
+   *
+   * Shows tables in the SQL Developer navigator.
+   * Generates a 1:1 view with or without an instead-of-trigger.
    *
    * @headcom
    */
 
-   /*
-   * oddgen PL/SQL data types
-   */
-   SUBTYPE string_type IS VARCHAR2(1000 CHAR);
-   SUBTYPE param_type IS VARCHAR2(60 CHAR);
-   TYPE t_string IS TABLE OF string_type;
-   TYPE t_param IS TABLE OF string_type INDEX BY param_type;
-   TYPE t_lov IS TABLE OF t_string INDEX BY param_type;
-
    /**
-   * Get name of the generator, used in tree view
+   * Get the name of the generator, used in tree view
+   * If this function is not implemented, the package name will be used.
    *
    * @returns name of the generator
+   *
+   * @since v0.1
    */
    FUNCTION get_name RETURN VARCHAR2;
 
    /**
-   * Get a description of the generator.
-   * 
+   * Get the description of the generator.
+   * If this function is not implemented, the owner and the package name will be used.
+   *
    * @returns description of the generator
+   *
+   * @since v0.1
    */
    FUNCTION get_description RETURN VARCHAR2;
-
-   /**
-   * Get a list of supported object types.
-   *
-   * @returns a list of supported object types
-   */
-   FUNCTION get_object_types RETURN t_string;
-
-   /**
-   * Get a list of objects for a object type.
-   *
-   * @param in_object_type object type to filter objects
-   * @returns a list of objects
-   */
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string;
-
-   /**
-   * Get all parameters supported by the generator including default values.
-   *
-   * @param in_object_type bject type to determine default parameter values
-   * @param in_object_name object name to determine default parameter values
-   * @returns parameters supported by the generator
-   */
-   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_param;
    
-  /**
-   * Get all parameter names in the order to be displayed in the 
-   * generate dialog.
+   /**
+   * Get the list of folder names. The first entry in the list is the folder 
+   * under 'All Generators', the second one is the subfolder under the 
+   * first one and so on. The generator will be visible in the last folder
+   * of the list.
+   * If this function is not implemented, the default will be determined
+   * based on the generator type. For generators stored in the database 
+   * this will be oddgen_types.t_value_type('Database Server Generators').
    *
-   * @param in_object_type object type to determine parameter order
-   * @param in_object_name object name to determine parameter order
+   * @returns the list of folders under 'All Generators'
+   *
+   * @since v0.3
+   */
+   FUNCTION get_folders RETURN oddgen_types.t_value_type;
+
+   /**
+   * Get the help of the generator.
+   * If this function is not implemented, no help is available.
+   *
+   * @returns help text as HTML
+   *
+   * @since v0.3
+   */
+   FUNCTION get_help RETURN CLOB;
+
+   /**
+   * Get the list of nodes shown to be shown in the SQL Developer navigator tree.
+   * The implementation decides if nodes are returned eagerly oder lazily.
+   * If this function is not implemented nodes for tables and views are returned lazily.
+   *
+   * @param in_parent_node_id root node to get children for
+   * @returns a list of nodes in a hierarchical structure
+   *
+   * @since v0.3
+   */
+   FUNCTION get_nodes(
+      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+   ) RETURN oddgen_types.t_node_type;
+
+   /**
+   * Get the list of parameter names in the order to be displayed in the generate dialog.
+   * If this function is not implemented, the parameters are ordered by name.
+   * Parameter names returned by this function are taking precedence.
+   * Remaining parameters are ordered by name.
+   *
    * @returns ordered parameter names
+   *
+   * @since v0.3
    */
-   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_string;
+   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type;
 
    /**
-   * Get a list of values per parameter, if such a LOV is applicable.
+   * Get the list of values per parameter, if such a LOV is applicable.
+   * If this function is not implemented, then the parameters cannot be validated in the GUI.
+   * This function is called when showing the generate dialog and after updating a parameter.
    *
-   * @param in_object_type object type to determine list of values
-   * @param in_object_name object_name to determine list of values
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
    * @returns parameters with their list-of-values
+   *
+   * @since v0.3
    */
-   FUNCTION get_lov(in_object_type IN VARCHAR2,
-                    in_object_name IN VARCHAR2,
-                    in_params      IN t_param) RETURN t_lov;
+   FUNCTION get_lov(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_lov_type;
+
+  /**
+   * Get the list of parameter states (enabled/disabled)
+   * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
+   * This function is called when showing the generate dialog and after updating a parameter.
+   *
+   * @param in_params parameters with active values to determine parameter state
+   * @param in_nodes table of selected nodes to be generated with default parameter values
+   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   *
+   * @since v0.3
+   */
+   FUNCTION get_param_states(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_param_type;
 
    /**
-   * Enables/disables co_iot_suffix based on co_gen_iot
+   * Generates the prolog
+   * If this function is not implemented, no prolog will be generated.
+   * Called once for all selected nodes at the very beginning of the processing.
    *
-   * @param in_object_type object type to configure the behavior of the generator
-   * @param in_object_name object_name to configure the behavior of the generator
-   * @param in_params parameters to configure the behavior of the generator
-   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
+   * @param in_nodes table of selected nodes to be generated
+   * @returns generator prolog
+   *
+   * @since v0.3
    */
-   FUNCTION get_param_states(in_object_type IN VARCHAR2,
-                             in_object_name IN VARCHAR2,
-                             in_params      IN t_param) RETURN t_param;
+   FUNCTION generate_prolog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB;
+
+   /**
+   * Generates the separator between generate calls.
+   * If this function is not implemented, an empty line will be generated.
+   * Called once, but applied between generator calls.
+   *
+   * @returns generator separator
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_separator RETURN VARCHAR2;
+
+   /**
+   * Generates the epilog.
+   * If this function is not implemented, no epilog will be generated.
+   * Called once for all selected nodes at the very end of the processing.
+   *
+   * @param in_nodes table of selected nodes to be generated
+   * @returns generator epilog
+   *
+   * @since v0.3
+   */
+   FUNCTION generate_epilog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB;
 
    /**
    * Generates the result.
+   * This function must be implemented.
+   * Called for every selected node.
+   * Children of nodes are not resolved by oddgen.
    *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @param in_params parameters to configure the behavior of the generator
+   * @param in_node node to be generated
    * @returns generator output
-   * @throws ORA-20501 when parameter validation fails
+   *
+   * @since v0.3
    */
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2,
-                     in_params      IN t_param) RETURN CLOB;
+   FUNCTION generate(
+      in_node IN oddgen_types.r_node_type
+   ) RETURN CLOB;
 
-   /**
-   * Alternative, simplified version of the generator, which is applicable in SQL.
-   * Default values according get_params are used for in_params.
-   * This function is implemented for convenience purposes only.
-   *
-   * @param in_object_type object type to process
-   * @param in_object_name object_name of in_object_type to process
-   * @returns generator output
-   * @throws ORA-20501 when parameter validation fails
-   */
-   FUNCTION generate(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2) RETURN CLOB;
 END teplsql_view;
 /

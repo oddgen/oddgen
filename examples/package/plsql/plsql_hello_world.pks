@@ -18,7 +18,8 @@ CREATE OR REPLACE PACKAGE plsql_hello_world AUTHID CURRENT_USER IS
    /**
    * oddgen PL/SQL database server generator 
    * Implementing a subset of the interface version 0.3.0.
-   * Missing functions: get_description, get_lov
+   * Missing functions: get_description, get_help, get_ordered_params, 
+   * get_lov, get_param_states
    *
    * Shows tables and views in the SQL Developer navigator.
    * Generates an anonymous PL/SQL block printing a "Hello World" message.

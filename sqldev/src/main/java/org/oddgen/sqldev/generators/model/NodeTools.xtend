@@ -35,16 +35,10 @@ class NodeTools {
 		l_node.description     := «IF node.description === null»NULL«ELSE»'«node.description.escapeSingleQuotes»'«ENDIF»;
 		l_node.icon_name       := «IF node.iconName === null»NULL«ELSE»'«node.iconName»'«ENDIF»;
 		l_node.icon_base64     := «IF node.iconBase64 === null»NULL«ELSE»'«node.iconBase64»'«ENDIF»;
-		«IF node.params === null»
-			l_node.params          := NULL;
-		«ELSE»
-			«IF node.params === null»
-				l_node.params          := NULL;
-			«ELSE»
-				«FOR key : node.params.keySet»
-					l_node.params('«key.escapeSingleQuotes»') := '«node.params.get(key)»';
-				«ENDFOR»
-			«ENDIF»
+		«IF node.params !== null»
+			«FOR key : node.params.keySet»
+				l_node.params('«key.escapeSingleQuotes»') := '«node.params.get(key).escapeSingleQuotes»';
+			«ENDFOR»
 		«ENDIF»
 		l_node.leaf            := «IF node.leaf === null»TRUE«ELSE»«IF node.leaf»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;
 		l_node.generatable     := «IF node.generatable === null»l_node.leaf«ELSE»«IF node.generatable»TRUE«ELSE»FALSE«ENDIF»«ENDIF»;

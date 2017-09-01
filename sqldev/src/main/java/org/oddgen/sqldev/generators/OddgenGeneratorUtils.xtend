@@ -15,6 +15,7 @@
  */
 package org.oddgen.sqldev.generators
 
+import com.jcabi.log.Logger
 import java.sql.Connection
 import java.util.HashMap
 import org.oddgen.sqldev.dal.DatabaseGeneratorDao
@@ -35,16 +36,32 @@ class OddgenGeneratorUtils {
 		val result = new  HashMap<String, OddgenGenerator2>
 		// 1st priority
 		for (gen : PluginUtils.findOddgenGenerators2(PluginUtils.findJars)) {
-			result.put(gen.class.name, gen)
+			val name = gen.class.name
+			Logger.debug(OddgenGeneratorUtils,'''adding v2 client generator «name»''')
+			result.put(name, gen)
 		}		
 		// 2nd priority (do not add generators with same class name)
 		for (gen : PluginUtils.findOddgenGenerators(PluginUtils.findJars)) {
-			result.put(gen.class.name, gen)
+			val name = gen.generator.class.name
+			if (result.get(name) === null) {
+				Logger.debug(OddgenGeneratorUtils,'''adding v1 client generator «name»''')
+				result.put(name, gen)
+			} else {
+				// ok, v2 generator has precedence over v1 generator 
+				Logger.info(OddgenGeneratorUtils,'''ignoring v1 client generator «name»''')
+			}
 		}
 		// 3rd priority
 		val dao = new DatabaseGeneratorDao(conn)
 		for (gen : dao.findAll) {
-			result.put('''«gen.metaData.generatorOwner».«gen.metaData.generatorName»''', gen)
+			val name = '''«gen.metaData.generatorOwner».«gen.metaData.generatorName»'''
+			if (result.get(name) === null) {
+				Logger.debug(OddgenGeneratorUtils,'''adding database generator «name»''')
+				result.put(name, gen)
+			} else {
+				// name is unique in a database instance, hence this should never happen
+				Logger.error(OddgenGeneratorUtils,'''ignoring database generator «name»''')
+			}
 		}
 		return result.values
 	}

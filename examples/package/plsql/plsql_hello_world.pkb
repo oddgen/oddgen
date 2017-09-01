@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_hello_world IS
    ) RETURN CLOB IS
    BEGIN
       RETURN '   -- ' 
-             || in_nodes.count || ' generated in ' || to_char(get_runtime,'FM999990.000') || ' ms.' 
+             || in_nodes.count || ' nodes generated in ' || to_char(get_runtime,'FM999990.000') || ' ms.' 
              || co_newline || 'END;'
              || co_newline || '/';
    END generate_epilog;

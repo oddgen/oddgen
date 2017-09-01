@@ -95,7 +95,7 @@ class PluginUtils {
 		val gens = reflections.getSubTypesOf(OddgenGenerator).filter [
 			it.hasDefaultConstructor && it.getName != "DatabaseGenerator"
 		]
-		val result = new ArrayList<OddgenGenerator2>
+		val result = new ArrayList<ClientGenerator>
 		for (g : gens) {
 			try {
 				val gen = new ClientGenerator(g.newInstance)

@@ -208,17 +208,24 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
             END IF;
          END LOOP emps;
       END LOOP nodes;
-      IF in_nodes(1).params(co_include_commission) = 'YES' THEN
-         l_with_or_without := 'with';
+      IF in_nodes.count = 0 THEN
+l_epilog :=
+'               ------
+Total of 0          0
+               ======';         
       ELSE
-         l_with_or_without := 'without';
-      END IF;
+         IF in_nodes(1).params(co_include_commission) = 'YES' THEN
+            l_with_or_without := 'with';
+         ELSE
+            l_with_or_without := 'without';
+         END IF;
 l_epilog := 
 '               ------
 Total of ' || rpad(in_nodes.count, 5) || to_char(l_total, '999990') || '
                ======
 
 Salaries ' || l_with_or_without || ' commissions.';
+      END IF;
       RETURN l_epilog;
    END generate_epilog;
 

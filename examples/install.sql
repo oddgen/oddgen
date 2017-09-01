@@ -102,10 +102,6 @@ SHOW ERRORS
 SHOW ERRORS
 @./package/teplsql/teplsql_view.pks
 SHOW ERRORS
-@./package/teplsql2/teplsql2_hello_world.pks
-SHOW ERRORS
-@./package/teplsql2/teplsql2_view.pks
-SHOW ERRORS
 
 PROMPT ====================================================================
 PROMPT Package bodies
@@ -126,10 +122,6 @@ SHOW ERRORS
 SHOW ERRORS
 @./package/teplsql/teplsql_view.pkb
 SHOW ERRORS
-@./package/teplsql2/teplsql2_hello_world.pkb
-SHOW ERRORS
-@./package/teplsql2/teplsql2_view.pkb
-SHOW ERRORS
 
 PROMPT ====================================================================
 PROMPT Grants
@@ -140,12 +132,11 @@ PROMPT ====================================================================
 GRANT EXECUTE ON oddgen_types TO PUBLIC;
 GRANT EXECUTE ON plsql_hello_world TO PUBLIC;
 GRANT EXECUTE ON plsql_view TO PUBLIC;
-GRANT EXECUTE ON dropall to PUBLIC;
+GRANT EXECUTE ON dropall TO PUBLIC;
+GRANT EXECUTE ON emp_hier TO PUBLIC;
 GRANT EXECUTE ON ftldb_hello_world TO PUBLIC;
 GRANT EXECUTE ON ftldb_view TO PUBLIC;
 GRANT EXECUTE ON teplsql_hello_world TO PUBLIC;
 GRANT EXECUTE ON teplsql_view TO PUBLIC;
-GRANT EXECUTE ON teplsql2_hello_world TO PUBLIC;
-GRANT EXECUTE ON teplsql2_view TO PUBLIC;
 
 SPOOL OFF

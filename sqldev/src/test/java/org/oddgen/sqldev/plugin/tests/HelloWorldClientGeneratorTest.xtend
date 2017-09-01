@@ -96,12 +96,12 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 	def generateEpilog() {
 		val nodes = gen.getNodes(dataSource.connection, null).filter[it.parentId == "TABLE"].toList
 		val expected = '''
-			«'   '»-- 4 nodes generated in ... ms.
+			«'   '»-- 4 nodes generated in 1.234 ms.
 			END;
 			/
 		'''
 		val result = gen.generateEpilog(dataSource.connection, nodes)
-		Assert.assertEquals(expected, result.replaceAll("[0-9.]+ ms", "... ms"))		
+		Assert.assertEquals(expected, result.replaceAll("[0-9]+\\.[0-9]{3}", "1.234"))		
 	}
 
 	@Test
@@ -124,7 +124,7 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 			   sys.dbms_output.put_line('Hello TABLE DEPT!');
 			   sys.dbms_output.put_line('Hello TABLE EMP!');
 			   sys.dbms_output.put_line('Hello TABLE SALGRADE!');
-			   -- 4 nodes generated in ... ms.
+			   -- 4 nodes generated in 1.234 ms.
 			END;
 			/
 		'''
@@ -135,7 +135,7 @@ class HelloWorldClientGeneratorTest extends AbstractJdbcTest {
 			«ENDFOR»
 			«gen.generateEpilog(dataSource.connection, nodes)»
 		'''
-		Assert.assertEquals(expected, result.replaceAll("[0-9.]+ ms", "... ms"))
+		Assert.assertEquals(expected, result.replaceAll("[0-9]+\\.[0-9]{3}", "1.234"))
 	}
 
 	@BeforeClass

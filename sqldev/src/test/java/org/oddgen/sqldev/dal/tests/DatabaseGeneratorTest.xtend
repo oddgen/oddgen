@@ -91,6 +91,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		'''	
 		val node = new Node;
 		node.id = "TABLE.DEPT"
+		node.parentId = "TABLE"
 		val generated = dbgen.generate(dataSource.connection, node)
 		Assert.assertEquals(expected.trim, generated.trim)
 	}
@@ -114,6 +115,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		'''	
 		val node = new Node;
 		node.id = "TABLE.EMP"
+		node.parentId = "TABLE"
 		node.params = new LinkedHashMap<String, String>
 		node.params.put("Generate instead-of-trigger?", "No");
 		val generated = dbgen.generate(dataSource.connection, node)
@@ -141,6 +143,7 @@ class DatabaseGeneratorTest extends AbstractJdbcTest {
 		'''
 		val node = new Node;
 		node.id = "TABLE.EMP"
+		node.parentId = "TABLE"
 		node.params = new LinkedHashMap<String, String>
 		node.params.put("Generate instead-of-trigger?", "No");
 		node.params.put("View suffix", "_'V''") // handle one or multiple single quotes

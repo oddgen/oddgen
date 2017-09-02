@@ -28,14 +28,15 @@ CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
    *
    * @since v0.3
    */
-   SUBTYPE key_type    IS VARCHAR2(32767 BYTE);
+   SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
 
    /**
-   * Values, typically short strings, but may contain larger values, e.g. for JSON content or similar.
+   * Values, typically short strings, but may contain larger values, 
+   * e.g. for JSON content or similar.
    *
    * @since v0.3
    */
-   SUBTYPE value_type  IS CLOB;
+   SUBTYPE value_type  IS VARCHAR2(32767 BYTE);
 
    /**
    * Value array.

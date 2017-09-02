@@ -17,6 +17,7 @@ package org.oddgen.sqldev.dal
 
 import com.jcabi.aspects.Loggable
 import com.jcabi.log.Logger
+import java.sql.Clob
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.HashMap
@@ -1206,6 +1207,9 @@ class DatabaseGeneratorDao {
 	}
 
 	def String bulkGenerate(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
+		val nodesString = nodes.toXml(false).toString
+		val Clob nodesXml = conn.createClob();
+		nodesXml.setString(1, nodesString)
 		val oddgenTypesUsed = (metaData.hasGetFolders || metaData.hasGetNodes || metaData.hasGenerateProlog || metaData.hasGenerateEpilog || metaData.hasGenerate3) 
 		val plsql = '''
 			DECLARE
@@ -1214,6 +1218,7 @@ class DatabaseGeneratorDao {
 			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
 			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
 			      l_sep    «metaData.generatorOwner».oddgen_types.value_type := chr(10);
+			      l_p      «metaData.generatorOwner».oddgen_types.t_param_type;
 			   «ELSE»
 			      -- no oddgen_types usage detected, define types locally
 			      SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
@@ -1238,6 +1243,7 @@ class DatabaseGeneratorDao {
 			      l_node   r_node_type;
 			      l_nodes  t_node_type := t_node_type();
 			      l_sep    value_type := chr(10);
+			      l_p      t_param_type;
 			   «ENDIF»
 			   «IF metaData.hasGenerate1»
 			      l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
@@ -1248,7 +1254,51 @@ class DatabaseGeneratorDao {
 			   «IF metaData.hasGenerateSeparator»
 			      l_sep := «metaData.generatorOwner».«metaData.generatorName».generate_separator;
 			   «ENDIF»
-			   «nodes.toPlsql»
+			   «IF nodes.size > 0 && nodes.get(0).params !== null»
+			      «FOR key : nodes.get(0).params.keySet»
+			         l_p('«key.escapeSingleQuotes»') := '«nodes.get(0).params.get(key).escapeSingleQuotes»';
+			      «ENDFOR»
+			   «ENDIF»
+			   FOR r IN (
+			      SELECT id,
+			             parent_id,
+			             name,
+			             description,
+			             icon_name,
+			             icon_base64,
+			             leaf,
+			             generatable,
+			             multiselectable,
+			             relevant
+			        FROM XMLTABLE(
+			                '/nodes/node'
+			                PASSING XMLTYPE(?)
+			                COLUMNS id              VARCHAR2(4000 BYTE) PATH 'id',
+			                        parent_id       VARCHAR2(4000 BYTE) PATH 'parent_id',
+			                        name            CLOB                PATH 'name',
+			                        description     CLOB                PATH 'description',
+			                        icon_name       VARCHAR2(4000 BYTE) PATH 'icon_name',
+			                        icon_base64     CLOB                PATH 'icon_base64',
+			                        leaf            VARCHAR2(5 CHAR)    PATH 'leaf',
+			                        generatable     VARCHAR2(5 CHAR)    PATH 'generatable',
+			                        multiselectable VARCHAR2(5 CHAR)    PATH 'multiselectable',
+			                        relevant        VARCHAR2(5 CHAR)    PATH 'relevant'
+			             )
+			   ) LOOP
+			      l_node.id              := r.id;
+			      l_node.parent_id       := r.parent_id;
+			      l_node.name            := r.name;
+			      l_node.description     := r.description;
+			      l_node.icon_name       := r.icon_name;
+			      l_node.icon_base64     := r.icon_base64;
+			      l_node.leaf            := r.leaf = 'true';
+			      l_node.generatable     := r.generatable = 'true';
+			      l_node.multiselectable := r.multiselectable = 'true';
+			      l_node.relevant        := r.relevant = 'true';
+			      l_node.params          := l_p;
+			      l_nodes.extend;
+			      l_nodes(l_nodes.count) := l_node;
+			   END LOOP;
 			   «IF metaData.hasGenerate1»
 			      «IF nodes.size > 0 && nodes.get(0).params !== null»
 			         «FOR key : nodes.get(0).params.keySet»
@@ -1308,7 +1358,7 @@ class DatabaseGeneratorDao {
 			END;
 		'''
 		Logger.debug(this, "plsql: %s", plsql)
-		val result = plsql.getClob('''Failed to generate code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''')
+		val result = plsql.getClob('''Failed to generate code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''', nodesXml)
 		return result
 	}
 

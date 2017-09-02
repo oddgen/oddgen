@@ -130,7 +130,9 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			val gen = gens.get(0).generator
 			val nodes = gens.addDeepNodes(conn).filter[it.isRelevant].toList
 			nodes.forEach[it.params = gens.get(0).node.params]
-			if (gen instanceof DatabaseGenerator && preferences.bulkProcess) {
+			val float dbVersion = (conn.metaData.databaseMajorVersion as float) + (conn.metaData.databaseMinorVersion as float) / 10
+			Logger.debug(this, '''Database Version is «dbVersion»''')
+			if (gen instanceof DatabaseGenerator && preferences.bulkProcess && dbVersion >= 10.2) {
 				result = '''«(gen as DatabaseGenerator).bulkGenerate(conn, nodes)»'''
 			} else {
 				result = '''

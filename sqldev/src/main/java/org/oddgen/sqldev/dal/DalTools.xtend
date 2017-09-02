@@ -111,6 +111,39 @@ class DalTools {
 		}
 		return result
 	}
+	
+	def String getClob(String plsql, String failedMessage, Clob clobInput) {
+		depth++
+		var String result = null
+		try {
+			val resultClob = jdbcTemplate.execute(plsql.removeCarriageReturns, new CallableStatementCallback<Clob>() {
+				override Clob doInCallableStatement(CallableStatement cs) throws SQLException, DataAccessException {
+					cs.setClob(1, clobInput)
+					cs.registerOutParameter(2, Types.CLOB);
+					cs.execute
+					return cs.getClob(2);
+				}
+			})
+			if (resultClob !== null) {
+				result = resultClob.getSubString(1, resultClob.length as int) 
+			} else {
+				result = ""
+			}
+		} catch (Exception e) {
+			if (e.message.contains("ORA-04068") && depth < MAX_DEPTH) {
+				// catch : existing state of packages has been discarded
+				Logger.debug(this, '''Failed with ORA-04068. Try again («depth»).''')
+				result = plsql.getClob(failedMessage)
+			} else {
+				result = '''«failedMessage». Got the following error: «e.cause?.message»'''
+				Logger.error(this, plsql + result)
+			}
+		} finally {
+			depth--
+		}
+		return result
+	}
+	
 
 	def Document getDoc(String plsql) {
 		depth++

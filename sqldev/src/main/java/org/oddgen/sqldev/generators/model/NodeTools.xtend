@@ -28,6 +28,33 @@ class NodeTools {
 		return value.replace("'", "''")
 	}
 	
+	def CharSequence toXml(List<Node> nodes, boolean withParams) '''
+		<nodes>
+			«FOR node : nodes»
+				<node>
+					<id>«node.id»</id>
+					<parent_id>«node.parentId»</parent_id>
+					<name>«node.name»</name>
+					<description>«node.description»</description>
+					<icon_name>«node.iconName»</icon_name>
+					<icon_base64>«node.iconBase64»</icon_base64>
+					«IF withParams»
+						<params>
+							«FOR key : node.params.keySet»
+								<key>«key»</key>
+								<value>«node.params.get(key)»</value>
+							«ENDFOR»
+						</params>
+					«ENDIF»
+					<leaf>«IF node.isLeaf»true«ELSE»false«ENDIF»</leaf>
+					<generatable>«IF node.isGeneratable»true«ELSE»false«ENDIF»</generatable>
+					<multiselectable>«IF node.isMultiselectable»true«ELSE»false«ENDIF»</multiselectable>
+					<relevant>«IF node.isRelevant»true«ELSE»false«ENDIF»</relevant>
+				</node>
+			«ENDFOR»
+		</nodes>
+	'''
+	
 	def CharSequence toPlsql(Node node) '''
 		l_node.id              := «IF node.id === null»NULL«ELSE»'«node.id.escapeSingleQuotes»'«ENDIF»;
 		l_node.parent_id       := «IF node.parentId === null»NULL«ELSE»'«node.parentId.escapeSingleQuotes»'«ENDIF»;

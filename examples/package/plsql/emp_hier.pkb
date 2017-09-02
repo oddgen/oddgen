@@ -96,31 +96,34 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
    FUNCTION get_nodes(
       in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
    ) RETURN oddgen_types.t_node_type IS
-      t_nodes oddgen_types.t_node_type := oddgen_types.t_node_type();
+      t_nodes  oddgen_types.t_node_type;
+      t_params oddgen_types.t_param_type;
       --
       PROCEDURE add_node (
          in_id          IN oddgen_types.key_type,
          in_parent_id   IN oddgen_types.key_type,
          in_name        IN oddgen_types.key_type,
          in_description IN oddgen_types.key_type,
-         in_leaf        IN INTEGER
+         in_leaf        IN BOOLEAN
       ) IS
          l_node oddgen_types.r_node_type;
       BEGIN
-         l_node.id                            := in_id;
-         l_node.parent_id                     := in_parent_id;
-         l_node.name                          := in_name;
-         l_node.description                   := in_description;
-         l_node.icon_base64                   := co_similing_face_emoji;
-         l_node.params(co_include_commission) := 'YES';
-         l_node.leaf                          := in_leaf = 1;
-         l_node.generatable                   := TRUE;
-         l_node.multiselectable               := TRUE;
-         l_node.relevant                      := TRUE;
+         l_node.id              := in_id;
+         l_node.parent_id       := in_parent_id;
+         l_node.name            := in_name;
+         l_node.description     := in_description;
+         l_node.icon_base64     := co_similing_face_emoji;
+         l_node.params          := t_params;
+         l_node.leaf            := in_leaf;
+         l_node.generatable     := TRUE;
+         l_node.multiselectable := TRUE;
+         l_node.relevant        := TRUE;
          t_nodes.extend;
          t_nodes(t_nodes.count) := l_node;         
       END add_node;
    BEGIN
+      t_nodes := oddgen_types.t_node_type();
+      t_params(co_include_commission) := 'YES';
       -- load all employees eagerly
       <<emps>>
       FOR r IN (
@@ -145,7 +148,7 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
                               || ', salary: ' || r.sal 
                               || ', commission: ' || NVL(r.comm, 0) 
                               || ')',
-            in_leaf        => r.leaf
+            in_leaf        => r.leaf = 1
          );
       END LOOP emps;
       RETURN t_nodes;

@@ -192,7 +192,8 @@ $end
    FUNCTION get_nodes(
       in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
    ) RETURN oddgen_types.t_node_type IS
-      t_nodes oddgen_types.t_node_type;
+      t_nodes  oddgen_types.t_node_type;
+      t_params oddgen_types.t_param_type;
       --
       PROCEDURE add_node (
          in_id          IN oddgen_types.key_type,
@@ -203,7 +204,7 @@ $end
       BEGIN
          l_node.id              := in_id;
          l_node.parent_id       := in_parent_id;
-         l_node.params          := get_default_params;
+         l_node.params          := t_params;
          l_node.leaf            := in_leaf;
          l_node.generatable     := TRUE;
          l_node.multiselectable := TRUE;
@@ -212,6 +213,7 @@ $end
       END add_node;
    BEGIN
       t_nodes := oddgen_types.t_node_type();
+      t_params := get_default_params;
       IF in_parent_node_id IS NULL THEN
          -- object types
          add_node(

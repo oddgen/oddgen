@@ -38,6 +38,36 @@ class DatabaseGeneratorDao {
 	var JdbcTemplate jdbcTemplate
 	var extension DalTools dalTools
 	val extension NodeTools nodeTools = new NodeTools
+	
+	private def addTextVariables() '''
+	   l_buffer      VARCHAR2(32767); 
+	   co_max_buffer CONSTANT INTEGER := 32767;
+	'''
+	
+	private def addTextProcedures(String clobName) '''
+	   PROCEDURE flush_buffer IS
+	   BEGIN
+	      sys.dbms_lob.append(«clobName», l_buffer);
+	      l_buffer := NULL;
+	   END flush_buffer;
+	   --
+	   PROCEDURE add_text (in_text IN varchar2) IS
+	      l_text_len   INTEGER;
+	      l_buffer_len INTEGER;
+	   BEGIN
+	      l_text_len   := length(in_text);
+	      l_buffer_len := length(l_buffer);
+	      IF l_text_len > co_max_buffer THEN
+	         flush_buffer;
+	         sys.dbms_lob.append(«clobName», in_text);
+	      ELSIF l_text_len + l_buffer_len > co_max_buffer THEN
+	         flush_buffer;
+	         l_buffer := in_text;
+	      ELSE
+	         l_buffer := l_buffer || in_text;
+	      END IF;
+	   END add_text;
+	'''
 
 	private def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
 		// convert PL/SQL associative array to XML
@@ -45,6 +75,9 @@ class DatabaseGeneratorDao {
 			DECLARE
 			   l_ordered_params «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   l_clob           CLOB;
+			   «addTextVariables»
+			   --
+			   «addTextProcedures("l_clob")»
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetOrderedParams2»
@@ -52,12 +85,13 @@ class DatabaseGeneratorDao {
 			   «ELSE»
 			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
 			   «ENDIF»
-			   sys.dbms_lob.append(l_clob, '<values>');
+			   add_text('<values>');
 			   FOR i IN 1 .. l_ordered_params.count
 			   LOOP
-			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_ordered_params(i) || ']]></value>');
+			      add_text('<value><![CDATA[' || l_ordered_params(i) || ']]></value>');
 			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</values>');
+			   add_text('</values>');
+			   flush_buffer;
 			   ? := l_clob;
 			END;
 		'''
@@ -90,6 +124,9 @@ class DatabaseGeneratorDao {
 			   l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
 			   l_key    «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   l_clob   CLOB;
+			   «addTextVariables»
+			   --
+			   «addTextProcedures("l_clob")»
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetParams2»
@@ -98,14 +135,15 @@ class DatabaseGeneratorDao {
 			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   «ENDIF»
 			   l_key    := l_params.first;
-			   sys.dbms_lob.append(l_clob, '<params>');
+			   add_text('<params>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_params(l_key) || ']]></value></param>');
+			      add_text('<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_params(l_key) || ']]></value></param>');
 			      l_params.delete(l_key);
 			      l_key := l_params.first;
 			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</params>');
+			   add_text('</params>');
+			   flush_buffer;
 			   ? := l_clob;
 			END;
 		'''
@@ -507,12 +545,12 @@ class DatabaseGeneratorDao {
 			             has_generate_separator,
 			             has_generate_epilog
 			        FROM tot;
-			
 			   --
 			   SUBTYPE string_type IS VARCHAR2(8192 CHAR);
 			   l_name        string_type;
 			   l_description string_type;
 			   l_result      CLOB;
+			   «addTextVariables»
 			   --
 			   FUNCTION get_default_name(in_owner IN VARCHAR2, in_package_name IN VARCHAR2)
 			      RETURN VARCHAR2 IS
@@ -568,15 +606,16 @@ class DatabaseGeneratorDao {
 			      END IF;
 			   END get_description;
 			   --
+			   «addTextProcedures("l_result")»
+			   --
 			   PROCEDURE add_node(in_node IN VARCHAR2, in_value IN VARCHAR2) IS
 			   BEGIN
-			      sys.dbms_lob.append(l_result,
-			                          '<' || in_node || '><![CDATA[' || in_value || ']]></' || in_node || '>');
+			      add_text('<' || in_node || '><![CDATA[' || in_value || ']]></' || in_node || '>');
 			   END add_node;
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_result, TRUE);
 			   <<detected_db_generators>>
-			   sys.dbms_lob.append(l_result, '<result>');
+			   add_text('<result>');
 			   FOR r_metadata IN c_metadata
 			   LOOP
 			      l_name        := get_name(in_owner        => r_metadata.owner,
@@ -585,7 +624,7 @@ class DatabaseGeneratorDao {
 			      l_description := get_description(in_owner               => r_metadata.owner,
 			                                       in_package_name        => r_metadata.package_name,
 			                                       in_has_get_description => r_metadata.has_get_description);
-			      sys.dbms_lob.append(l_result, '<generator>');
+			      add_text('<generator>');
 			      add_node(in_node => 'owner', in_value => r_metadata.owner);
 			      add_node(in_node => 'packageName', in_value => r_metadata.package_name);
 			      add_node(in_node => 'name', in_value => l_name);
@@ -614,9 +653,10 @@ class DatabaseGeneratorDao {
 			      add_node(in_node => 'hasGenerateProlog', in_value => r_metadata.has_generate_prolog);
 			      add_node(in_node => 'hasGenerateSeparator', in_value => r_metadata.has_generate_separator);
 			      add_node(in_node => 'hasGenerateEpilog', in_value => r_metadata.has_generate_epilog);
-			      sys.dbms_lob.append(l_result, '</generator>');
+			      add_text('</generator>');
 			   END LOOP detected_db_generators;
-			   sys.dbms_lob.append(l_result, '</result>');
+			   add_text('</result>');
+			   flush_buffer;
 			   ? := l_result;
 			END;
 		'''
@@ -680,15 +720,19 @@ class DatabaseGeneratorDao {
 			DECLARE
 			   l_folders «metaData.generatorOwner».oddgen_types.t_value_type;
 			   l_clob    CLOB;
+			   «addTextVariables»
+			   --
+			   «addTextProcedures("l_clob")»
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   l_folders := «metaData.generatorOwner».«metaData.generatorName».get_folders;
-			   sys.dbms_lob.append(l_clob, '<values>');
+			   add_text('<values>');
 			   FOR i IN 1 .. l_folders.count
 			   LOOP
-			      sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_folders(i) || ']]></value>');
+			      add_text('<value><![CDATA[' || l_folders(i) || ']]></value>');
 			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</values>');
+			   add_text('</values>');
+			   flush_buffer;
 			   ? := l_clob;
 			END;
 		'''
@@ -746,6 +790,7 @@ class DatabaseGeneratorDao {
 				   t_nodes «metaData.generatorOwner».oddgen_types.t_node_type;
 				   l_key   «metaData.generatorOwner».oddgen_types.key_type;
 				   l_clob CLOB;
+				   «addTextVariables»
 				   -- 
 				   FUNCTION bool2string (in_bool BOOLEAN, in_default VARCHAR2) RETURN VARCHAR2 IS
 				   BEGIN
@@ -757,37 +802,40 @@ class DatabaseGeneratorDao {
 				         RETURN 'false';
 				      END IF;
 				   END bool2string;
+				   --
+				   «addTextProcedures("l_clob")»
 				BEGIN
 				   sys.dbms_lob.createtemporary(l_clob, TRUE);
 				   t_nodes := «metaData.generatorOwner».«metaData.generatorName».get_nodes(in_parent_node_id => '«parentNodeId»');
-				   sys.dbms_lob.append(l_clob, '<nodes>');
+				   add_text('<nodes>');
 				   IF t_nodes.count > 0 THEN
 				      <<nodes>>
 				      FOR i IN 1..t_nodes.count LOOP
-				         sys.dbms_lob.append(l_clob, '<node>');
-				         sys.dbms_lob.append(l_clob, '<id>' || t_nodes(i).id || '</id>');
-				         sys.dbms_lob.append(l_clob, '<parent_id>' || t_nodes(i).parent_id || '</parent_id>');
-				         sys.dbms_lob.append(l_clob, '<name><![CDATA[' || t_nodes(i).name || ']]></name>');
-				         sys.dbms_lob.append(l_clob, '<description><![CDATA[' || t_nodes(i).description || ']]></description>');
-				         sys.dbms_lob.append(l_clob, '<icon_name>' || t_nodes(i).icon_name || '</icon_name>');
-				         sys.dbms_lob.append(l_clob, '<icon_base64>' || t_nodes(i).icon_base64 || '</icon_base64>');
-				         sys.dbms_lob.append(l_clob, '<params>');
+				         add_text('<node>');
+				         add_text('<id>' || t_nodes(i).id || '</id>');
+				         add_text('<parent_id>' || t_nodes(i).parent_id || '</parent_id>');
+				         add_text('<name><![CDATA[' || t_nodes(i).name || ']]></name>');
+				         add_text('<description><![CDATA[' || t_nodes(i).description || ']]></description>');
+				         add_text('<icon_name>' || t_nodes(i).icon_name || '</icon_name>');
+				         add_text('<icon_base64>' || t_nodes(i).icon_base64 || '</icon_base64>');
+				         add_text('<params>');
 				         l_key := t_nodes(i).params.first;
 				         <<params>>
 				         WHILE l_key IS NOT NULL LOOP
-				            sys.dbms_lob.append(l_clob, '<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || t_nodes(i).params(l_key) || ']]></value></param>');
+				            add_text('<param><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || t_nodes(i).params(l_key) || ']]></value></param>');
 				            t_nodes(i).params.delete(l_key);
 				            l_key := t_nodes(i).params.first;
 				         END LOOP params;
-				         sys.dbms_lob.append(l_clob, '</params>');
-				         sys.dbms_lob.append(l_clob, '<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
-				         sys.dbms_lob.append(l_clob, '<generatable>' || bool2string(t_nodes(i).generatable, NULL) || '</generatable>');
-				         sys.dbms_lob.append(l_clob, '<multiselectable>' || bool2string(t_nodes(i).multiselectable, NULL) || '</multiselectable>');
-				         sys.dbms_lob.append(l_clob, '<relevant>' || bool2string(t_nodes(i).relevant, NULL) || '</relevant>');
-				         sys.dbms_lob.append(l_clob, '</node>');
+				         add_text('</params>');
+				         add_text('<leaf>' || bool2string(t_nodes(i).leaf, 'false') || '</leaf>');
+				         add_text('<generatable>' || bool2string(t_nodes(i).generatable, NULL) || '</generatable>');
+				         add_text('<multiselectable>' || bool2string(t_nodes(i).multiselectable, NULL) || '</multiselectable>');
+				         add_text('<relevant>' || bool2string(t_nodes(i).relevant, NULL) || '</relevant>');
+				         add_text('</node>');
 				      END LOOP nodes;
 				   END IF;
-				   sys.dbms_lob.append(l_clob, '</nodes>');
+				   add_text('</nodes>');
+				   flush_buffer;
 				   ? := l_clob;
 				END;
 			«ELSE»
@@ -796,41 +844,49 @@ class DatabaseGeneratorDao {
 						DECLARE
 						   l_types «metaData.generatorOwner».«metaData.generatorName».t_string;
 						   l_clob CLOB;
+						   «addTextVariables»
+						   --
+						   «addTextProcedures("l_clob")»
 						BEGIN
 						   l_types := «metaData.generatorOwner».«metaData.generatorName».get_object_types();
 						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   add_text('<nodes>');
 						   FOR i IN 1 .. l_types.count
 						   LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>' || l_types(i) || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id/>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						      sys.dbms_lob.append(l_clob, '</node>');
+						      add_text('<node>');
+						      add_text('<id>' || l_types(i) || '</id>');
+						      add_text('<parent_id/>');
+						      add_text('<params/>');
+						      add_text('<leaf>false</leaf>');
+						      add_text('</node>');
 						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   add_text('</nodes>');
+						   flush_buffer;
 						   ? := l_clob;
 						END;
 					«ELSE»
 						DECLARE
 						   l_clob CLOB;
+						   «addTextVariables»
+						   --
+						   «addTextProcedures("l_clob")»
 						BEGIN
 						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
-						   sys.dbms_lob.append(l_clob, '<node>');
-						   sys.dbms_lob.append(l_clob, '<id>TABLE</id>');
-						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params/>');
-						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '</node>');
-						   sys.dbms_lob.append(l_clob, '<node>');
-						   sys.dbms_lob.append(l_clob, '<id>VIEW</id>');
-						   sys.dbms_lob.append(l_clob, '<parent_id/>');
-						   sys.dbms_lob.append(l_clob, '<params/>');
-						   sys.dbms_lob.append(l_clob, '<leaf>false</leaf>');
-						   sys.dbms_lob.append(l_clob, '</node>');
-						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   add_text('<nodes>');
+						   add_text('<node>');
+						   add_text('<id>TABLE</id>');
+						   add_text('<parent_id/>');
+						   add_text('<params/>');
+						   add_text('<leaf>false</leaf>');
+						   add_text('</node>');
+						   add_text('<node>');
+						   add_text('<id>VIEW</id>');
+						   add_text('<parent_id/>');
+						   add_text('<params/>');
+						   add_text('<leaf>false</leaf>');
+						   add_text('</node>');
+						   add_text('</nodes>');
+						   flush_buffer;
 						   ? := l_clob;
 						END;
 					«ENDIF»
@@ -839,28 +895,35 @@ class DatabaseGeneratorDao {
 						DECLARE
 						   l_names «metaData.generatorOwner».«metaData.generatorName».t_string;
 						   l_clob   CLOB;
+						   «addTextVariables»
+						   --
+						   «addTextProcedures("l_clob")»
 						BEGIN
 						   l_names := «metaData.generatorOwner».«metaData.generatorName».get_object_names(in_object_type => '«parentNodeId»');
 						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   add_text('<nodes>');
 						   FOR i IN 1 .. l_names.count
 						   LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || l_names(i) || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '</node>');
+						      add_text('<node>');
+						      add_text('<id>«parentNodeId».' || l_names(i) || '</id>');
+						      add_text('<parent_id>«parentNodeId»</parent_id>');
+						      add_text('<params/>');
+						      add_text('<leaf>true</leaf>');
+						      add_text('</node>');
 						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   add_text('</nodes>');
+						   flush_buffer;
 						   ? := l_clob;
 						END;
 					«ELSE»
 						DECLARE
 						   l_clob   CLOB;
+						   «addTextVariables»
+						   --
+						   «addTextProcedures("l_clob")»
 						BEGIN
 						   sys.dbms_lob.createtemporary(l_clob, TRUE);
-						   sys.dbms_lob.append(l_clob, '<nodes>');
+						   add_text('<nodes>');
 						   FOR r IN (
 						      SELECT object_name
 						        FROM user_objects
@@ -868,14 +931,15 @@ class DatabaseGeneratorDao {
 						         AND generated = 'N'
 						       ORDER BY object_name
 						   ) LOOP
-						      sys.dbms_lob.append(l_clob, '<node>');
-						      sys.dbms_lob.append(l_clob, '<id>«parentNodeId».' || r.object_name || '</id>');
-						      sys.dbms_lob.append(l_clob, '<parent_id>«parentNodeId»</parent_id>');
-						      sys.dbms_lob.append(l_clob, '<params/>');
-						      sys.dbms_lob.append(l_clob, '<leaf>true</leaf>');
-						      sys.dbms_lob.append(l_clob, '</node>');
+						      add_text('<node>');
+						      add_text('<id>«parentNodeId».' || r.object_name || '</id>');
+						      add_text('<parent_id>«parentNodeId»</parent_id>');
+						      add_text('<params/>');
+						      add_text('<leaf>true</leaf>');
+						      add_text('</node>');
 						   END LOOP;
-						   sys.dbms_lob.append(l_clob, '</nodes>');
+						   add_text('</nodes>');
+						   flush_buffer;
 						   ? := l_clob;
 						END;
 					«ENDIF»
@@ -951,6 +1015,9 @@ class DatabaseGeneratorDao {
 			      l_lov  «metaData.generatorOwner».«metaData.generatorName».t_string;
 			   «ENDIF»
 			   l_clob CLOB;
+			   «addTextVariables»
+			   --
+			   «addTextProcedures("l_clob")»
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF params !== null && (metaData.hasGetLov3 || metaData.hasGetLov2 || metaData.hasRefreshLov)»
@@ -969,19 +1036,20 @@ class DatabaseGeneratorDao {
 			      l_lovs := «metaData.generatorOwner».«metaData.generatorName».get_lov();
 			   «ENDIF»
 			   l_key  := l_lovs.first;
-			   sys.dbms_lob.append(l_clob, '<lovs>');
+			   add_text('<lovs>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      sys.dbms_lob.append(l_clob, '<lov><key><![CDATA[' || l_key || ']]></key><values>');
+			      add_text('<lov><key><![CDATA[' || l_key || ']]></key><values>');
 			      FOR i IN 1 .. l_lovs(l_key).count
 			      LOOP
-			         sys.dbms_lob.append(l_clob, '<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>');
+			         add_text('<value><![CDATA[' || l_lovs(l_key) (i) || ']]></value>');
 			      END LOOP;
-			      sys.dbms_lob.append(l_clob, '</values></lov>');
+			      add_text('</values></lov>');
 			      l_lovs.delete(l_key);
 			      l_key := l_lovs.first;
 			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</lovs>');
+			   add_text('</lovs>');
+			   flush_buffer;
 			   ? := l_clob;
 			END;
 		'''
@@ -1027,6 +1095,9 @@ class DatabaseGeneratorDao {
 			      l_key          «metaData.generatorOwner».«metaData.generatorName».param_type;
 			   «ENDIF»
 			   l_clob         CLOB;
+			   «addTextVariables»
+			   --
+			   «addTextProcedures("l_clob")»
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «FOR key : params.keySet»
@@ -1046,14 +1117,15 @@ class DatabaseGeneratorDao {
 			                        );
 			   «ENDIF»
 			   l_key          := l_param_states.first;
-			   sys.dbms_lob.append(l_clob, '<paramStates>');
+			   add_text('<paramStates>');
 			   WHILE l_key IS NOT NULL
 			   LOOP
-			      sys.dbms_lob.append(l_clob, '<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>');
+			      add_text('<paramState><key><![CDATA[' || l_key || ']]></key><value><![CDATA[' || l_param_states(l_key) || ']]></value></paramState>');
 			      l_param_states.delete(l_key);
 			      l_key := l_param_states.first;
 			   END LOOP;
-			   sys.dbms_lob.append(l_clob, '</paramStates>');
+			   add_text('</paramStates>');
+			   flush_buffer;
 			   ? := l_clob;
 			END;
 		'''

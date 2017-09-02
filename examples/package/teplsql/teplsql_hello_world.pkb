@@ -170,17 +170,13 @@ END;
    FUNCTION generate(
       in_node IN oddgen_types.r_node_type
    ) RETURN CLOB IS
-      l_object_type oddgen_types.key_type;
-      l_object_name oddgen_types.key_type;
       l_vars        teplsql.t_assoc_array;
       l_template    CLOB;
       l_result      CLOB;
    BEGIN
       l_template := q'[   sys.dbms_output.put_line('Hello ${object_type} ${object_name}!');]';
-      l_object_type := in_node.parent_id;
-      l_object_name := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
       l_vars('object_type') := in_node.parent_id;
-      l_vars('object_name') := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
+      l_vars('object_name') := regexp_substr(in_node.id, '[^\.]+', 1, 2);
       l_result := teplsql.render(
                      p_vars     => l_vars, 
                      p_template => l_template

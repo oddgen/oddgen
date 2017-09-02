@@ -464,7 +464,7 @@ $end
       END init_params;
    BEGIN
       l_object_type := in_node.parent_id;
-      l_object_name := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
+      l_object_name := regexp_substr(in_node.id, '[^\.]+', 1, 2);
       IF l_object_type = 'TABLE' THEN
          init_params;
          l_vars('object_type') := l_object_type;

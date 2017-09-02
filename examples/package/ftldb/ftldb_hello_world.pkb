@@ -190,13 +190,11 @@ $END
       l_result CLOB;
    BEGIN
       l_object_type := in_node.parent_id;
-      l_object_name := regexp_substr(in_node.id, '[A-Z_$#]+', 1, 2);
+      l_object_name := regexp_substr(in_node.id, '[^\.]+', 1, 2);
       l_args := NEW varchar2_nt(l_object_type, l_object_name);
-      l_result := trim(
-                     ftldb_api.process_to_clob(
-                        in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
-                        in_templ_args => l_args
-                     )
+      l_result := ftldb_api.process_to_clob(
+                     in_templ_name => $$PLSQL_UNIT || '%generate_ftl',
+                     in_templ_args => l_args
                   );
       RETURN l_result;
    END generate;

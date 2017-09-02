@@ -99,36 +99,32 @@ ORDER BY table_name
 --
 WITH
    PROCEDURE add_nodes (
-      io_nodes        IN OUT oddgen.oddgen_types.t_node_type,
-      in_parent_node  IN     oddgen.oddgen_types.r_node_type
+      io_nodes          IN OUT oddgen.oddgen_types.t_node_type,
+      in_parent_node_id IN     oddgen.oddgen_types.key_type
    ) IS
       t_nodes oddgen.oddgen_types.t_node_type;
    BEGIN
-      t_nodes := oddgen.dropall.get_nodes(in_parent_node.id);
+      t_nodes := oddgen.dropall.get_nodes(in_parent_node_id);
       FOR i IN 1 .. t_nodes.count LOOP
-         IF    t_nodes(i).parent_id = in_parent_node.id
-            OR t_nodes(i).parent_id IS NULL AND in_parent_node.id IS NULL
+         IF    t_nodes(i).parent_id = in_parent_node_id
+            OR t_nodes(i).parent_id IS NULL AND in_parent_node_id IS NULL
          THEN
             IF NVL(t_nodes(i).relevant, t_nodes(i).leaf) THEN
                io_nodes.extend;
                io_nodes(io_nodes.count) := t_nodes(i);
             END IF;
             IF NOT t_nodes(i).leaf THEN
-               add_nodes(io_nodes, t_nodes(i));
+               add_nodes(io_nodes, t_nodes(i).id);
             END IF;
          END IF;
       END LOOP;
    END;
    --
    FUNCTION gen(in_parent_node_id IN VARCHAR2) RETURN CLOB IS
-      t_all_nodes      oddgen.oddgen_types.t_node_type;
       t_relevant_nodes oddgen.oddgen_types.t_node_type;
    BEGIN
-      t_all_nodes := oddgen.dropall.get_nodes(in_parent_node_id);
       t_relevant_nodes := NEW oddgen.oddgen_types.t_node_type();
-      FOR i IN 1 .. t_all_nodes.count LOOP
-         add_nodes(t_relevant_nodes, t_all_nodes(i));
-      END LOOP;
+      add_nodes(t_relevant_nodes, in_parent_node_id);
       RETURN oddgen.dropall.generate_prolog(t_relevant_nodes);
    END;
 SELECT 'CODE' AS parent_id,
@@ -149,22 +145,22 @@ SELECT 'DATA.TABLE' AS parent_id,
 --
 WITH
    PROCEDURE add_nodes (
-      io_nodes        IN OUT oddgen.oddgen_types.t_node_type,
-      in_parent_node  IN     oddgen.oddgen_types.r_node_type
+      io_nodes          IN OUT oddgen.oddgen_types.t_node_type,
+      in_parent_node_id IN     oddgen.oddgen_types.key_type
    ) IS
       t_nodes oddgen.oddgen_types.t_node_type;
    BEGIN
-      t_nodes := oddgen.emp_hier.get_nodes(in_parent_node.id);
+      t_nodes := oddgen.emp_hier.get_nodes(in_parent_node_id);
       FOR i IN 1 .. t_nodes.count LOOP
-         IF    t_nodes(i).parent_id = in_parent_node.id
-            OR t_nodes(i).parent_id IS NULL AND in_parent_node.id IS NULL
+         IF    t_nodes(i).parent_id = in_parent_node_id
+            OR t_nodes(i).parent_id IS NULL AND in_parent_node_id IS NULL
          THEN
             IF NVL(t_nodes(i).relevant, t_nodes(i).leaf) THEN
                io_nodes.extend;
                io_nodes(io_nodes.count) := t_nodes(i);
             END IF;
             IF NOT t_nodes(i).leaf THEN
-               add_nodes(io_nodes, t_nodes(i));
+               add_nodes(io_nodes, t_nodes(i).id);
             END IF;
          END IF;
       END LOOP;
@@ -181,7 +177,7 @@ WITH
          IF t_all_nodes(i).id = in_root_node_id THEN
             t_relevant_nodes.extend;
             t_relevant_nodes(t_relevant_nodes.count) := t_all_nodes(i);
-            add_nodes(t_relevant_nodes, t_all_nodes(i));
+            add_nodes(t_relevant_nodes, t_all_nodes(i).id);
          END IF;
       END LOOP;
       l_result := oddgen.emp_hier.generate_prolog(t_relevant_nodes);

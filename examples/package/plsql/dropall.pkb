@@ -18,9 +18,9 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
    --
    -- private constants
    --
-   co_newline   CONSTANT oddgen_types.key_type := chr(10);
-   co_purge     CONSTANT oddgen_types.key_type := 'Purge?'; -- for tables only
-   co_error_no  CONSTANT INTEGER               := -20501;
+   co_newline   CONSTANT oddgen_types.value_type := chr(10);
+   co_purge     CONSTANT oddgen_types.key_type   := 'Purge?'; -- for tables only
+   co_error_no  CONSTANT INTEGER                 := -20501;
 
    --
    -- get_name
@@ -261,7 +261,7 @@ CREATE OR REPLACE PACKAGE BODY dropall IS
                     FROM XMLTABLE(
                             '/ids/id'
                             PASSING XMLTYPE(l_ids)
-                            COLUMNS id VARCHAR2(4000) PATH '.'
+                            COLUMNS id VARCHAR2(4000 BYTE) PATH '.'
                          )
                )
             SELECT object_type, object_name

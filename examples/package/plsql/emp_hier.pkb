@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
    -- private constants
    --
    co_include_commission  CONSTANT oddgen_types.value_type := 'Include commission?';
-   co_similing_face_emoji CONSTANT VARCHAR2(32767 BYTE)    := 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMA'
+   co_similing_face_emoji CONSTANT oddgen_types.value_type := 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMA'
       || 'AAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjanVNnVFPpFj333vRCS4iAlEtvUhUIIFJCi4AUkSYqIQkQSogho'
       || 'dkVUcERRUUEG8igiAOOjoCMFVEsDIoK2AfkIaKOg6OIisr74Xuja9a89+bN/rXXPues852zzwfACAyWSDNRNYAMqUIeEeCDx8TG4eQuQIEKJH'
       || 'AAEAizZCFz/SMBAPh+PDwrIsAHvgABeNMLCADATZvAMByH/w/qQplcAYCEAcB0kThLCIAUAEB6jkKmAEBGAYCdmCZTAKAEAGDLY2LjAFAtAGA'
@@ -102,8 +102,8 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
       PROCEDURE add_node (
          in_id          IN oddgen_types.key_type,
          in_parent_id   IN oddgen_types.key_type,
-         in_name        IN oddgen_types.key_type,
-         in_description IN oddgen_types.key_type,
+         in_name        IN oddgen_types.value_type,
+         in_description IN oddgen_types.value_type,
          in_leaf        IN BOOLEAN
       ) IS
          l_node oddgen_types.r_node_type;
@@ -195,7 +195,7 @@ CREATE OR REPLACE PACKAGE BODY emp_hier AS
    ) RETURN CLOB IS
       l_epilog          CLOB;
       l_total           NUMBER := 0;
-      l_with_or_without VARCHAR2(7 CHAR);
+      l_with_or_without oddgen_types.value_type;
    BEGIN
       <<nodes>>
       FOR i in 1 .. in_nodes.count LOOP

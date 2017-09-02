@@ -18,17 +18,17 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
    --
    -- parameter names used also as labels in the GUI
    --
-   co_view_suffix  CONSTANT oddgen_types.value_type := 'View suffix';
-   co_table_suffix CONSTANT oddgen_types.value_type := 'Table suffix to be replaced';
-   co_iot_suffix   CONSTANT oddgen_types.value_type := 'Instead-of-trigger suffix';
-   co_gen_iot      CONSTANT oddgen_types.value_type := 'Generate instead-of-trigger?';
+   co_view_suffix  CONSTANT oddgen_types.key_type := 'View suffix';
+   co_table_suffix CONSTANT oddgen_types.key_type := 'Table suffix to be replaced';
+   co_iot_suffix   CONSTANT oddgen_types.key_type := 'Instead-of-trigger suffix';
+   co_gen_iot      CONSTANT oddgen_types.key_type := 'Generate instead-of-trigger?';
 
    --
    -- other constants
    --
-   co_newline      CONSTANT oddgen_types.key_type := chr(10);
-   co_max_obj_len  CONSTANT PLS_INTEGER           := 30;
-   co_oddgen_error CONSTANT PLS_INTEGER           := -20501;
+   co_newline      CONSTANT oddgen_types.value_type := chr(10);
+   co_max_obj_len  CONSTANT PLS_INTEGER             := 30;
+   co_oddgen_error CONSTANT PLS_INTEGER             := -20501;
    
    --
    -- get_default_params (private)
@@ -377,8 +377,8 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
       END gen_view;
       --
       FUNCTION get_where_clause RETURN VARCHAR2 IS
-         l_where oddgen_types.key_type;
-         l_line  oddgen_types.key_type;
+         l_where oddgen_types.value_type;
+         l_line  oddgen_types.value_type;
       BEGIN
          <<pk_columns>>
          FOR l_rec IN c_pk_columns
@@ -395,7 +395,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
       END get_where_clause;
       --
       PROCEDURE gen_iot IS
-         l_line oddgen_types.key_type;
+         l_line oddgen_types.value_type;
       BEGIN
          IF t_params(co_gen_iot) = 'Yes' THEN
             add_line('-- create simple instead-of-trigger for demonstration purposes');

@@ -18,8 +18,8 @@ CREATE OR REPLACE PACKAGE BODY teplsql_hello_world IS
    --
    -- private declarations
    --
-   g_start_time TIMESTAMP(6)         := SYSTIMESTAMP;
-   co_newline   CONSTANT VARCHAR2(2) := chr(10);
+   g_start_time TIMESTAMP(6)                     := SYSTIMESTAMP;
+   co_newline   CONSTANT oddgen_types.value_type := chr(10);
    
    --
    -- get_runtime

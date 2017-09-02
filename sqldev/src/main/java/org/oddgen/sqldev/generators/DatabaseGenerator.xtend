@@ -46,7 +46,7 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	def getMetaData() {
 		return metaData
 	}
-
+	
 	override getName(Connection conn) {
 		return metaData.name
 	}
@@ -90,6 +90,10 @@ class DatabaseGenerator implements OddgenGenerator2 {
 	
 	override generateEpilog(Connection conn, List<Node> nodes) {
 		return conn.dao.generateEpilog(metaData, nodes)
+	}
+
+	def bulkGenerate(Connection conn, List<Node> nodes) {
+		return conn.dao.bulkGenerate(metaData, nodes)
 	}
 	
 	override generate(Connection conn, Node node) {

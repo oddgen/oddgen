@@ -25,7 +25,7 @@ class PreferenceModelTest {
 	def testDefaultOfIsDiscoverPlsqlGenerators() {
 		val PreferenceModel model = PreferenceModel.getInstance(null)
 		Logger.info(this, "model: " + model)
-		Assert.assertTrue(model.isDiscoverDbServerGenerators)
+		Assert.assertTrue(model.isBulkProcess)
 		Assert.assertTrue(model.showClientGeneratorExamples)
 	}
 }

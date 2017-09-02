@@ -30,13 +30,16 @@ import oracle.dbtools.worksheet.editor.OpenWorksheetWizard
 import oracle.dbtools.worksheet.editor.Worksheet
 import oracle.ide.Context
 import oracle.ide.Ide
+import oracle.ide.config.Preferences
 import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
+import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.GeneratorSelection
+import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
@@ -66,7 +69,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return INSTANCE
 	}
-	
+
 	def static boolean allowGenerate(Context context) {
 		var boolean allowGenerate = false
 		val hasOtherNodes = context.selection.findFirst[!(it instanceof NodeNode)] !== null
@@ -82,7 +85,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				}
 			}
 		}
-		return allowGenerate		
+		return allowGenerate
 	}
 
 	def List<GeneratorSelection> selectedGenerators(Context context) {
@@ -94,7 +97,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 		}
 		return gensels
 	}
-	
+
 	def void addDeepNodes(LinkedHashMap<String, Node> map, OddgenGenerator2 gen, Node node, Connection conn) {
 		for (n : gen.getNodes(conn, node.id).filter[it.parentId == node.id]) {
 			if (n.isRelevant) {
@@ -105,7 +108,7 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			}
 		}
 	}
-	
+
 	def addDeepNodes(List<GeneratorSelection> gensels, Connection conn) {
 		val map = new LinkedHashMap<String, Node>
 		for (gensel : gensels) {
@@ -121,19 +124,24 @@ class OddgenNavigatorController extends ShowNavigatorController {
 	def generateToString(List<GeneratorSelection> gens, Connection conn) {
 		var String result;
 		val gui = OddgenNavigatorManager.instance.navigatorWindow.GUI
+		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 		try {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
 			val gen = gens.get(0).generator
 			val nodes = gens.addDeepNodes(conn).filter[it.isRelevant].toList
 			nodes.forEach[it.params = gens.get(0).node.params]
-			result = '''
-				«gen.generateProlog(conn, nodes)»
-				«FOR node : nodes SEPARATOR gen.generateSeparator(conn)»
-					«Logger.debug(this, "Generating %1$s to string...", node.id)»
-					«gen.generate(conn, node)»
-				«ENDFOR»
-				«gen.generateEpilog(conn, nodes)»
-			'''
+			if (gen instanceof DatabaseGenerator && preferences.bulkProcess) {
+				result = '''«(gen as DatabaseGenerator).bulkGenerate(conn, nodes)»'''
+			} else {
+				result = '''
+					«gen.generateProlog(conn, nodes)»
+					«FOR node : nodes SEPARATOR gen.generateSeparator(conn)»
+						«Logger.debug(this, "Generating %1$s to string...", node.id)»
+						«gen.generate(conn, node)»
+					«ENDFOR»
+					«gen.generateEpilog(conn, nodes)»
+				'''
+			}
 		} finally {
 			gui.cursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
 		}

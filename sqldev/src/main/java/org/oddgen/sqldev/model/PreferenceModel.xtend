@@ -32,21 +32,21 @@ class PreferenceModel extends HashStructureAdapter {
 	}
 
 	/** 
-	 * enabled/disable automatic discovery of database server generators when opening an oddgen node
+	 * enabled/disable bulk process (for database server generators only)
 	 */
-	static final String KEY_DISCOVER_DB_SERVER_GENERATORS = "discoverDbServerGenerators"
+	static final String KEY_BULK_PROCESS = "bulkProcess"
 	
 	/**
 	 * enable/disable client generator examples
 	 */
 	static final String KEY_SHOW_CLIENT_GENERATOR_EXAMPLES = "showClientGeneratorExamples"
 
-	def isDiscoverDbServerGenerators() {
-		return getHashStructure.getBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_DISCOVER_DB_SERVER_GENERATORS, true)
+	def isBulkProcess() {
+		return getHashStructure.getBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_BULK_PROCESS, true)
 	}
 
-	def setDiscoverDbServerGenerators(boolean discoverDbServerGenerators) {
-		getHashStructure.putBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_DISCOVER_DB_SERVER_GENERATORS, discoverDbServerGenerators)
+	def setBulkProcess(boolean bulkProcess) {
+		getHashStructure.putBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_BULK_PROCESS, bulkProcess)
 	}
 	
 	def isShowClientGeneratorExamples() {

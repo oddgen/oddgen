@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
-	final JCheckBox discoverDbServerGeneratorsCheckBox = new JCheckBox()
+	final JCheckBox bulkProcessCheckBox = new JCheckBox()
 	final JCheckBox showClientGeneratorExamplesCheckBox = new JCheckBox()
 
 	new() {
@@ -37,9 +37,9 @@ class PreferencePanel extends DefaultTraversablePanel {
 		val FieldLayoutBuilder builder = new FieldLayoutBuilder(this)
 		builder.alignLabelsLeft = true
 		builder.add(
-			builder.field.label.withText(OddgenResources.getString("PREF_DISCOVER_DB_SERVER_GENERATORS_LABEL")).component(
-				discoverDbServerGeneratorsCheckBox).withHint(
-				OddgenResources.getString("PREF_DISCOVER_DB_SERVER_GENERATORS_HINT")
+			builder.field.label.withText(OddgenResources.getString("PREF_BULK_PROCESS_LABEL")).component(
+				bulkProcessCheckBox).withHint(
+				OddgenResources.getString("PREF_BULK_PROCESS_HINT")
 			))
 		builder.add(
 			builder.field.label.withText(OddgenResources.getString("PREF_SHOW_CLIENT_GENERATOR_EXAMPLES_LABEL")).component(
@@ -51,14 +51,14 @@ class PreferencePanel extends DefaultTraversablePanel {
 
 	override onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = traversableContext.userInformation
-		discoverDbServerGeneratorsCheckBox.selected = info.isDiscoverDbServerGenerators
+		bulkProcessCheckBox.selected = info.isBulkProcess
 		showClientGeneratorExamplesCheckBox.selected = info.isShowClientGeneratorExamples
 		super.onEntry(traversableContext)
 	}
 
 	override onExit(TraversableContext traversableContext) throws TraversalException {
 		var PreferenceModel info = traversableContext.userInformation
-		info.discoverDbServerGenerators = discoverDbServerGeneratorsCheckBox.selected
+		info.bulkProcess = bulkProcessCheckBox.selected
 		info.showClientGeneratorExamples = showClientGeneratorExamplesCheckBox.selected
 		super.onExit(traversableContext)
 	}

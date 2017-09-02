@@ -1205,6 +1205,113 @@ class DatabaseGeneratorDao {
 		return result
 	}
 
+	def String bulkGenerate(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
+		val oddgenTypesUsed = (metaData.hasGetFolders || metaData.hasGetNodes || metaData.hasGenerateProlog || metaData.hasGenerateEpilog || metaData.hasGenerate3) 
+		val plsql = '''
+			DECLARE
+			   «IF oddgenTypesUsed»
+			      -- oddgen_types usage detected
+			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			      l_sep    «metaData.generatorOwner».oddgen_types.value_type := chr(10);
+			   «ELSE»
+			      -- no oddgen_types usage detected, define types locally
+			      SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
+			      SUBTYPE value_type  IS VARCHAR2(32767 BYTE);
+			      TYPE t_value_type   IS TABLE OF value_type;
+			      TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
+			      TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
+			      TYPE r_node_type    IS RECORD (
+			         id               key_type,
+			         parent_id        key_type
+			         name             value_type,
+			         description      value_type,
+			         icon_name        key_type,
+			         icon_base64      value_type,
+			         params           t_param_type,
+			         leaf             BOOLEAN,
+			         generatable      BOOLEAN,
+			         multiselectable  BOOLEAN,
+			         relevant         BOOLEAN
+			      );
+			      TYPE t_node_type    IS TABLE OF r_node_type;
+			      l_node   r_node_type;
+			      l_nodes  t_node_type := t_node_type();
+			      l_sep    value_type := chr(10);
+			   «ENDIF»
+			   «IF metaData.hasGenerate1»
+			      l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
+			   «ENDIF»
+			   l_clob   CLOB;
+			   l_temp   CLOB;
+			BEGIN
+			   «IF metaData.hasGenerateSeparator»
+			      l_sep := «metaData.generatorOwner».«metaData.generatorName».generate_separator;
+			   «ENDIF»
+			   «nodes.toPlsql»
+			   «IF metaData.hasGenerate1»
+			      «IF nodes.size > 0 && nodes.get(0).params !== null»
+			         «FOR key : nodes.get(0).params.keySet»
+			            l_params('«key»') := '«nodes.get(0).params.get(key).escapeSingleQuotes»';
+			         «ENDFOR»
+			      «ENDIF»
+			   «ENDIF»
+			   sys.dbms_lob.createtemporary(l_clob, TRUE);
+			   «IF metaData.hasGenerateProlog»
+			      l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_prolog(
+			                   in_nodes => l_nodes
+			                );
+			      IF l_temp IS NOT NULL THEN
+			         IF NOT sys.dbms_lob.substr(l_temp, 1, sys.dbms_lob.getlength(l_temp)) = chr(10) THEN
+			            sys.dbms_lob.append(l_temp, chr(10));
+			         END IF;
+			         sys.dbms_lob.append(l_clob, l_temp);
+			      END IF;
+			   «ENDIF»
+			   FOR i IN 1 .. l_nodes.count LOOP
+			      «IF metaData.hasGenerate3»
+			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                      in_node => l_nodes(i)
+			                   );
+			      «ELSE»
+			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                      in_object_type => l_nodes(i).parent_id
+			                    , in_object_name => substr(l_nodes(i).id, instr(l_nodes(i).id, '.') + 1)
+			                    «IF metaData.hasGenerate1»
+			                       , in_params      => l_params
+			                    «ENDIF»
+			                   );
+			      «ENDIF»
+			      IF l_temp IS NOT NULL THEN
+			         IF NOT sys.dbms_lob.substr(l_temp, 1, sys.dbms_lob.getlength(l_temp)) = chr(10) THEN
+			            sys.dbms_lob.append(l_temp, chr(10));
+			         END IF;
+			         IF l_clob IS NULL THEN
+			            l_clob := l_temp;
+			         ELSE
+			            sys.dbms_lob.append(l_clob, l_temp);
+			         END IF;
+			         IF i < l_nodes.count AND l_sep IS NOT NULL THEN
+			            sys.dbms_lob.append(l_clob, l_sep);
+			         END IF;
+			      END IF;
+			   END LOOP;
+			   «IF metaData.hasGenerateEpilog»
+			      l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_epilog(
+			      		       in_nodes => l_nodes
+			         	    );
+			      IF l_temp IS NOT NULL THEN
+			         sys.dbms_lob.append(l_clob, l_temp);
+			      END IF;
+			   «ENDIF»
+			   ? := l_clob;
+			END;
+		'''
+		Logger.debug(this, "plsql: %s", plsql)
+		val result = plsql.getClob('''Failed to generate code for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName»''')
+		return result
+	}
+
 	def String generate(DatabaseGeneratorMetaData metaData, Node node) {
 		val plsql = '''
 			DECLARE

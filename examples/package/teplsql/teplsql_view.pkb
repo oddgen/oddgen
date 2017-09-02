@@ -226,8 +226,9 @@ $end
          <<nodes>>
          FOR r IN (
             SELECT object_name
-              FROM user_objects
-             WHERE object_type = in_parent_node_id
+              FROM dba_objects
+             WHERE owner = USER
+               AND object_type = in_parent_node_id
                AND generated = 'N'
          ) LOOP
             add_node(

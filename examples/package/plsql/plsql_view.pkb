@@ -450,7 +450,7 @@ CREATE OR REPLACE PACKAGE BODY plsql_view IS
          END IF;
       END gen_iot;
    BEGIN
-      l_object_name := regexp_substr(in_node.id, '[^\.]+', 1, 2);
+      l_object_name := substr(in_node.id, instr(in_node.id, '.') + 1);
       IF in_node.parent_id = 'TABLE' THEN
          init_params;
          gen_view;

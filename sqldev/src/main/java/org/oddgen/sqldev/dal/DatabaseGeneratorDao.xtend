@@ -1308,9 +1308,15 @@ class DatabaseGeneratorDao {
 			   «ENDIF»
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGenerateProlog»
-			      l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_prolog(
-			                   in_nodes => l_nodes
-			                );
+			      BEGIN
+			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_prolog(
+			                      in_nodes => l_nodes
+			                   );
+			      EXCEPTION
+			         WHEN OTHERS THEN
+			            l_temp := 'Failed to generate prolog for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName». Got the following error: '
+			                      || SQLERRM || chr(10) || sys.dbms_utility.format_error_backtrace();
+			      END;
 			      IF l_temp IS NOT NULL THEN
 			         IF NOT sys.dbms_lob.substr(l_temp, 1, sys.dbms_lob.getlength(l_temp)) = chr(10) THEN
 			            sys.dbms_lob.append(l_temp, chr(10));
@@ -1319,19 +1325,26 @@ class DatabaseGeneratorDao {
 			      END IF;
 			   «ENDIF»
 			   FOR i IN 1 .. l_nodes.count LOOP
-			      «IF metaData.hasGenerate3»
-			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
-			                      in_node => l_nodes(i)
-			                   );
-			      «ELSE»
-			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
-			                      in_object_type => l_nodes(i).parent_id
-			                    , in_object_name => substr(l_nodes(i).id, instr(l_nodes(i).id, '.') + 1)
-			                    «IF metaData.hasGenerate1»
-			                       , in_params      => l_params
-			                    «ENDIF»
-			                   );
-			      «ENDIF»
+			      BEGIN
+			         «IF metaData.hasGenerate3»
+			            l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                         in_node => l_nodes(i)
+			                      );
+			         «ELSE»
+			            l_temp := «metaData.generatorOwner».«metaData.generatorName».generate(
+			                         in_object_type => l_nodes(i).parent_id
+			                       , in_object_name => substr(l_nodes(i).id, instr(l_nodes(i).id, '.') + 1)
+			                      «IF metaData.hasGenerate1»
+			                         , in_params      => l_params
+			                      «ENDIF»
+			                      );
+			         «ENDIF»
+			      EXCEPTION
+			         WHEN OTHERS THEN
+			             l_temp := 'Failed to generate code for ' || l_nodes(i).id
+			                       || ' via «metaData.generatorOwner».«metaData.generatorName». Got the following error: '
+			                       || SQLERRM || chr(10) || sys.dbms_utility.format_error_backtrace();
+			      END;
 			      IF l_temp IS NOT NULL THEN
 			         IF NOT sys.dbms_lob.substr(l_temp, 1, sys.dbms_lob.getlength(l_temp)) = chr(10) THEN
 			            sys.dbms_lob.append(l_temp, chr(10));
@@ -1347,9 +1360,15 @@ class DatabaseGeneratorDao {
 			      END IF;
 			   END LOOP;
 			   «IF metaData.hasGenerateEpilog»
-			      l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_epilog(
-			      		       in_nodes => l_nodes
-			         	    );
+			      BEGIN
+			         l_temp := «metaData.generatorOwner».«metaData.generatorName».generate_epilog(
+			                      in_nodes => l_nodes
+			         	       );
+			      EXCEPTION
+			         WHEN OTHERS THEN
+			            l_temp := 'Failed to generate epilog for «nodes.size» nodes via «metaData.generatorOwner».«metaData.generatorName». Got the following error: '
+			                      || SQLERRM || chr(10) || sys.dbms_utility.format_error_backtrace();
+			      END;
 			      IF l_temp IS NOT NULL THEN
 			         sys.dbms_lob.append(l_clob, l_temp);
 			      END IF;

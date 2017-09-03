@@ -34,15 +34,15 @@ class NodeTools {
 				<node>
 					<id>«node.id»</id>
 					<parent_id>«node.parentId»</parent_id>
-					<name>«node.name»</name>
-					<description>«node.description»</description>
+					<name><![CDATA[«node.name»]]></name>
+					<description><![CDATA[«node.description»]]></description>
 					<icon_name>«node.iconName»</icon_name>
 					<icon_base64>«node.iconBase64»</icon_base64>
 					«IF withParams»
 						<params>
 							«FOR key : node.params.keySet»
-								<key>«key»</key>
-								<value>«node.params.get(key)»</value>
+								<key><![CDATA[«key»]]></key>
+								<value><![CDATA[«node.params.get(key)»]]></value>
 							«ENDFOR»
 						</params>
 					«ENDIF»

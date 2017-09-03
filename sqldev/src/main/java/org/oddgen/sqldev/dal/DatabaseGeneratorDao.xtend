@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,10 @@ class DatabaseGeneratorDao {
 	var JdbcTemplate jdbcTemplate
 	var extension DalTools dalTools
 	val extension NodeTools nodeTools = new NodeTools
+	
+	private def CharSequence typesOwnerPrefix(DatabaseGeneratorMetaData metaData) {
+		return '''«IF metaData.typesOwner !== null && metaData.typesOwner != "PUBLIC"»«metaData.typesOwner».«ENDIF»'''
+	}
 	
 	private def addTextVariables() '''
 	   l_buffer      VARCHAR2(32767); 
@@ -178,7 +182,7 @@ class DatabaseGeneratorDao {
 			DECLARE
 			   CURSOR c_metadata IS
 			      WITH 
-			         gen_base AS (
+			         gen_root AS (
 			            SELECT owner,
 			                   package_name,
 			                   object_name AS procedure_name,
@@ -204,9 +208,28 @@ class DatabaseGeneratorDao {
 			                   --
 			                   )
 			             GROUP BY owner, package_name, object_name, overload),
+			         gen_base AS (
+			            SELECT gen_root.owner,
+			                   gen_root.package_name,
+			                   MIN(
+			                      CASE 
+			                         WHEN a.type_name = 'ODDGEN_TYPES' THEN 
+			                            a.type_owner 
+			                         ELSE 
+			                            NULL
+			                      END
+			                   ) AS types_owner,
+			                   gen_root.procedure_name,
+			                   gen_root.arg_count
+			              FROM gen_root
+			              JOIN all_arguments a
+			                ON a.owner = gen_root.owner
+			                   AND a.package_name = gen_root.package_name
+			             GROUP BY gen_root.owner, gen_root.package_name, gen_root.procedure_name, gen_root.arg_count),
 			         gen AS (
 			            SELECT owner,
 			                   package_name,
+			                   types_owner,
 			                   SUM(CASE
 			                           WHEN arg_count = 4 THEN
 			                            1
@@ -226,11 +249,12 @@ class DatabaseGeneratorDao {
 			                            0
 			                       END) AS has_generate3
 			              FROM gen_base
-			             GROUP BY owner, package_name
+			             GROUP BY owner, package_name, types_owner
 			         ),
 			         oth_base AS (
 			            SELECT gen.owner,
 			                   gen.package_name,
+			                   gen.types_owner,
 			                   arg.object_name AS procedure_name,
 			                   arg.overload,
 			                   COUNT(*) AS arg_count,
@@ -352,11 +376,12 @@ class DatabaseGeneratorDao {
 			                    in_out = 'IN' AND data_type = 'TABLE')
 			                   --
 			                   )
-			             GROUP BY gen.owner, gen.package_name, arg.object_name, arg.overload
+			             GROUP BY gen.owner, gen.package_name, gen.types_owner, arg.object_name, arg.overload
 			         ),
 			         oth AS (
 			            SELECT owner,
 			                   package_name,
+			                   types_owner,
 			                   SUM(CASE
 			                           WHEN procedure_name = 'GET_NAME' AND arg_count = 1 THEN
 			                            1
@@ -484,11 +509,12 @@ class DatabaseGeneratorDao {
 			                            0
 			                        END) AS has_generate_epilog
 			              FROM oth_base
-			             GROUP BY owner, package_name
+			             GROUP BY owner, package_name, types_owner
 			         ),
 			         tot AS ( 
 			            SELECT gen.owner,
 			                   gen.package_name,
+			                   gen.types_owner,
 			                   gen.has_generate1, -- v0.1.0 deprecated
 			                   gen.has_generate2, -- v0.2.0 deprecated
 			                   gen.has_generate3, -- v0.3.0 current
@@ -521,6 +547,7 @@ class DatabaseGeneratorDao {
 			      -- main
 			      SELECT owner,
 			             package_name,
+			             types_owner,
 			             has_generate1,
 			             has_generate2,
 			             has_generate3,
@@ -628,6 +655,7 @@ class DatabaseGeneratorDao {
 			      add_text('<generator>');
 			      add_node(in_node => 'owner', in_value => r_metadata.owner);
 			      add_node(in_node => 'packageName', in_value => r_metadata.package_name);
+			      add_node(in_node => 'typesOwner', in_value => r_metadata.types_owner);
 			      add_node(in_node => 'name', in_value => l_name);
 			      add_node(in_node => 'description', in_value => l_description);
 			      add_node(in_node => 'hasGenerate1', in_value => r_metadata.has_generate1);
@@ -671,6 +699,7 @@ class DatabaseGeneratorDao {
 				val xmlGenerator = xmlGenerators.item(i) as Element
 				metaData.generatorOwner = xmlGenerator.getElementsByTagName("owner").item(0).textContent
 				metaData.generatorName = xmlGenerator.getElementsByTagName("packageName").item(0).textContent
+				metaData.typesOwner = xmlGenerator.getElementsByTagName("typesOwner").item(0).textContent
 				metaData.name = xmlGenerator.getElementsByTagName("name").item(0).textContent
 				metaData.description = xmlGenerator.getElementsByTagName("description").item(0).textContent
 				metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
@@ -719,7 +748,7 @@ class DatabaseGeneratorDao {
 		// convert PL/SQL table to XML
 		val plsql = '''
 			DECLARE
-			   l_folders «metaData.generatorOwner».oddgen_types.t_value_type;
+			   l_folders «metaData.typesOwnerPrefix»oddgen_types.t_value_type;
 			   l_clob    CLOB;
 			   «addTextVariables»
 			   --
@@ -788,8 +817,8 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			«IF metaData.hasGetNodes»
 				DECLARE
-				   t_nodes «metaData.generatorOwner».oddgen_types.t_node_type;
-				   l_key   «metaData.generatorOwner».oddgen_types.key_type;
+				   t_nodes «metaData.typesOwnerPrefix»oddgen_types.t_node_type;
+				   l_key   «metaData.typesOwnerPrefix»oddgen_types.key_type;
 				   l_clob CLOB;
 				   «addTextVariables»
 				   -- 
@@ -1001,12 +1030,12 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGetLov3»
-			      l_params «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			      l_lovs   «metaData.generatorOwner».oddgen_types.t_lov_type;
-			      l_key    «metaData.generatorOwner».oddgen_types.value_type;
-			      l_lov    «metaData.generatorOwner».oddgen_types.t_value_type;
+			      l_params «metaData.typesOwnerPrefix»oddgen_types.t_param_type;
+			      l_node   «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
+			      l_nodes  «metaData.typesOwnerPrefix»oddgen_types.t_node_type := «metaData.typesOwnerPrefix»oddgen_types.t_node_type();
+			      l_lovs   «metaData.typesOwnerPrefix»oddgen_types.t_lov_type;
+			      l_key    «metaData.typesOwnerPrefix»oddgen_types.value_type;
+			      l_lov    «metaData.typesOwnerPrefix»oddgen_types.t_value_type;
 			   «ELSE»
 			      «IF metaData.hasGetLov2 || metaData.hasRefreshLov»
 			          l_params «metaData.generatorOwner».« metaData.generatorName».t_param;
@@ -1085,11 +1114,11 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGetParamStates2»
-			      l_params       «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_node         «metaData.generatorOwner».oddgen_types.r_node_type;
-			      l_nodes        «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			      l_param_states «metaData.generatorOwner».oddgen_types.t_param_type;
-			      l_key          «metaData.generatorOwner».oddgen_types.value_type;
+			      l_params       «metaData.typesOwnerPrefix»oddgen_types.t_param_type;
+			      l_node         «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
+			      l_nodes        «metaData.typesOwnerPrefix»oddgen_types.t_node_type := «metaData.typesOwnerPrefix»oddgen_types.t_node_type();
+			      l_param_states «metaData.typesOwnerPrefix»oddgen_types.t_param_type;
+			      l_key          «metaData.typesOwnerPrefix»oddgen_types.value_type;
 			   «ELSE»
 			      l_params       «metaData.generatorOwner».«metaData.generatorName».t_param;
 			      l_param_states «metaData.generatorOwner».«metaData.generatorName».t_param;
@@ -1151,8 +1180,8 @@ class DatabaseGeneratorDao {
 	def generateProlog(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
 		val plsql = '''
 			DECLARE
-			   l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			   l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			   l_node   «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
+			   l_nodes  «metaData.typesOwnerPrefix»oddgen_types.t_node_type := «metaData.typesOwnerPrefix»oddgen_types.t_node_type();
 			   l_clob   CLOB;
 			BEGIN
 			   «nodes.toPlsql»
@@ -1188,8 +1217,8 @@ class DatabaseGeneratorDao {
 	def generateEpilog(DatabaseGeneratorMetaData metaData, List<Node> nodes) {
 		val plsql = '''
 			DECLARE
-			   l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			   l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
+			   l_node   «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
+			   l_nodes  «metaData.typesOwnerPrefix»oddgen_types.t_node_type := «metaData.typesOwnerPrefix»oddgen_types.t_node_type();
 			   l_clob   CLOB;
 			BEGIN
 			   «nodes.toPlsql»
@@ -1215,10 +1244,10 @@ class DatabaseGeneratorDao {
 			DECLARE
 			   «IF oddgenTypesUsed»
 			      -- oddgen_types usage detected
-			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
-			      l_nodes  «metaData.generatorOwner».oddgen_types.t_node_type := «metaData.generatorOwner».oddgen_types.t_node_type();
-			      l_sep    «metaData.generatorOwner».oddgen_types.value_type := chr(10);
-			      l_p      «metaData.generatorOwner».oddgen_types.t_param_type;
+			      l_node   «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
+			      l_nodes  «metaData.typesOwnerPrefix»oddgen_types.t_node_type := «metaData.typesOwnerPrefix»oddgen_types.t_node_type();
+			      l_sep    «metaData.typesOwnerPrefix»oddgen_types.value_type := chr(10);
+			      l_p      «metaData.typesOwnerPrefix»oddgen_types.t_param_type;
 			   «ELSE»
 			      -- no oddgen_types usage detected, define types locally
 			      SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
@@ -1385,7 +1414,7 @@ class DatabaseGeneratorDao {
 		val plsql = '''
 			DECLARE
 			   «IF metaData.hasGenerate3»
-			      l_node   «metaData.generatorOwner».oddgen_types.r_node_type;
+			      l_node   «metaData.typesOwnerPrefix»oddgen_types.r_node_type;
 			   «ELSEIF metaData.hasGenerate1»
 			      l_params «metaData.generatorOwner».«metaData.generatorName».t_param;
 			   «ENDIF»

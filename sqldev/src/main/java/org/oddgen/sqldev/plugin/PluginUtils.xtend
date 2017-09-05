@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,12 +121,14 @@ class PluginUtils {
 			if (preferences.showClientGeneratorExamples ||
 				g.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
 					g.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator") {
-						try {
-							val gen = g.newInstance
-							result.add(gen)
-						} catch (Exception e) {
-							Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2",
-								g.name, e.message)
+						if (!g.name.startsWith("org.oddgen.sqldev.plugin.templates")) {
+							try {
+								val gen = g.newInstance
+								result.add(gen)
+							} catch (Exception e) {
+								Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2",
+									g.name, e.message)
+							}
 						}
 					}
 				}

@@ -16,6 +16,21 @@
 						<property name="Category">View</property>
 					</properties>
 				</action>
+				<action id="ODDGEN_NEW_PLSQL_GENERATOR">
+					<properties>
+						<property name="Name">${CTX_MENU_NEW_PLSQL_GENERATOR_LABEL}</property>
+					</properties>
+				</action>
+				<action id="ODDGEN_NEW_XTEND_PLUGIN">
+					<properties>
+						<property name="Name">${CTX_MENU_NEW_XTEND_PLUGIN_LABEL}</property>
+					</properties>
+				</action>
+				<action id="ODDGEN_NEW_XTEND_SQLDEV_EXTENSION">
+					<properties>
+						<property name="Name">${CTX_MENU_NEW_XTEND_SQLDEV_EXTENSION_LABEL}</property>
+					</properties>
+				</action>
 				<action id="ODDGEN_GENERATE_TO_WORKSHEET">
 					<properties>
 						<property name="Name">${CTX_MENU_GEN_TO_WORKSHEET_LABEL}</property>

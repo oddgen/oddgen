@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,24 @@ import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.model.PreferenceModel
+import org.oddgen.sqldev.plugin.templates.NewPlsqlGenerator
+import org.oddgen.sqldev.plugin.templates.NewXtendGenerator
 import org.oddgen.sqldev.resources.OddgenResources
+import org.oddgen.sqldev.plugin.templates.NewXtendSqlDeveloperExtension
 
 @Loggable(value=LoggableConstants.DEBUG)
 class OddgenNavigatorController extends ShowNavigatorController {
 	private static OddgenNavigatorController INSTANCE
 
+	private static final int NEW_PLSQL_GENERATOR_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_NEW_PLSQL_GENERATOR")
+	private static final int NEW_XTEND_PLUGIN_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_NEW_XTEND_PLUGIN")
+	private static final int NEW_XTEND_SQLDEV_EXTENSION_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_NEW_XTEND_SQLDEV_EXTENSION")
 	private static final int GENERATE_TO_WORKSHEET_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_GENERATE_TO_WORKSHEET")
 	private static final int GENERATE_TO_CLIPBOARD_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_GENERATE_TO_CLIPBOARD")
 	private static final int GENERATE_DIALOG_CMD_ID = Ide.findOrCreateCmdID("ODDGEN_GENERATE_DIALOG")
+	public static final IdeAction NEW_PLSQL_GENERATOR_ACTION = getAction(NEW_PLSQL_GENERATOR_CMD_ID)
+	public static final IdeAction NEW_XTEND_PLUGIN_ACTION = getAction(NEW_XTEND_PLUGIN_CMD_ID)
+	public static final IdeAction NEW_XTEND_SQLDEV_EXTENSION_ACTION = getAction(NEW_XTEND_SQLDEV_EXTENSION_CMD_ID)
 	public static final IdeAction GENERATE_TO_WORKSHEET_ACTION = getAction(GENERATE_TO_WORKSHEET_CMD_ID)
 	public static final IdeAction GENERATE_TO_CLIPBOARD_ACTION = getAction(GENERATE_TO_CLIPBOARD_CMD_ID)
 	public static final IdeAction GENERATE_DIALOG_ACTION = getAction(GENERATE_DIALOG_CMD_ID)
@@ -177,6 +186,15 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			}
 		});
 	}
+	
+	def showTemplateDialog(OddgenGenerator2 gen) {
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		val gensel = new GeneratorSelection
+		gensel.generator = gen
+		gensel.node = gen.getNodes(conn, null).get(0)
+		val gens = #[gensel]
+		GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, gens, conn)		
+	}
 
 	override update(IdeAction action, Context context) {
 		val id = action.getCommandId()
@@ -221,6 +239,15 @@ class OddgenNavigatorController extends ShowNavigatorController {
 				val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 				val gens = selectedGenerators(context)
 				GenerateDialog.createAndShow(OddgenNavigatorManager.instance.navigatorWindow.GUI, gens, conn)
+				return true
+			} else if (action.commandId == NEW_PLSQL_GENERATOR_CMD_ID) {
+				showTemplateDialog(new NewPlsqlGenerator)
+				return true
+			} else if (action.commandId == NEW_XTEND_PLUGIN_CMD_ID) {
+				showTemplateDialog(new NewXtendGenerator)
+				return true
+			} else if (action.commandId == NEW_XTEND_SQLDEV_EXTENSION_CMD_ID) {
+				showTemplateDialog(new NewXtendSqlDeveloperExtension)
 				return true
 			}
 		}

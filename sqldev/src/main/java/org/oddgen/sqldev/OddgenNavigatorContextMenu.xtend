@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.jcabi.log.Logger
 import oracle.ide.Context
 import oracle.ide.controller.ContextMenu
 import oracle.ide.controller.ContextMenuListener
+import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class OddgenNavigatorContextMenu implements ContextMenuListener {
@@ -55,6 +56,15 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 		for (component : contextMenu.getGUI(false).getComponents) {
 			Logger.debug(this, "component of menu: %s", component)
 		}
+		val subMenu = contextMenu.createSubMenu(OddgenResources.getString("CTX_MENU_NEW_LABEL"),null,1,1)
+		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_PLSQL_GENERATOR_ACTION))
+		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_XTEND_PLUGIN_ACTION))
+		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_XTEND_SQLDEV_EXTENSION_ACTION)) 
+		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
+		if (conn === null) {
+			subMenu.enabled = false
+		} 
+		contextMenu.add(subMenu)
 		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION))
 		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_CLIPBOARD_ACTION))
 		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_DIALOG_ACTION))

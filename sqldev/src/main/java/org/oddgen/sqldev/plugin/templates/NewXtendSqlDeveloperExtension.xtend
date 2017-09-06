@@ -47,11 +47,11 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 
 	override getNodes(Connection conn, String parentNodeId) {
 		val params = new LinkedHashMap<String, String>()
-		params.put(OUTPUT_DIR, '''«System.getProperty("user.home")»«File.separator»oddgen«File.separator»custom«File.separator»extension''')
+		params.put(OUTPUT_DIR, '''«System.getProperty("user.home")»«File.separator»oddgen«File.separator»sqldev''')
 		params.put(PACKAGE_NAME, "org.oddgen.custom.plugin")
 		params.put(CLASS_NAME, "NewGenerator")
 		val node = new Node
-		node.id = "new"
+		node.id = "SQL Developer extension template"
 		node.params = params
 		node.leaf = true
 		node.generatable = true
@@ -95,5 +95,4 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 			4. Restart SQL Developer
 		'''
 	}
-
 }

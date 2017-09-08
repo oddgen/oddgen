@@ -16,8 +16,6 @@
 package org.oddgen.sqldev.plugin.templates
 
 import java.io.File
-import java.io.FileOutputStream
-import java.io.PrintStream
 import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
@@ -45,7 +43,24 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 
 	var JdbcTemplate jdbcTemplate
 	var Node node
+	val extension TemplateTools templateTools = new TemplateTools
 	val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+	
+	def private hasOddgenTypes() {
+		val stmt = '''
+			DECLARE
+			   r_node oddgen_types.r_node_type;
+			BEGIN
+			   NULL;
+			END;
+		'''
+		try {
+			jdbcTemplate.execute(stmt)
+			return true
+		} catch (Exception e) {
+			return false
+		}
+	}
 
 	def private oddgenTypesTemplate() {
 		return OddgenResources.getTextFile("ODDGEN_TYPES_PKS_FILE")
@@ -256,30 +271,6 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 		/
 	'''
 	
-	def private String mkdirs(String dirName) {
-		try {
-			val file = new File (dirName)
-			if (!file.exists) {
-				file.mkdirs
-				return '''«dirName» created.'''
-			}
-		} catch (Exception e) {
-			return '''Cannot create directory «dirName». Got the following error message: «e.message».'''
-		}
-	}
-	
-	def private String writeToFile(String fileName, String text) {
-		try {
-			val out = new PrintStream(new FileOutputStream(fileName))
-			out.print(text);
-			out.flush
-			out.close
-			return '''«fileName» created.'''
-		} catch (Exception e) {
-			return '''Cannot create «fileName». Got the following error message: «e.message».'''
-		}
-	}
-
 	def private installTemplate() '''
 		«IF node.params.get(GENERATE_ODDGEN_TYPES) == ALWAYS || node.params.get(GENERATE_ODDGEN_TYPES) == ONLY_IF_MISSING && !hasOddgenTypes»
 			@@oddgen_types.pks
@@ -359,7 +350,8 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 				«writeToFile('''«outputDir»«File.separator»«packageName».pks''',  packageTemplate)»
 				«writeToFile('''«outputDir»«File.separator»«packageName».pkb''',  packageBodyTemplate.toString)»
 				
-				Run the following command to install the generator:
+				To install the PL/SQL generator:
+
 				@«outputDir»«File.separator»install.sql
 			'''
 		} else {
@@ -374,22 +366,6 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 			'''
 		}
 		return result
-	}
-
-	def hasOddgenTypes() {
-		val stmt = '''
-			DECLARE
-			   r_node oddgen_types.r_node_type;
-			BEGIN
-			   NULL;
-			END;
-		'''
-		try {
-			jdbcTemplate.execute(stmt)
-			return true
-		} catch (Exception e) {
-			return false
-		}
 	}
 
 }

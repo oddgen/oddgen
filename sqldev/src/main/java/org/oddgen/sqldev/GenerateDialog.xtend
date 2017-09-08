@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.awt.event.WindowEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.sql.Connection
+import java.util.ArrayList
 import java.util.HashMap
 import java.util.List
 import javax.swing.BorderFactory
@@ -47,6 +48,7 @@ import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.model.DirectoryBrowseButton
 import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.resources.OddgenResources
 
@@ -61,9 +63,10 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 
 	var JPanel paneParams;
 	var int paramPos = -1;
-	var HashMap<String, Component> params = new HashMap<String, Component>()
-	var HashMap<String, List<String>> lovs;
-	var HashMap<String, Boolean> paramStates;
+	var HashMap<String, Component> params = new HashMap<String, Component>
+	var HashMap<String, List<String>> lovs
+	var HashMap<String, Boolean> paramStates
+	var List<DirectoryBrowseButton> dirButtons = new ArrayList<DirectoryBrowseButton>
 
 	def static createAndShow(Component parent, List<GeneratorSelection> gens, Connection conn) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -243,9 +246,35 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 					}
 				} else {
 					val textField = new JTextField(gen.node.params.get(name))
-					paneParams.add(textField, c);
 					params.put(name, textField)
 					textField.addActionListener(this)
+					if (name.toLowerCase.endsWith("directory")) {
+						val panel = new JPanel(new GridBagLayout)
+						val c2 = new GridBagConstraints
+						c2.gridx=0
+						c2.gridy=0
+						c2.gridwidth=1
+						c2.insets = new Insets(0, 0, 0, 0) // top, left, bottom, right
+						c2.fill = GridBagConstraints.HORIZONTAL
+						c2.weightx = 1
+						c2.weighty = 0
+						panel.add(textField, c2)
+						val button = new JButton("Browse")
+						val dirButton = new DirectoryBrowseButton
+						dirButton.button = button
+						dirButton.textField = textField
+						dirButton.parameterName = name
+						dirButtons.add(dirButton)
+						button.addActionListener(this)
+						c2.gridx=1
+						c2.insets = new Insets(0, 10, 0, 0) // top, left, bottom, right
+						c2.fill = GridBagConstraints.REMAINDER
+						c2.weightx=0
+						panel.add(button, c2)
+						paneParams.add(panel, c)
+					} else {
+						paneParams.add(textField, c);
+					}
 				}
 			}
 		}
@@ -387,6 +416,10 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 							} else {
 								component.enabled = false
 							}
+							val dirButton = dirButtons.findFirst[it.parameterName == name]
+							if (dirButton !== null) {
+								dirButton.button.enabled = component.enabled
+							}
 						}
 					}
 				}
@@ -414,6 +447,11 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 				e.getSource instanceof JTextField) {
 				// do not use instanceof for JComboBox to avoid rawtypes warning
 				refresh()
+			} else if (e.getSource instanceof JButton) {
+				val dirButton = dirButtons.findFirst[it.button == e.getSource]
+				if (dirButton !== null) {
+					DirectoryChooser.choose(dirButton.parameterName, dirButton.textField)
+				}
 			}
 		}
 

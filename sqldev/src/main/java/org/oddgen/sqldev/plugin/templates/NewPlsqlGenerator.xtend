@@ -255,8 +255,11 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 	
 	def private String mkdirs(String dirName) {
 		try {
-			(new File (dirName)).mkdirs
-			return '''«dirName» created.'''
+			val file = new File (dirName)
+			if (!file.exists) {
+				file.mkdirs
+				return '''«dirName» created.'''
+			}
 		} catch (Exception e) {
 			return '''Cannot create directory «dirName». Got the following error message: «e.message».'''
 		}

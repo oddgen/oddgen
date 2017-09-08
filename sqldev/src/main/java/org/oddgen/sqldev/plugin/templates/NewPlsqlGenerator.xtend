@@ -16,12 +16,15 @@
 package org.oddgen.sqldev.plugin.templates
 
 import java.io.File
+import java.io.FileOutputStream
+import java.io.PrintStream
 import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
+import org.oddgen.sqldev.resources.OddgenResources
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
@@ -41,380 +44,16 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 	var JdbcTemplate jdbcTemplate
 	var Node node
 
-	override getName(Connection conn) {
-		return "PL/SQL generator"
-	}
-
-	override getDescription(Connection conn) {
-		return "Generate a PL/SQL oddgen plugin"
-	}
-
-	override getFolders(Connection conn) {
-		return #["Templates"]
-	}
-
-	override getHelp(Connection conn) {
-		return "<p>not yet available</p>"
-	}
-
-	override getNodes(Connection conn, String parentNodeId) {
-		val params = new LinkedHashMap<String, String>()
-		params.put(PACKAGE_NAME, "new_generator")
-		params.put(GENERATE_ODDGEN_TYPES, ONLY_IF_MISSING)
-		params.put(GENERATE_FILES, NO)
-		params.put(OUTPUT_DIR, '''«System.getProperty("user.home")»«File.separator»oddgen«File.separator»plsql''')
-		val node = new Node
-		node.id = "PL/SQL template"
-		node.params = params
-		node.leaf = true
-		node.generatable = true
-		return #[node]
-	}
-
-	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		val lov = new HashMap<String, List<String>>
-		lov.put(GENERATE_ODDGEN_TYPES, #[ONLY_IF_MISSING, ALWAYS, NEVER])
-		lov.put(GENERATE_FILES, #[YES, NO])
-		return lov
-	}
-
-	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
-		val paramStates = new HashMap<String, Boolean>
-		paramStates.put(OUTPUT_DIR, params.get(GENERATE_FILES) == YES)
-		return paramStates
-	}
-
-	override generateProlog(Connection conn, List<Node> nodes) {
-		return ""
-	}
-
-	override generateSeparator(Connection conn) {
-		return ""
-	}
-
-	override generateEpilog(Connection conn, List<Node> nodes) {
-		return ""
-	}
-
-	override generate(Connection conn, Node node) {
-		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		this.node = node
-		var String result
-		if (node.params.get(GENERATE_FILES) == YES) {
-			result = '''todo'''
-		} else {
-			result = '''
-				«IF node.params.get(GENERATE_ODDGEN_TYPES) == ALWAYS || node.params.get(GENERATE_ODDGEN_TYPES) == ONLY_IF_MISSING && !hasOddgenTypes»
-					«oddgenTypesTemplate»
-				«ENDIF»
-				«packageTemplate»
-				«packageBodyTemplate»
-			'''
-		}
-		return result
-	}
-
-	def hasOddgenTypes() {
-		val stmt = '''
-			DECLARE
-			   r_node oddgen_types.r_node_type;
-			BEGIN
-			   NULL;
-			END;
-		'''
-		try {
-			jdbcTemplate.execute(stmt)
-			return true
-		} catch (Exception e) {
-			return false
-		}
+	def private oddgenTypesTemplate() {
+		return OddgenResources.getTextFile("ODDGEN_TYPES_PKS_FILE")
 	}
 	
-	def oddgenTypesTemplate() '''
-		CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
-		   /*
-		   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
-		   *
-		   * Licensed under the Apache License, Version 2.0 (the "License");
-		   * you may not use this file except in compliance with the License.
-		   * You may obtain a copy of the License at
-		   *
-		   *     http://www.apache.org/licenses/LICENSE-2.0
-		   *
-		   * Unless required by applicable law or agreed to in writing, software
-		   * distributed under the License is distributed on an "AS IS" BASIS,
-		   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-		   * See the License for the specific language governing permissions and
-		   * limitations under the License.
-		   */
-		
-		   /**
-		   * oddgen data types for PL/SQL database server generator.
-		   * This package must be installed in the same schema as the generators.
-		   * The user executing the generator must have execute privileges for this package.
-		   *
-		   * @headcom
-		   */
-		
-		   /**
-		   * Keys, generic string values
-		   *
-		   * @since v0.3
-		   */
-		   SUBTYPE key_type    IS VARCHAR2(4000 BYTE);
-		
-		   /**
-		   * Values, typically short strings, but may contain larger values, 
-		   * e.g. for JSON content or similar.
-		   *
-		   * @since v0.3
-		   */
-		   SUBTYPE value_type  IS VARCHAR2(32767 BYTE);
-		
-		   /**
-		   * Value array.
-		   *
-		   * @since v0.3
-		   */
-		   TYPE t_value_type   IS TABLE OF value_type;
-		
-		   /**
-		   * Associative array of parameters (key-value pairs).
-		   *
-		   * @since v0.3
-		   */
-		   TYPE t_param_type   IS TABLE OF value_type INDEX BY key_type;
-		
-		   /**
-		   * Associative array of list-of-values (key-value pairs, but a value is a value array).
-		   *
-		   * @since v0.3
-		   */
-		   TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
-		
-		   /**
-		   * Record type to represent a node in the SQL Developer navigator tree.
-		   * Icon is evaluated as follows:
-		   *    a) by icon_name, if defined
-		   *    b) by icon_base64, if defined
-		   *    c) by parent_id, if leaf node and parent_id is a known object type (normal icon)
-		   *    d) by id, if non-leaf node and id is a known object type (folder icon)
-		   *    e) UNKNOWN_ICON, if leaf node
-		   *    f) UNKNOWN_FOLDER_ICON, if non-leaf node
-		   *
-		   * @since v0.3
-		   */
-		   TYPE r_node_type    IS RECORD (
-		      id               key_type,     -- node identifier, case-sensitive, e.g. EMP
-		      parent_id        key_type,     -- parent node identifier, NULL for root nodes, e.g. TABLE
-		      name             value_type,   -- name of the node, e.g. Emp
-		      description      value_type,   -- description of the node, e.g. Table Emp
-		      icon_name        key_type,     -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
-		      icon_base64      value_type,   -- Base64 encoded icon, size 16x16 pixels
-		      params           t_param_type, -- array of parameters, e.g. View suffix=_V, Instead-of-trigger suffix=_TRG
-		      leaf             BOOLEAN,      -- Is this a leaf node? true|false, default false
-		      generatable      BOOLEAN,      -- Is the node with all its children generatable? true|false, default leaf
-		      multiselectable  BOOLEAN,      -- May this node be part of a multiselection? true|false, default leaf
-		      relevant         BOOLEAN       -- Pass node to the generator? true|false, default leaf
-		   );
-		
-		   /**
-		   * Array of nodes, typically containing relevant nodes only.
-		   *
-		   * @since v0.3
-		   */
-		   TYPE t_node_type    IS TABLE OF r_node_type;
-		
-		END oddgen_types;
-		/
-	'''
+	def private packageTemplate() {
+		val template = OddgenResources.getTextFile("ODDGEN_INTERFACE_PKS_FILE")
+		return template.replace("oddgen_interface", node.params.get(PACKAGE_NAME).toLowerCase)
+	}
 	
-	def packageTemplate() '''
-		CREATE OR REPLACE PACKAGE «node.params.get(PACKAGE_NAME).toLowerCase» AUTHID CURRENT_USER IS
-		   /*
-		   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
-		   *
-		   * Licensed under the Apache License, Version 2.0 (the "License");
-		   * you may not use this file except in compliance with the License.
-		   * You may obtain a copy of the License at
-		   *
-		   *     http://www.apache.org/licenses/LICENSE-2.0
-		   *
-		   * Unless required by applicable law or agreed to in writing, software
-		   * distributed under the License is distributed on an "AS IS" BASIS,
-		   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-		   * See the License for the specific language governing permissions and
-		   * limitations under the License.
-		   */
-		
-		   /**
-		   * oddgen PL/SQL database server generator.
-		   *
-		   * @headcom
-		   */
-		
-		   /**
-		   * Get the name of the generator, used in tree view
-		   * If this function is not implemented, the package name will be used.
-		   *
-		   * @returns name of the generator
-		   *
-		   * @since v0.1
-		   */
-		   FUNCTION get_name RETURN VARCHAR2;
-		
-		   /**
-		   * Get the description of the generator.
-		   * If this function is not implemented, the owner and the package name will be used.
-		   *
-		   * @returns description of the generator
-		   *
-		   * @since v0.1
-		   */
-		   FUNCTION get_description RETURN VARCHAR2;
-		   
-		   /**
-		   * Get the list of folder names. The first entry in the list is the folder 
-		   * under 'All Generators', the second one is the subfolder under the 
-		   * first one and so on. The generator will be visible in the last folder
-		   * of the list.
-		   * If this function is not implemented, the default will be determined
-		   * based on the generator type. For generators stored in the database 
-		   * this will be oddgen_types.t_value_type('Database Server Generators').
-		   *
-		   * @returns the list of folders under 'All Generators'
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_folders RETURN oddgen_types.t_value_type;
-		
-		   /**
-		   * Get the help of the generator.
-		   * If this function is not implemented, no help is available.
-		   *
-		   * @returns help text as HTML
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_help RETURN CLOB;
-		
-		   /**
-		   * Get the list of nodes shown to be shown in the SQL Developer navigator tree.
-		   * The implementation decides if nodes are returned eagerly oder lazily.
-		   * If this function is not implemented nodes for tables and views are returned lazily.
-		   *
-		   * @param in_parent_node_id root node to get children for
-		   * @returns a list of nodes in a hierarchical structure
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_nodes(
-		      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
-		   ) RETURN oddgen_types.t_node_type;
-		
-		   /**
-		   * Get the list of parameter names in the order to be displayed in the generate dialog.
-		   * If this function is not implemented, the parameters are ordered by name.
-		   * Parameter names returned by this function are taking precedence.
-		   * Remaining parameters are ordered by name.
-		   *
-		   * @returns ordered parameter names
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type;
-		
-		   /**
-		   * Get the list of values per parameter, if such a LOV is applicable.
-		   * If this function is not implemented, then the parameters cannot be validated in the GUI.
-		   * This function is called when showing the generate dialog and after updating a parameter.
-		   *
-		   * @param in_params parameters with active values to determine parameter state
-		   * @param in_nodes table of selected nodes to be generated with default parameter values
-		   * @returns parameters with their list-of-values
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_lov(
-		      in_params IN oddgen_types.t_param_type,
-		      in_nodes  IN oddgen_types.t_node_type
-		   ) RETURN oddgen_types.t_lov_type;
-		
-		  /**
-		   * Get the list of parameter states (enabled/disabled)
-		   * If this function is not implemented, then the parameters are enabled, if more than one value is valid.
-		   * This function is called when showing the generate dialog and after updating a parameter.
-		   *
-		   * @param in_params parameters with active values to determine parameter state
-		   * @param in_nodes table of selected nodes to be generated with default parameter values
-		   * @returns parameters with their editable state ("0"=disabled, "1"=enabled)
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION get_param_states(
-		      in_params IN oddgen_types.t_param_type,
-		      in_nodes  IN oddgen_types.t_node_type
-		   ) RETURN oddgen_types.t_param_type;
-		
-		   /**
-		   * Generates the prolog
-		   * If this function is not implemented, no prolog will be generated.
-		   * Called once for all selected nodes at the very beginning of the processing.
-		   *
-		   * @param in_nodes table of selected nodes to be generated
-		   * @returns generator prolog
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION generate_prolog(
-		      in_nodes IN oddgen_types.t_node_type
-		   ) RETURN CLOB;
-		
-		   /**
-		   * Generates the separator between generate calls.
-		   * If this function is not implemented, an empty line will be generated.
-		   * Called once, but applied between generator calls.
-		   *
-		   * @returns generator separator
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION generate_separator RETURN VARCHAR2;
-		
-		   /**
-		   * Generates the epilog.
-		   * If this function is not implemented, no epilog will be generated.
-		   * Called once for all selected nodes at the very end of the processing.
-		   *
-		   * @param in_nodes table of selected nodes to be generated
-		   * @returns generator epilog
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION generate_epilog(
-		      in_nodes IN oddgen_types.t_node_type
-		   ) RETURN CLOB;
-		
-		   /**
-		   * Generates the result.
-		   * This function must be implemented.
-		   * Called for every selected node.
-		   * Children of nodes are not resolved by oddgen.
-		   *
-		   * @param in_node node to be generated
-		   * @returns generator output
-		   *
-		   * @since v0.3
-		   */
-		   FUNCTION generate(
-		      in_node IN oddgen_types.r_node_type
-		   ) RETURN CLOB;
-		
-		END «node.params.get(PACKAGE_NAME).toLowerCase»;
-		/
-	'''
-	
-	def packageBodyTemplate() '''
+	def private packageBodyTemplate() '''
 		CREATE OR REPLACE PACKAGE BODY «node.params.get(PACKAGE_NAME).toLowerCase» IS
 		   /*
 		   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
@@ -613,22 +252,138 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 		END «node.params.get(PACKAGE_NAME).toLowerCase»;
 		/
 	'''
+	
+	def private String mkdirs(String dirName) {
+		try {
+			(new File (dirName)).mkdirs
+			return '''«dirName» created.'''
+		} catch (Exception e) {
+			return '''Cannot create directory «dirName». Got the following error message: «e.message».'''
+		}
+	}
+	
+	def private String writeToFile(String fileName, String text) {
+		try {
+			val out = new PrintStream(new FileOutputStream(fileName))
+			out.print(text);
+			out.flush
+			out.close
+			return '''«fileName» created.'''
+		} catch (Exception e) {
+			return '''Cannot create «fileName». Got the following error message: «e.message».'''
+		}
+	}
 
-	def installTemplate() '''
-		todo
+	def private installTemplate() '''
+		«IF node.params.get(GENERATE_ODDGEN_TYPES) == ALWAYS || node.params.get(GENERATE_ODDGEN_TYPES) == ONLY_IF_MISSING && !hasOddgenTypes»
+			@@oddgen_types.pks
+		«ENDIF»
+		@@«node.params.get(PACKAGE_NAME).toLowerCase».pks
+		@@«node.params.get(PACKAGE_NAME).toLowerCase».pkb
 	'''
 
-	def worksheetTemplate() '''
-		if output directory is empty the worksheet contains
-		- oddgen_types (if no object exists with that name in target schema)
-		- generator packae specfication
-		- generator package body
-		
-		if the output directory is defined, the following four files are generated:
-		- install.sql
-		- oddgen_types.pks
-		- «node.params.get(PACKAGE_NAME).toLowerCase».pks
-		- «node.params.get(PACKAGE_NAME).toLowerCase».pkb
-		plus some information in the worksheet.
-	'''
+	override getName(Connection conn) {
+		return "PL/SQL generator"
+	}
+
+	override getDescription(Connection conn) {
+		return "Generate a PL/SQL oddgen plugin"
+	}
+
+	override getFolders(Connection conn) {
+		return #["Templates"]
+	}
+
+	override getHelp(Connection conn) {
+		return "<p>not yet available</p>"
+	}
+
+	override getNodes(Connection conn, String parentNodeId) {
+		val params = new LinkedHashMap<String, String>()
+		params.put(PACKAGE_NAME, "new_generator")
+		params.put(GENERATE_ODDGEN_TYPES, ONLY_IF_MISSING)
+		params.put(GENERATE_FILES, NO)
+		params.put(OUTPUT_DIR, '''«System.getProperty("user.home")»«File.separator»oddgen«File.separator»plsql''')
+		val node = new Node
+		node.id = "PL/SQL template"
+		node.params = params
+		node.leaf = true
+		node.generatable = true
+		return #[node]
+	}
+
+	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
+		val lov = new HashMap<String, List<String>>
+		lov.put(GENERATE_ODDGEN_TYPES, #[ONLY_IF_MISSING, ALWAYS, NEVER])
+		lov.put(GENERATE_FILES, #[YES, NO])
+		return lov
+	}
+
+	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
+		val paramStates = new HashMap<String, Boolean>
+		paramStates.put(OUTPUT_DIR, params.get(GENERATE_FILES) == YES)
+		return paramStates
+	}
+
+	override generateProlog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generateSeparator(Connection conn) {
+		return ""
+	}
+
+	override generateEpilog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generate(Connection conn, Node node) {
+		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+		this.node = node
+		var String result
+		if (node.params.get(GENERATE_FILES) == YES) {
+			val outputDir = node.params.get(OUTPUT_DIR)
+			val packageName = node.params.get(PACKAGE_NAME)
+			result = '''
+				«mkdirs(outputDir)»
+				«writeToFile('''«outputDir»«File.separator»install.sql''',  installTemplate.toString)»
+				«IF node.params.get(GENERATE_ODDGEN_TYPES) == ALWAYS || node.params.get(GENERATE_ODDGEN_TYPES) == ONLY_IF_MISSING && !hasOddgenTypes»
+					«writeToFile('''«outputDir»«File.separator»oddgen_types.pks''',  oddgenTypesTemplate)»
+				«ENDIF»
+				«writeToFile('''«outputDir»«File.separator»«packageName».pks''',  packageTemplate)»
+				«writeToFile('''«outputDir»«File.separator»«packageName».pkb''',  packageBodyTemplate.toString)»
+				
+				Run the following command to install the generator:
+				@«outputDir»«File.separator»install.sql
+			'''
+		} else {
+			result = '''
+				«IF node.params.get(GENERATE_ODDGEN_TYPES) == ALWAYS || node.params.get(GENERATE_ODDGEN_TYPES) == ONLY_IF_MISSING && !hasOddgenTypes»
+					«oddgenTypesTemplate»
+
+				«ENDIF»
+				«packageTemplate»
+
+				«packageBodyTemplate»
+			'''
+		}
+		return result
+	}
+
+	def hasOddgenTypes() {
+		val stmt = '''
+			DECLARE
+			   r_node oddgen_types.r_node_type;
+			BEGIN
+			   NULL;
+			END;
+		'''
+		try {
+			jdbcTemplate.execute(stmt)
+			return true
+		} catch (Exception e) {
+			return false
+		}
+	}
+
 }

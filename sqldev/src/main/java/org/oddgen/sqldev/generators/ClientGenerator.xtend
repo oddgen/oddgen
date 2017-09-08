@@ -20,9 +20,11 @@ import java.sql.Connection
 import java.util.ArrayList
 import java.util.LinkedHashMap
 import java.util.List
+import oracle.ide.config.Preferences
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
+import org.oddgen.sqldev.model.PreferenceModel
 
 /**
  * Implements the OddgenGenerator2 interface for old generators implementing deprecated OddgenGenerator interface 
@@ -49,8 +51,11 @@ class ClientGenerator implements OddgenGenerator2 {
 	}
 
 	override getFolders(Connection conn) {
+		val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 		val folders = new ArrayList<String>
-		folders.add("Client Generators")
+		for (f : preferences.defaultClientGeneratorFolder.split(",").filter[!it.empty]) {
+			folders.add(f.trim)
+		}
 		return folders
 	}
 

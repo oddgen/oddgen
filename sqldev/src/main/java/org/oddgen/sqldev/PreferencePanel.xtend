@@ -17,6 +17,7 @@ package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
 import javax.swing.JCheckBox
+import javax.swing.JTextField
 import oracle.ide.panels.DefaultTraversablePanel
 import oracle.ide.panels.TraversableContext
 import oracle.ide.panels.TraversalException
@@ -26,8 +27,10 @@ import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
 class PreferencePanel extends DefaultTraversablePanel {
-	final JCheckBox bulkProcessCheckBox = new JCheckBox()
-	final JCheckBox showClientGeneratorExamplesCheckBox = new JCheckBox()
+	final JCheckBox bulkProcessCheckBox = new JCheckBox
+	final JCheckBox showClientGeneratorExamplesCheckBox = new JCheckBox
+	final JTextField defaultClientGeneratorsFolderTextField = new JTextField
+	final JTextField defaultDatabaseServerGeneratorsFolderTextField = new JTextField	
 
 	new() {
 		layoutControls()
@@ -46,13 +49,25 @@ class PreferencePanel extends DefaultTraversablePanel {
 				showClientGeneratorExamplesCheckBox).withHint(
 				OddgenResources.getString("PREF_SHOW_CLIENT_GENERATOR_EXAMPLES_HINT")
 			))
-		builder.addVerticalSpring
+		builder.add(
+			builder.field.label.withText(OddgenResources.getString("PREF_DEFAULT_CLIENT_GENERATORS_FOLDER_LABEL")).component(
+				defaultClientGeneratorsFolderTextField).withHint(
+				OddgenResources.getString("PREF_DEFAULT_CLIENT_GENERATORS_FOLDER_HINT")
+			))
+		builder.add(
+			builder.field.label.withText(OddgenResources.getString("PREF_DEFAULT_DATABASE_SERVER_GENERATORS_FOLDER_LABEL")).component(
+				defaultDatabaseServerGeneratorsFolderTextField).withHint(
+				OddgenResources.getString("PREF_DEFAULT_DATABASE_SERVER_GENERATORS_FOLDER_HINT")
+			))
+		builder.addVerticalSpring		
 	}
 
 	override onEntry(TraversableContext traversableContext) {
 		var PreferenceModel info = traversableContext.userInformation
 		bulkProcessCheckBox.selected = info.isBulkProcess
 		showClientGeneratorExamplesCheckBox.selected = info.isShowClientGeneratorExamples
+		defaultClientGeneratorsFolderTextField.text = info.defaultClientGeneratorFolder
+		defaultDatabaseServerGeneratorsFolderTextField.text = info.defaultDatabaseServerGeneratorFolder
 		super.onEntry(traversableContext)
 	}
 
@@ -60,6 +75,8 @@ class PreferencePanel extends DefaultTraversablePanel {
 		var PreferenceModel info = traversableContext.userInformation
 		info.bulkProcess = bulkProcessCheckBox.selected
 		info.showClientGeneratorExamples = showClientGeneratorExamplesCheckBox.selected
+		info.defaultClientGeneratorFolder = defaultClientGeneratorsFolderTextField.text
+		info.defaultDatabaseServerGeneratorFolder = defaultDatabaseServerGeneratorsFolderTextField.text
 		super.onExit(traversableContext)
 	}
 

@@ -23,11 +23,13 @@ import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import oracle.ide.config.Preferences
 import org.oddgen.sqldev.LoggableConstants
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.DatabaseGeneratorMetaData
+import org.oddgen.sqldev.model.PreferenceModel
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 import org.w3c.dom.Document
@@ -784,7 +786,17 @@ class DatabaseGeneratorDao {
 				folders.add(type)
 			}
 		} else {
-			folders.add("Database Server Generators")
+			var PreferenceModel preferences
+			try {
+				// running in SQL Developer
+				preferences = PreferenceModel.getInstance(Preferences.getPreferences());
+			} catch (NoClassDefFoundError e) {
+				// running in development environment (default prefrences)
+				preferences = PreferenceModel.getInstance(null)
+			}
+			for (f : preferences.defaultDatabaseServerGeneratorFolder.split(",").filter[!it.empty]) {
+				folders.add(f.trim)
+			}
 		}
 		return folders
 	}	

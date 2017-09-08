@@ -40,6 +40,16 @@ class PreferenceModel extends HashStructureAdapter {
 	 * enable/disable client generator examples
 	 */
 	static final String KEY_SHOW_CLIENT_GENERATOR_EXAMPLES = "showClientGeneratorExamples"
+	
+	/**
+	 * Default folder for client generators
+	 */
+	static final String KEY_DEFAULT_CLIENT_GENERATORS_FOLDER = "defaultClientGeneratorFolder"
+	
+	/**
+	 * Default folder for database server generators
+	 */
+	static final String KEY_DEFAULT_DATABASE_SERVER_GENERATORS_FOLDER = "defaultDatabaseServerGeneratorFolder"
 
 	def isBulkProcess() {
 		return getHashStructure.getBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_BULK_PROCESS, true)
@@ -55,6 +65,22 @@ class PreferenceModel extends HashStructureAdapter {
 	
 	def setShowClientGeneratorExamples(boolean showClientGeneratorExamples) {
 		getHashStructure.putBoolean(org.oddgen.sqldev.model.PreferenceModel.KEY_SHOW_CLIENT_GENERATOR_EXAMPLES, showClientGeneratorExamples)
+	}
+	
+	def getDefaultClientGeneratorFolder() {
+		return getHashStructure.getString(org.oddgen.sqldev.model.PreferenceModel.KEY_DEFAULT_CLIENT_GENERATORS_FOLDER, "Client Generators")
+	}
+	
+	def setDefaultClientGeneratorFolder(String folder) {
+		getHashStructure.putString(org.oddgen.sqldev.model.PreferenceModel.KEY_DEFAULT_CLIENT_GENERATORS_FOLDER, folder)
+	}
+
+	def getDefaultDatabaseServerGeneratorFolder() {
+		return getHashStructure.getString(org.oddgen.sqldev.model.PreferenceModel.KEY_DEFAULT_DATABASE_SERVER_GENERATORS_FOLDER, "Database Server Generators")
+	}
+
+	def setDefaultDatabaseServerGeneratorFolder(String folder) {
+		getHashStructure.putString(org.oddgen.sqldev.model.PreferenceModel.KEY_DEFAULT_DATABASE_SERVER_GENERATORS_FOLDER, folder)
 	}
 
 	override toString() {

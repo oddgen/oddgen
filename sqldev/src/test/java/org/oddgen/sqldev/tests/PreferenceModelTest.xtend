@@ -27,5 +27,7 @@ class PreferenceModelTest {
 		Logger.info(this, "model: " + model)
 		Assert.assertTrue(model.isBulkProcess)
 		Assert.assertTrue(model.showClientGeneratorExamples)
+		Assert.assertEquals("Client Generators", model.defaultClientGeneratorFolder)
+		Assert.assertEquals("Database Server Generators", model.defaultDatabaseServerGeneratorFolder)
 	}
 }

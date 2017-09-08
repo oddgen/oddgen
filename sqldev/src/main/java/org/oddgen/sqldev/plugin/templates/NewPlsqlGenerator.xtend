@@ -22,8 +22,10 @@ import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import oracle.ide.config.Preferences
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
+import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.resources.OddgenResources
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
@@ -43,6 +45,7 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 
 	var JdbcTemplate jdbcTemplate
 	var Node node
+	val preferences = PreferenceModel.getInstance(Preferences.getPreferences());
 
 	def private oddgenTypesTemplate() {
 		return OddgenResources.getTextFile("ODDGEN_TYPES_PKS_FILE")
@@ -99,7 +102,7 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 		   --
 		   FUNCTION get_folders RETURN oddgen_types.t_value_type IS
 		   BEGIN
-		      RETURN NEW oddgen_types.t_value_type('Database Server Generators');
+		      RETURN NEW oddgen_types.t_value_type(«FOR f :preferences.defaultDatabaseServerGeneratorFolder.split(",").filter[!it.empty] SEPARATOR ", "»'«f.trim»'«ENDFOR»);
 		   END get_folders;
 		
 		   --

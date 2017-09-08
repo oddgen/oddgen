@@ -1,5 +1,7 @@
 package org.oddgen.sqldev.resources
 
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import oracle.dbtools.raptor.utils.MessagesBase
 
 class OddgenResources extends MessagesBase {
@@ -34,4 +36,18 @@ class OddgenResources extends MessagesBase {
 	def static getInteger(String paramString) {
 		return INSTANCE.getIntegerImpl(paramString)
 	}
+	
+	def static getTextFile(String paramString) {
+		val fileName = getString(paramString)
+		val url = INSTANCE.class.getResource(fileName);
+		val in = new BufferedReader(new InputStreamReader(url.openStream))
+		val sb = new StringBuffer
+		var String line;
+		while ((line = in.readLine) !== null) {
+			sb.append(line)
+			sb.append(System.lineSeparator)
+		}
+        in.close();
+        return sb.toString
+    }	
 }

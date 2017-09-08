@@ -29,7 +29,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY1"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			TABLE.DEPT
 
@@ -45,7 +45,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY2"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			TABLE.DEPT
 			TABLE.EMP
@@ -60,7 +60,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY3"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			TABLE.DEPT
 			TABLE.EMP
@@ -75,7 +75,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY4"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			-- 2 nodes in prolog.
 			TABLE.DEPT
@@ -95,7 +95,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY5"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			-- 2 nodes in prolog.
 			TABLE.DEPT - a 3
@@ -112,7 +112,7 @@ class BulkGenerateTest extends AbstractJdbcTest {
 		val dbgen = dao.findAll.findFirst [
 			it.getMetaData.generatorOwner == dataSource.username.toUpperCase && it.getMetaData.generatorName == "PLSQL_DUMMY6"
 		]
-		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].toList.toList.sortBy[it.id]
+		val nodes = dbgen.getNodes(dataSource.connection, "TABLE").filter[it.id == "TABLE.EMP" || it.id == "TABLE.DEPT"].sortBy[it.id]
 		val expected = '''
 			-- 2 nodes in prolog.
 			TABLE.DEPT - a 3

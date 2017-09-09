@@ -45,12 +45,20 @@ class NodeNode extends DefaultContainer {
 		if (gensel.node.iconName !== null && !gensel.node.iconName.empty) {
 			return OddgenResources.getIcon(gensel.node.iconName)
 		} else if (gensel.node.iconBase64 !== null && !gensel.node.iconBase64.empty) {
-			var icon = new ImageIcon
-			val decodedBytes = DatatypeConverter.parseBase64Binary(gensel.node.iconBase64);
-			val bis = new ByteArrayInputStream(decodedBytes);
-			icon.image = ImageIO.read(bis);
-			bis.close();
-			return icon
+			try {
+				var icon = new ImageIcon
+				val decodedBytes = DatatypeConverter.parseBase64Binary(gensel.node.iconBase64);
+				if (decodedBytes.length > 0) {
+					val bis = new ByteArrayInputStream(decodedBytes);
+					icon.image = ImageIO.read(bis);
+					bis.close();
+					return icon
+				} else {
+					return OddgenResources.getIcon("UNKNOWN_ICON")
+				}
+			} catch (Exception e) {
+				return OddgenResources.getIcon("UNKNOWN_ICON")
+			}
 		} else {
 			val entries = Arrays.asList(gensel.node.id.split("\\."))
 			if (gensel.node.leaf) {

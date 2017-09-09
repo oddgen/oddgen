@@ -30,7 +30,16 @@ class OddgenResources extends MessagesBase {
 	}
 
 	def static getIcon(String paramString) {
-		return INSTANCE.getIconImpl(paramString)
+		try {
+			val icon = INSTANCE.getIconImpl(paramString)
+			return icon
+		} catch (Exception e) {
+			if (paramString.toLowerCase.contains("folder")) {
+				return INSTANCE.getIconImpl("UNKNOWN_FOLDER_ICON")
+			} else {
+				return INSTANCE.getIconImpl("UNKNOWN_ICON")
+			}
+		}
 	}
 
 	def static getInteger(String paramString) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,14 @@ import org.oddgen.sqldev.generators.model.Node
 interface OddgenGenerator2 {
 	public static String[] BOOLEAN_TRUE = #["true", "yes", "ja", "oui", "si", "1"]	
 	public static String[] BOOLEAN_FALSE = #["false", "no", "nein", "non", "no", "0"]
+	
+	/**
+	 * Checks if the current connection is supported by the generator.
+	 * Called by oddgen before populating GUI components.
+	 * @param conn active connection in the Generators window
+	 * @return true if the generator supports the database vendor and version
+	 */
+	def boolean isSupported(Connection conn)
 	
 	/** 
 	 * Get the name of the generator.

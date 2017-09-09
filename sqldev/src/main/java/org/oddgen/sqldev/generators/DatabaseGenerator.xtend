@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ class DatabaseGenerator implements OddgenGenerator2 {
 
 	def getMetaData() {
 		return metaData
+	}
+	
+	override isSupported(Connection conn) {
+		return true
 	}
 	
 	override getName(Connection conn) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.oddgen.sqldev.plugin.examples
 
+import com.jcabi.log.Logger
 import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
+import org.oddgen.sqldev.dal.DalTools
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
@@ -38,6 +40,16 @@ class ViewClientGenerator implements OddgenGenerator2 {
 	var Connection conn;
 	var Node node;
 	var extension NodeTools nodeTools = new NodeTools
+
+	override isSupported(Connection conn) {
+		val dalTools = new DalTools(conn)
+		if (dalTools.isAtLeastOracle(9,2)) {
+			return true
+		} else {
+			Logger.info(this, '''The 1:1 View generator does not support this connection. Requires Oracle Database 9.2 or higher.''')
+			return false
+		}
+	}
 
 	override getName(Connection conn) {
 		return "1:1 View"

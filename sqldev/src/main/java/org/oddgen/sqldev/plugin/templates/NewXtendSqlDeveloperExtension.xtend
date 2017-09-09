@@ -29,6 +29,10 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 	public static val PACKAGE_NAME = "Package name"
 	public static val CLASS_NAME = "Class name"
 
+	override isSupported(Connection conn) {
+		return true
+	}
+
 	override getName(Connection conn) {
 		return "SQL Developer extension"
 	}

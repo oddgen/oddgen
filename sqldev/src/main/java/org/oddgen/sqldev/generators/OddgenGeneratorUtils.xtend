@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,30 +37,36 @@ class OddgenGeneratorUtils {
 		// 1st priority
 		for (gen : PluginUtils.findOddgenGenerators2(PluginUtils.findJars)) {
 			val name = gen.class.name
-			Logger.debug(OddgenGeneratorUtils,'''adding v2 client generator «name»''')
-			result.put(name, gen)
+			if (gen.isSupported(conn)) {
+				Logger.debug(OddgenGeneratorUtils,'''adding v2 client generator «name»''')
+				result.put(name, gen)
+			}
 		}		
 		// 2nd priority (do not add generators with same class name)
 		for (gen : PluginUtils.findOddgenGenerators(PluginUtils.findJars)) {
-			val name = gen.generator.class.name
-			if (result.get(name) === null) {
-				Logger.debug(OddgenGeneratorUtils,'''adding v1 client generator «name»''')
-				result.put(name, gen)
-			} else {
-				// ok, v2 generator has precedence over v1 generator 
-				Logger.info(OddgenGeneratorUtils,'''ignoring v1 client generator «name»''')
+			if (gen.isSupported(conn)) {
+				val name = gen.generator.class.name
+				if (result.get(name) === null) {
+					Logger.debug(OddgenGeneratorUtils,'''adding v1 client generator «name»''')
+					result.put(name, gen)
+				} else {
+					// ok, v2 generator has precedence over v1 generator 
+					Logger.info(OddgenGeneratorUtils,'''ignoring v1 client generator «name»''')
+				}
 			}
 		}
 		// 3rd priority
 		val dao = new DatabaseGeneratorDao(conn)
 		for (gen : dao.findAll) {
-			val name = '''«gen.metaData.generatorOwner».«gen.metaData.generatorName»'''
-			if (result.get(name) === null) {
-				Logger.debug(OddgenGeneratorUtils,'''adding database generator «name»''')
-				result.put(name, gen)
-			} else {
-				// name is unique in a database instance, hence this should never happen
-				Logger.error(OddgenGeneratorUtils,'''ignoring database generator «name»''')
+			if (gen.isSupported(conn)) {
+				val name = '''«gen.metaData.generatorOwner».«gen.metaData.generatorName»'''
+				if (result.get(name) === null) {
+					Logger.debug(OddgenGeneratorUtils,'''adding database generator «name»''')
+					result.put(name, gen)
+				} else {
+					// name is unique in a database instance, hence this should never happen
+					Logger.error(OddgenGeneratorUtils,'''ignoring database generator «name»''')
+				}
 			}
 		}
 		return result.values

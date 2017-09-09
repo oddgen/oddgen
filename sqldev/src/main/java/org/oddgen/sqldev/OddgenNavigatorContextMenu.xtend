@@ -20,6 +20,7 @@ import com.jcabi.log.Logger
 import oracle.ide.Context
 import oracle.ide.controller.ContextMenu
 import oracle.ide.controller.ContextMenuListener
+import org.oddgen.sqldev.plugin.templates.NewPlsqlGenerator
 import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(LoggableConstants.DEBUG)
@@ -57,13 +58,17 @@ class OddgenNavigatorContextMenu implements ContextMenuListener {
 			Logger.debug(this, "component of menu: %s", component)
 		}
 		val subMenu = contextMenu.createSubMenu(OddgenResources.getString("CTX_MENU_NEW_LABEL"),null,1,1)
-		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_PLSQL_GENERATOR_ACTION))
+		val plsqlGeneratorMenu = contextMenu.createMenuItem(OddgenNavigatorController.NEW_PLSQL_GENERATOR_ACTION)
+		subMenu.add(plsqlGeneratorMenu)
 		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_XTEND_PLUGIN_ACTION))
 		subMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.NEW_XTEND_SQLDEV_EXTENSION_ACTION)) 
 		val conn = (OddgenNavigatorManager.instance.navigatorWindow as OddgenNavigatorWindow).connection
 		if (conn === null) {
 			subMenu.enabled = false
-		} 
+		} else {
+			val gen = new NewPlsqlGenerator()
+			plsqlGeneratorMenu.enabled = gen.isSupported(conn)
+		}
 		contextMenu.add(subMenu)
 		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_WORKSHEET_ACTION))
 		contextMenu.add(contextMenu.createMenuItem(OddgenNavigatorController.GENERATE_TO_CLIPBOARD_ACTION))

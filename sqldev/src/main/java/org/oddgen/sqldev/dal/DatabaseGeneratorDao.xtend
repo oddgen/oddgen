@@ -691,56 +691,58 @@ class DatabaseGeneratorDao {
 			   ? := l_result;
 			END;
 		'''
-		Logger.debug(this, "plsql: %s", plsql)
-		val doc = plsql.doc
 		val dbgens = new ArrayList<DatabaseGenerator>()
-		if (doc !== null) {
-			val xmlGenerators = doc.getElementsByTagName("generator")
-			for (var i = 0; i < xmlGenerators.length; i++) {
-				val metaData = new DatabaseGeneratorMetaData
-				val xmlGenerator = xmlGenerators.item(i) as Element
-				metaData.generatorOwner = xmlGenerator.getElementsByTagName("owner").item(0).textContent
-				metaData.generatorName = xmlGenerator.getElementsByTagName("packageName").item(0).textContent
-				metaData.typesOwner = xmlGenerator.getElementsByTagName("typesOwner").item(0).textContent
-				metaData.name = xmlGenerator.getElementsByTagName("name").item(0).textContent
-				metaData.description = xmlGenerator.getElementsByTagName("description").item(0).textContent
-				metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
-				metaData.hasGetDescription = xmlGenerator.getElementsByTagName("hasGetDescription").item(0).
-					textContent == "1"
-				metaData.hasGetFolders = xmlGenerator.getElementsByTagName("hasGetFolders").item(0).textContent == "1"
-				metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).textContent == "1"
-				metaData.hasGetNodes = xmlGenerator.getElementsByTagName("hasGetNodes").item(0).textContent == "1"
-				metaData.hasGetObjectTypes = xmlGenerator.getElementsByTagName("hasGetObjectTypes").item(0).
-					textContent == "1"
-				metaData.hasGetObjectNames = xmlGenerator.getElementsByTagName("hasGetObjectNames").item(0).
-					textContent == "1"
-				metaData.hasGetParams1 = xmlGenerator.getElementsByTagName("hasGetParams1").item(0).textContent == "1"
-				metaData.hasGetParams2 = xmlGenerator.getElementsByTagName("hasGetParams2").item(0).textContent == "1"
-				metaData.hasGetOrderedParams1 = xmlGenerator.getElementsByTagName("hasGetOrderedParams1").item(0).
-					textContent == "1"
-				metaData.hasGetOrderedParams2 = xmlGenerator.getElementsByTagName("hasGetOrderedParams2").item(0).
-					textContent == "1"
-				metaData.hasGetLov1 = xmlGenerator.getElementsByTagName("hasGetLov1").item(0).textContent == "1"
-				metaData.hasGetLov2 = xmlGenerator.getElementsByTagName("hasGetLov2").item(0).textContent == "1"
-				metaData.hasGetLov3 = xmlGenerator.getElementsByTagName("hasGetLov3").item(0).textContent == "1"
-				metaData.hasRefreshLov = xmlGenerator.getElementsByTagName("hasRefreshLov").item(0).textContent == "1"
-				metaData.hasRefreshParamStates = xmlGenerator.getElementsByTagName("hasRefreshParamStates").item(0).
-					textContent == "1"
-				metaData.hasGetParamStates1 = xmlGenerator.getElementsByTagName("hasGetParamStates1").item(0).
-					textContent == "1"
-				metaData.hasGetParamStates2 = xmlGenerator.getElementsByTagName("hasGetParamStates2").item(0).
-					textContent == "1"
-				metaData.hasGenerateProlog = xmlGenerator.getElementsByTagName("hasGenerateProlog").item(0).
-					textContent == "1"
-				metaData.hasGenerateSeparator = xmlGenerator.getElementsByTagName("hasGenerateSeparator").item(0).
-					textContent == "1"
-				metaData.hasGenerateEpilog = xmlGenerator.getElementsByTagName("hasGenerateEpilog").item(0).
-					textContent == "1"
-				metaData.hasGenerate1 = xmlGenerator.getElementsByTagName("hasGenerate1").item(0).textContent == "1"
-				metaData.hasGenerate2 = xmlGenerator.getElementsByTagName("hasGenerate2").item(0).textContent == "1"
-				metaData.hasGenerate3 = xmlGenerator.getElementsByTagName("hasGenerate3").item(0).textContent == "1"
-				val dbgen = new DatabaseGenerator(metaData)
-				dbgens.add(dbgen)
+		if (isAtLeastOracle(9,2)) {
+			Logger.debug(this, "plsql: %s", plsql)
+			val doc = plsql.doc
+			if (doc !== null) {
+				val xmlGenerators = doc.getElementsByTagName("generator")
+				for (var i = 0; i < xmlGenerators.length; i++) {
+					val metaData = new DatabaseGeneratorMetaData
+					val xmlGenerator = xmlGenerators.item(i) as Element
+					metaData.generatorOwner = xmlGenerator.getElementsByTagName("owner").item(0).textContent
+					metaData.generatorName = xmlGenerator.getElementsByTagName("packageName").item(0).textContent
+					metaData.typesOwner = xmlGenerator.getElementsByTagName("typesOwner").item(0).textContent
+					metaData.name = xmlGenerator.getElementsByTagName("name").item(0).textContent
+					metaData.description = xmlGenerator.getElementsByTagName("description").item(0).textContent
+					metaData.hasGetName = xmlGenerator.getElementsByTagName("hasGetName").item(0).textContent == "1"
+					metaData.hasGetDescription = xmlGenerator.getElementsByTagName("hasGetDescription").item(0).
+						textContent == "1"
+					metaData.hasGetFolders = xmlGenerator.getElementsByTagName("hasGetFolders").item(0).textContent == "1"
+					metaData.hasGetHelp = xmlGenerator.getElementsByTagName("hasGetHelp").item(0).textContent == "1"
+					metaData.hasGetNodes = xmlGenerator.getElementsByTagName("hasGetNodes").item(0).textContent == "1"
+					metaData.hasGetObjectTypes = xmlGenerator.getElementsByTagName("hasGetObjectTypes").item(0).
+						textContent == "1"
+					metaData.hasGetObjectNames = xmlGenerator.getElementsByTagName("hasGetObjectNames").item(0).
+						textContent == "1"
+					metaData.hasGetParams1 = xmlGenerator.getElementsByTagName("hasGetParams1").item(0).textContent == "1"
+					metaData.hasGetParams2 = xmlGenerator.getElementsByTagName("hasGetParams2").item(0).textContent == "1"
+					metaData.hasGetOrderedParams1 = xmlGenerator.getElementsByTagName("hasGetOrderedParams1").item(0).
+						textContent == "1"
+					metaData.hasGetOrderedParams2 = xmlGenerator.getElementsByTagName("hasGetOrderedParams2").item(0).
+						textContent == "1"
+					metaData.hasGetLov1 = xmlGenerator.getElementsByTagName("hasGetLov1").item(0).textContent == "1"
+					metaData.hasGetLov2 = xmlGenerator.getElementsByTagName("hasGetLov2").item(0).textContent == "1"
+					metaData.hasGetLov3 = xmlGenerator.getElementsByTagName("hasGetLov3").item(0).textContent == "1"
+					metaData.hasRefreshLov = xmlGenerator.getElementsByTagName("hasRefreshLov").item(0).textContent == "1"
+					metaData.hasRefreshParamStates = xmlGenerator.getElementsByTagName("hasRefreshParamStates").item(0).
+						textContent == "1"
+					metaData.hasGetParamStates1 = xmlGenerator.getElementsByTagName("hasGetParamStates1").item(0).
+						textContent == "1"
+					metaData.hasGetParamStates2 = xmlGenerator.getElementsByTagName("hasGetParamStates2").item(0).
+						textContent == "1"
+					metaData.hasGenerateProlog = xmlGenerator.getElementsByTagName("hasGenerateProlog").item(0).
+						textContent == "1"
+					metaData.hasGenerateSeparator = xmlGenerator.getElementsByTagName("hasGenerateSeparator").item(0).
+						textContent == "1"
+					metaData.hasGenerateEpilog = xmlGenerator.getElementsByTagName("hasGenerateEpilog").item(0).
+						textContent == "1"
+					metaData.hasGenerate1 = xmlGenerator.getElementsByTagName("hasGenerate1").item(0).textContent == "1"
+					metaData.hasGenerate2 = xmlGenerator.getElementsByTagName("hasGenerate2").item(0).textContent == "1"
+					metaData.hasGenerate3 = xmlGenerator.getElementsByTagName("hasGenerate3").item(0).textContent == "1"
+					val dbgen = new DatabaseGenerator(metaData)
+					dbgens.add(dbgen)
+				}
 			}
 		}
 		return dbgens

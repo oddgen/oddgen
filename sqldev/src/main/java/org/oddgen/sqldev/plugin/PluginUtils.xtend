@@ -118,21 +118,19 @@ class PluginUtils {
 		]
 		val result = new ArrayList<OddgenGenerator2>
 		for (g : gens) {
-			if (preferences.showClientGeneratorExamples ||
-				g.name != "org.oddgen.sqldev.plugin.examples.HelloWorldClientGenerator" &&
-					g.name != "org.oddgen.sqldev.plugin.examples.ViewClientGenerator") {
-						if (!g.name.startsWith("org.oddgen.sqldev.plugin.templates")) {
-							try {
-								val gen = g.newInstance
-								result.add(gen)
-							} catch (Exception e) {
-								Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2",
-									g.name, e.message)
-							}
-						}
+			if (preferences.showClientGeneratorExamples || !g.name.startsWith("org.oddgen.sqldev.plugin.examples")) {
+				if (!g.name.startsWith("org.oddgen.sqldev.plugin.templates")) {
+					try {
+						val gen = g.newInstance
+						result.add(gen)
+					} catch (Exception e) {
+						Logger.error(PluginUtils, "Cannot populate version 2 client generator %s1 node due to %s2",
+							g.name, e.message)
 					}
 				}
-				return result
 			}
 		}
+		return result
+	}
+}
 		

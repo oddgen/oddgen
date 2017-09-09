@@ -34,6 +34,7 @@ import oracle.ide.config.Preferences
 import oracle.ide.controller.IdeAction
 import oracle.ideri.navigator.ShowNavigatorController
 import oracle.javatools.dialogs.MessageDialog
+import org.oddgen.sqldev.dal.DalTools
 import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
@@ -42,8 +43,8 @@ import org.oddgen.sqldev.model.GeneratorSelection
 import org.oddgen.sqldev.model.PreferenceModel
 import org.oddgen.sqldev.plugin.templates.NewPlsqlGenerator
 import org.oddgen.sqldev.plugin.templates.NewXtendGenerator
-import org.oddgen.sqldev.resources.OddgenResources
 import org.oddgen.sqldev.plugin.templates.NewXtendSqlDeveloperExtension
+import org.oddgen.sqldev.resources.OddgenResources
 
 @Loggable(value=LoggableConstants.DEBUG)
 class OddgenNavigatorController extends ShowNavigatorController {
@@ -139,9 +140,8 @@ class OddgenNavigatorController extends ShowNavigatorController {
 			val gen = gens.get(0).generator
 			val nodes = gens.addDeepNodes(conn).filter[it.isRelevant].toList
 			nodes.forEach[it.params = gens.get(0).node.params]
-			val float dbVersion = (conn.metaData.databaseMajorVersion as float) + (conn.metaData.databaseMinorVersion as float) / 10
-			Logger.debug(this, '''Database Version is «dbVersion»''')
-			if (gen instanceof DatabaseGenerator && preferences.bulkProcess && dbVersion >= 10.2) {
+			val dalTools = new DalTools(conn)
+			if (gen instanceof DatabaseGenerator && preferences.bulkProcess && dalTools.isAtLeastOracle(10,2)) {
 				result = '''«(gen as DatabaseGenerator).bulkGenerate(conn, nodes)»'''
 			} else {
 				result = '''

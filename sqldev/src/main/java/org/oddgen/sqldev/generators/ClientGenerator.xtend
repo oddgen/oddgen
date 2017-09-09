@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.oddgen.sqldev.generators
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.sql.Connection
 import java.util.ArrayList
 import java.util.LinkedHashMap
 import java.util.List
 import oracle.ide.config.Preferences
 import org.oddgen.sqldev.LoggableConstants
+import org.oddgen.sqldev.dal.DalTools
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.generators.model.NodeTools
 import org.oddgen.sqldev.model.PreferenceModel
@@ -40,6 +42,16 @@ class ClientGenerator implements OddgenGenerator2 {
 
 	def getGenerator() {
 		return gen
+	}
+
+	override isSupported(Connection conn) {
+		val dalTools = new DalTools(conn)
+		if (dalTools.isAtLeastOracle(9,2)) {
+			return true
+		} else {
+			Logger.info(this, '''Generator «this.class.name» does not support this connection. Requires Oracle Database 9.2 or higher.''')
+			return false
+		}
 	}
 
 	override getName(Connection conn) {

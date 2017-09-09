@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2015 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,21 @@ class DalTools {
 	new(Connection conn) {
 		this.conn = conn
 		this.jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+	}
+	
+	def isAtLeastOracle(int major, int minor) {
+		Logger.debug(this, '''productName: «conn.metaData.databaseProductName» majorVersion: «conn.metaData.databaseMajorVersion» minorVersion: «conn.metaData.databaseMinorVersion»''')
+		var ret = false
+		if (conn.metaData.databaseProductName.startsWith("Oracle")) {
+			if (conn.metaData.databaseMajorVersion == major) {
+				if (conn.metaData.databaseMinorVersion == minor) {
+					ret = true
+				}
+			} else if (conn.metaData.databaseMajorVersion > major) {
+				ret = true
+			}
+		}
+		return ret
 	}
 
 	def removeCarriageReturns(String plsql) {

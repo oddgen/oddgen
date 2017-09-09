@@ -230,6 +230,10 @@ class NewXtendGenerator implements OddgenGenerator2 {
 			«"'''"»
 		}
 	'''
+
+	override isSupported(Connection conn) {
+		return true
+	}
 	
 	override getName(Connection conn) {
 		return "Xtend generator"

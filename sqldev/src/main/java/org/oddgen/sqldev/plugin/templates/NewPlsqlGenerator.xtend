@@ -15,12 +15,14 @@
  */
 package org.oddgen.sqldev.plugin.templates
 
+import com.jcabi.log.Logger
 import java.io.File
 import java.sql.Connection
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
 import oracle.ide.config.Preferences
+import org.oddgen.sqldev.dal.DalTools
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.generators.model.Node
 import org.oddgen.sqldev.model.PreferenceModel
@@ -278,6 +280,16 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 		@@«node.params.get(PACKAGE_NAME).toLowerCase».pks
 		@@«node.params.get(PACKAGE_NAME).toLowerCase».pkb
 	'''
+
+	override isSupported(Connection conn) {
+		val dalTools = new DalTools(conn)
+		if (dalTools.isAtLeastOracle(9,2)) {
+			return true
+		} else {
+			Logger.info(this, '''The PL/SQL Generator template does not support this connection. Requires Oracle Database 9.2 or higher.''')
+		}
+		return false
+	}
 
 	override getName(Connection conn) {
 		return "PL/SQL generator"

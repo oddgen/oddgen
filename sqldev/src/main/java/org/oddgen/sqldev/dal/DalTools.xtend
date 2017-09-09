@@ -50,7 +50,7 @@ class DalTools {
 		var ret = false
 		if (conn.metaData.databaseProductName.startsWith("Oracle")) {
 			if (conn.metaData.databaseMajorVersion == major) {
-				if (conn.metaData.databaseMinorVersion == minor) {
+				if (conn.metaData.databaseMinorVersion >= minor) {
 					ret = true
 				}
 			} else if (conn.metaData.databaseMajorVersion > major) {

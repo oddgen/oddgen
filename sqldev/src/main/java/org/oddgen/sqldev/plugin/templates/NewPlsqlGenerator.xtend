@@ -365,6 +365,10 @@ class NewPlsqlGenerator implements OddgenGenerator2 {
 				To install the PL/SQL generator:
 
 				@«outputDir»«File.separator»install.sql
+				
+				To uninstall the PL/SQL generator:
+				
+				DROP PACKAGE «packageName»;
 			'''
 		} else {
 			result = '''

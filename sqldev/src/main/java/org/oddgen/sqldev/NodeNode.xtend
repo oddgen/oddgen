@@ -16,6 +16,7 @@
 package org.oddgen.sqldev
 
 import com.jcabi.aspects.Loggable
+import com.jcabi.log.Logger
 import java.io.ByteArrayInputStream
 import java.net.URL
 import java.util.Arrays
@@ -42,10 +43,10 @@ class NodeNode extends DefaultContainer {
 	}
 
 	override getIcon() {
-		if (gensel.node.iconName !== null && !gensel.node.iconName.empty) {
-			return OddgenResources.getIcon(gensel.node.iconName)
-		} else if (gensel.node.iconBase64 !== null && !gensel.node.iconBase64.empty) {
-			try {
+		try {
+			if (gensel.node.iconName !== null && !gensel.node.iconName.empty) {
+				return OddgenResources.getIcon(gensel.node.iconName)
+			} else if (gensel.node.iconBase64 !== null && !gensel.node.iconBase64.empty) {
 				var icon = new ImageIcon
 				val decodedBytes = DatatypeConverter.parseBase64Binary(gensel.node.iconBase64);
 				if (decodedBytes.length > 0) {
@@ -53,124 +54,127 @@ class NodeNode extends DefaultContainer {
 					icon.image = ImageIO.read(bis);
 					bis.close();
 					return icon
-				} else {
-					return OddgenResources.getIcon("UNKNOWN_ICON")
 				}
-			} catch (Exception e) {
-				return OddgenResources.getIcon("UNKNOWN_ICON")
-			}
-		} else {
-			val entries = Arrays.asList(gensel.node.id.split("\\."))
-			if (gensel.node.leaf) {
-				// assuming that a node is an object name and parent is an object type
-				val id = if (entries.size >= 2) {entries.get(entries.size - 2)} else {gensel.node.parentId}
-				if (id !== null) {
-					if (id.startsWith("TABLE") || id == "CLUSTER") {
-						return OddgenResources.getIcon("TABLE_ICON")
-					} else if (id == "VIEW") {
-						return OddgenResources.getIcon("VIEW_ICON")
-					} else if (id.startsWith("INDEX")) {
-						return OddgenResources.getIcon("INDEX_ICON")
-					} else if (id == "SYNONYM") {
-						return OddgenResources.getIcon("SYNONYM_ICON")
-					} else if (id == "SEQUENCE") {
-						return OddgenResources.getIcon("SEQUENCE_ICON")
-					} else if (id == "PROCEDURE") {
-						return OddgenResources.getIcon("PROCEDURE_ICON")
-					} else if (id == "FUNCTION") {
-						return OddgenResources.getIcon("FUNCTION_ICON")
-					} else if (id.startsWith("PACKAGE")) {
-						return OddgenResources.getIcon("PACKAGE_ICON")
-					} else if (id == "TRIGGER") {
-						return OddgenResources.getIcon("TRIGGER_ICON")
-					} else if (id.startsWith("TYPE")) {
-						return OddgenResources.getIcon("TYPE_ICON")
-					} else if (id == "LIBRARY") {
-						return OddgenResources.getIcon("LIBRARY_ICON")
-					} else if (id == "DIRECTORY") {
-						return OddgenResources.getIcon("DIRECTORY_ICON")
-					} else if (id == "QUEUE") {
-						return OddgenResources.getIcon("QUEUE_ICON")
-					} else if (id.startsWith("JAVA")) {
-						return OddgenResources.getIcon("JAVA_ICON")
-					} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
-						return OddgenResources.getIcon("MATERIALIZED_VIEW_ICON")
-					} else if (id == "EDITION") {
-						return OddgenResources.getIcon("EDITION_ICON")
-					} else if (id.startsWith("JOB")) {
-						return OddgenResources.getIcon("JOB_ICON")
-					} else if (id == "DATABASE LINK") {
-						return OddgenResources.getIcon("DBLINK_ICON")
-					} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" ||
-						id.startsWith("LOB") || id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" ||
-						id.startsWith("RULE") || id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" ||
-						id == "WINDOW" || id == "XML SCHEMA" || id == "DIMENSION" || id == "SUBSCRIPTION" ||
-						id == "LOCATION" || id == "CAPTURE" || id == "APPLY" || id == "CHAIN" || id == "FILE GROUP" ||
-						id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" || id == "CUBE DIMENSION" ||
-						id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" || id == "FILE WATCHER" ||
-						id == "SQL TRANSLATION PROFILE") {
-						return OddgenResources.getIcon("OBJECT_ICON")
+			} else {
+				val entries = Arrays.asList(gensel.node.id.split("\\."))
+				if (gensel.node.leaf) {
+					// assuming that a node is an object name and parent is an object type
+					val id = if (entries.size >= 2) {entries.get(entries.size - 2)} else {gensel.node.parentId}
+					if (id !== null) {
+						if (id.startsWith("TABLE") || id == "CLUSTER") {
+							return OddgenResources.getIcon("TABLE_ICON")
+						} else if (id == "VIEW") {
+							return OddgenResources.getIcon("VIEW_ICON")
+						} else if (id.startsWith("INDEX")) {
+							return OddgenResources.getIcon("INDEX_ICON")
+						} else if (id == "SYNONYM") {
+							return OddgenResources.getIcon("SYNONYM_ICON")
+						} else if (id == "SEQUENCE") {
+							return OddgenResources.getIcon("SEQUENCE_ICON")
+						} else if (id == "PROCEDURE") {
+							return OddgenResources.getIcon("PROCEDURE_ICON")
+						} else if (id == "FUNCTION") {
+							return OddgenResources.getIcon("FUNCTION_ICON")
+						} else if (id.startsWith("PACKAGE")) {
+							return OddgenResources.getIcon("PACKAGE_ICON")
+						} else if (id == "TRIGGER") {
+							return OddgenResources.getIcon("TRIGGER_ICON")
+						} else if (id.startsWith("TYPE")) {
+							return OddgenResources.getIcon("TYPE_ICON")
+						} else if (id == "LIBRARY") {
+							return OddgenResources.getIcon("LIBRARY_ICON")
+						} else if (id == "DIRECTORY") {
+							return OddgenResources.getIcon("DIRECTORY_ICON")
+						} else if (id == "QUEUE") {
+							return OddgenResources.getIcon("QUEUE_ICON")
+						} else if (id.startsWith("JAVA")) {
+							return OddgenResources.getIcon("JAVA_ICON")
+						} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
+							return OddgenResources.getIcon("MATERIALIZED_VIEW_ICON")
+						} else if (id == "EDITION") {
+							return OddgenResources.getIcon("EDITION_ICON")
+						} else if (id.startsWith("JOB")) {
+							return OddgenResources.getIcon("JOB_ICON")
+						} else if (id == "DATABASE LINK") {
+							return OddgenResources.getIcon("DBLINK_ICON")
+						} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" ||
+							id.startsWith("LOB") || id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" ||
+							id.startsWith("RULE") || id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" ||
+							id == "WINDOW" || id == "XML SCHEMA" || id == "DIMENSION" || id == "SUBSCRIPTION" ||
+							id == "LOCATION" || id == "CAPTURE" || id == "APPLY" || id == "CHAIN" || id == "FILE GROUP" ||
+							id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" || id == "CUBE DIMENSION" ||
+							id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" || id == "FILE WATCHER" ||
+							id == "SQL TRANSLATION PROFILE") {
+							return OddgenResources.getIcon("OBJECT_ICON")
+						} else {
+							return OddgenResources.getIcon("UNKNOWN_ICON")
+						}
 					} else {
 						return OddgenResources.getIcon("UNKNOWN_ICON")
 					}
 				} else {
-					return OddgenResources.getIcon("UNKNOWN_ICON")
-				}
-			} else {
-				// assuming that a node is an object type
-				val id = if (entries.size >= 1) {entries.get(entries.size - 1)} else {gensel.node.id}
-				if (id !== null) { 
-					if (id.startsWith("TABLE") || id == "CLUSTER") {
-						return OddgenResources.getIcon("TABLE_FOLDER_ICON")
-					} else if (id == "VIEW") {
-						return OddgenResources.getIcon("VIEW_FOLDER_ICON")
-					} else if (id.startsWith("INDEX")) {
-						return OddgenResources.getIcon("INDEX_FOLDER_ICON")
-					} else if (id == "SYNONYM") {
-						return OddgenResources.getIcon("SYNONYM_FOLDER_ICON")
-					} else if (id == "SEQUENCE") {
-						return OddgenResources.getIcon("SEQUENCE_FOLDER_ICON")
-					} else if (id == "PROCEDURE") {
-						return OddgenResources.getIcon("PROCEDURE_FOLDER_ICON")
-					} else if (id == "FUNCTION") {
-						return OddgenResources.getIcon("FUNCTION_FOLDER_ICON")
-					} else if (id.startsWith("PACKAGE")) {
-						return OddgenResources.getIcon("PACKAGE_FOLDER_ICON")
-					} else if (id == "TRIGGER") {
-						return OddgenResources.getIcon("TRIGGER_FOLDER_ICON")
-					} else if (id.startsWith("TYPE")) {
-						return OddgenResources.getIcon("TYPE_FOLDER_ICON")
-					} else if (id == "LIBRARY") {
-						return OddgenResources.getIcon("LIBRARY_FOLDER_ICON")
-					} else if (id == "DIRECTORY") {
-						return OddgenResources.getIcon("DIRECTORY_FOLDER_ICON")
-					} else if (id == "QUEUE") {
-						return OddgenResources.getIcon("QUEUE_FOLDER_ICON")
-					} else if (id.startsWith("JAVA")) {
-						return OddgenResources.getIcon("JAVA_FOLDER_ICON")
-					} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
-						return OddgenResources.getIcon("MATERIALIZED_VIEW_FOLDER_ICON")
-					} else if (id == "EDITION") {
-						return OddgenResources.getIcon("EDITION_FOLDER_ICON")
-					} else if (id.startsWith("JOB")) {
-						return OddgenResources.getIcon("JOB_FOLDER_ICON")
-					} else if (id == "DATABASE LINK") {
-						return OddgenResources.getIcon("DBLINK_FOLDER_ICON")
-					} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" ||
-						id.startsWith("LOB") || id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" ||
-						id.startsWith("RULE") || id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" ||
-						id == "WINDOW" || id == "XML SCHEMA" || id == "DIMENSION" || id == "SUBSCRIPTION" ||
-						id == "LOCATION" || id == "CAPTURE" || id == "APPLY" || id == "CHAIN" || id == "FILE GROUP" ||
-						id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" || id == "CUBE DIMENSION" ||
-						id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" || id == "FILE WATCHER" ||
-						id == "SQL TRANSLATION PROFILE") {
-						return OddgenResources.getIcon("OBJECT_FOLDER_ICON")
+					// assuming that a node is an object type
+					val id = if (entries.size >= 1) {entries.get(entries.size - 1)} else {gensel.node.id}
+					if (id !== null) { 
+						if (id.startsWith("TABLE") || id == "CLUSTER") {
+							return OddgenResources.getIcon("TABLE_FOLDER_ICON")
+						} else if (id == "VIEW") {
+							return OddgenResources.getIcon("VIEW_FOLDER_ICON")
+						} else if (id.startsWith("INDEX")) {
+							return OddgenResources.getIcon("INDEX_FOLDER_ICON")
+						} else if (id == "SYNONYM") {
+							return OddgenResources.getIcon("SYNONYM_FOLDER_ICON")
+						} else if (id == "SEQUENCE") {
+							return OddgenResources.getIcon("SEQUENCE_FOLDER_ICON")
+						} else if (id == "PROCEDURE") {
+							return OddgenResources.getIcon("PROCEDURE_FOLDER_ICON")
+						} else if (id == "FUNCTION") {
+							return OddgenResources.getIcon("FUNCTION_FOLDER_ICON")
+						} else if (id.startsWith("PACKAGE")) {
+							return OddgenResources.getIcon("PACKAGE_FOLDER_ICON")
+						} else if (id == "TRIGGER") {
+							return OddgenResources.getIcon("TRIGGER_FOLDER_ICON")
+						} else if (id.startsWith("TYPE")) {
+							return OddgenResources.getIcon("TYPE_FOLDER_ICON")
+						} else if (id == "LIBRARY") {
+							return OddgenResources.getIcon("LIBRARY_FOLDER_ICON")
+						} else if (id == "DIRECTORY") {
+							return OddgenResources.getIcon("DIRECTORY_FOLDER_ICON")
+						} else if (id == "QUEUE") {
+							return OddgenResources.getIcon("QUEUE_FOLDER_ICON")
+						} else if (id.startsWith("JAVA")) {
+							return OddgenResources.getIcon("JAVA_FOLDER_ICON")
+						} else if (id == "MATERIALIZED VIEW" || id == "REWRITE EQUIVALENCE") {
+							return OddgenResources.getIcon("MATERIALIZED_VIEW_FOLDER_ICON")
+						} else if (id == "EDITION") {
+							return OddgenResources.getIcon("EDITION_FOLDER_ICON")
+						} else if (id.startsWith("JOB")) {
+							return OddgenResources.getIcon("JOB_FOLDER_ICON")
+						} else if (id == "DATABASE LINK") {
+							return OddgenResources.getIcon("DBLINK_FOLDER_ICON")
+						} else if (id == "CONSUMER GROUP" || id.contains("CONTEXT") || id == "DESTINATION" ||
+							id.startsWith("LOB") || id == "OPERATOR" || id == "PROGRAM" || id == "RESOURCE PLAN" ||
+							id.startsWith("RULE") || id.startsWith("SCHEDULE") || id == "UNIFIED AUDIT POLICY" ||
+							id == "WINDOW" || id == "XML SCHEMA" || id == "DIMENSION" || id == "SUBSCRIPTION" ||
+							id == "LOCATION" || id == "CAPTURE" || id == "APPLY" || id == "CHAIN" || id == "FILE GROUP" ||
+							id == "MINING MODEL" || id == "ASSEMBLY" || id == "CREDENTIAL" || id == "CUBE DIMENSION" ||
+							id == "CUBE" || id == "MEASURE FOLDER" || id == "CUBE BUILD PROCESS" || id == "FILE WATCHER" ||
+							id == "SQL TRANSLATION PROFILE") {
+							return OddgenResources.getIcon("OBJECT_FOLDER_ICON")
+						} else {
+							return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
+						}
 					} else {
 						return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
 					}
-				} else {
-					return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
 				}
+			}
+		} catch (Exception e) {
+			Logger.error(this, '''Could not produce a valid icon for«IF gensel.node.leaf» leaf«ENDIF» node «gensel.node.id». Used default icon instead.''')
+			if (gensel.node.leaf) {
+				return OddgenResources.getIcon("UNKNOWN_ICON")
+			} else {
+				return OddgenResources.getIcon("UNKNOWN_FOLDER_ICON")
 			}
 		}
 	}

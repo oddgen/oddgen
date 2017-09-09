@@ -132,6 +132,7 @@ class NewXtendGenerator implements OddgenGenerator2 {
 		import java.util.HashMap
 		import java.util.LinkedHashMap
 		import java.util.List
+		import org.oddgen.sqldev.dal.DalTools
 		import org.oddgen.sqldev.generators.OddgenGenerator2
 		import org.oddgen.sqldev.generators.model.Node
 		import org.springframework.jdbc.core.BeanPropertyRowMapper
@@ -143,6 +144,10 @@ class NewXtendGenerator implements OddgenGenerator2 {
 			public static var P1 = "P1?"
 			public static var P2 = "P2"
 			public static var P3 = "P3"
+
+			override isSupported(Connection conn) {
+				return (new DalTools(conn)).isAtLeastOracle(9,2)
+			}
 		
 			override getName(Connection conn) {
 				return "«node.params.get(CLASS_NAME).toFirstUpper»"
@@ -290,7 +295,7 @@ class NewXtendGenerator implements OddgenGenerator2 {
 		var String result
 		val outputDir = node.params.get(OUTPUT_DIR)
 		val sourceDir = '''«outputDir»«File.separator»src«File.separator»main«File.separator»java«FOR d : node.params.get(PACKAGE_NAME).split(".")»«File.separator»«d»«ENDFOR»'''
-		val pluginJar = '''«outputDir»«File.separator»target«File.separator»«node.params.get(PACKAGE_NAME)».«node.params.get(CLASS_NAME).toLowerCase»-1.0.0-SNAPSHOT.jar'''
+		val pluginJarFile = '''«node.params.get(PACKAGE_NAME)».«node.params.get(CLASS_NAME).toLowerCase»-1.0.0-SNAPSHOT.jar'''
 		result = '''
 			«mkdirs(outputDir)»
 			«mkdirs(sourceDir)»
@@ -299,16 +304,19 @@ class NewXtendGenerator implements OddgenGenerator2 {
 			
 			To build the plugin:
 			
-			cd «outputDir»
+			cd "«outputDir»"
 			mvn clean package
 			
 			To install the plugin:
 			
-			«IF System.getProperty("os.name").startsWith("Windows")»
-				copy «pluginJar» «PluginUtils.sqlDevExtensionDir»
-			«ELSE»
-				cp «pluginJar» «PluginUtils.sqlDevExtensionDir»
-			«ENDIF»
+			«val copyCommand = if (System.getProperty("os.name").startsWith("Windows")) {"copy"} else {"cp"}»
+			«copyCommand» "«outputDir»«File.separator»target«File.separator»«pluginJarFile»" "«PluginUtils.sqlDevExtensionDir»"
+			
+			To uninstall the plugin:
+			
+			«val removeCommand = if (System.getProperty("os.name").startsWith("Windows")) {"del"} else {"rm"}»
+			«removeCommand» "«PluginUtils.sqlDevExtensionDir»«File.separator»«pluginJarFile»"
+			
 		'''
 	}
 

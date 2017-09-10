@@ -2,6 +2,7 @@ package org.oddgen.sqldev.resources
 
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 import oracle.dbtools.raptor.utils.MessagesBase
 
 class OddgenResources extends MessagesBase {
@@ -40,7 +41,7 @@ class OddgenResources extends MessagesBase {
 	def static getTextFile(String paramString) {
 		val fileName = getString(paramString)
 		val url = INSTANCE.class.getResource(fileName);
-		val in = new BufferedReader(new InputStreamReader(url.openStream))
+		val in = new BufferedReader(new InputStreamReader(url.openStream, StandardCharsets.UTF_8))
 		val sb = new StringBuffer
 		var String line;
 		while ((line = in.readLine) !== null) {

@@ -104,6 +104,13 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				</dependency>
 				<dependency>
 					<groupId>oracle</groupId>
+					<artifactId>javax-ide</artifactId>
+					<version>12.2.0</version>
+					<scope>system</scope>
+					<systemPath>${sqldev.basedir}/ide/lib/javax-ide.jar</systemPath>
+				</dependency>
+				<dependency>
+					<groupId>oracle</groupId>
 					<artifactId>javatools-nodeps</artifactId>
 					<version>12.2.0</version>
 					<scope>system</scope>
@@ -132,18 +139,12 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				</dependency>
 				<dependency>
 					<groupId>oracle</groupId>
-					<artifactId>xmlparserv2</artifactId>
+					<artifactId>ojdbc8</artifactId>
 					<version>12.2.0</version>
 					<scope>system</scope>
-					<systemPath>${sqldev.basedir}/modules/oracle.xdk/xmlparserv2.jar</systemPath>
+					<systemPath>${sqldev.basedir}/jdbc/lib/ojdbc8.jar</systemPath>
 				</dependency>
-				<dependency>
-					<groupId>oracle</groupId>
-					<artifactId>oracle.sqldeveloper.worksheet</artifactId>
-					<version>12.2.0</version>
-					<scope>system</scope>
-					<systemPath>${sqldev.basedir}/sqldeveloper/extensions/oracle.sqldeveloper.worksheet.jar</systemPath>
-				</dependency>
+
 				<!-- ordinary dependencies -->
 				<dependency>
 					<groupId>org.oddgen</groupId>

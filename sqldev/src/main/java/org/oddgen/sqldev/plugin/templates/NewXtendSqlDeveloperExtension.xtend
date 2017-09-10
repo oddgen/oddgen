@@ -1037,7 +1037,8 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 		«ELSE»
 			host=localhost
 			port=1521
-			service=ORCL
+			sid=ORCL
+			service=
 		«ENDIF»
 
 		# oracle users

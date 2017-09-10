@@ -18,7 +18,8 @@ package org.oddgen.sqldev.plugin.templates
 import com.jcabi.aspects.Loggable
 import java.io.File
 import java.io.FileOutputStream
-import java.io.PrintStream
+import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
 import org.oddgen.sqldev.LoggableConstants
 
 @Loggable(LoggableConstants.DEBUG)
@@ -38,8 +39,8 @@ class TemplateTools {
 
 	def String writeToFile(String fileName, String text) {
 		try {
-			val out = new PrintStream(new FileOutputStream(fileName))
-			out.print(text);
+			val out = new OutputStreamWriter(new FileOutputStream(fileName), StandardCharsets.UTF_8)
+			out.append(text)
 			out.flush
 			out.close
 			return '''«fileName» created.'''

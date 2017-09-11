@@ -131,7 +131,6 @@ class NewXtendGenerator implements OddgenGenerator2 {
 		import java.util.HashMap
 		import java.util.LinkedHashMap
 		import java.util.List
-		import org.oddgen.sqldev.dal.DalTools
 		import org.oddgen.sqldev.generators.OddgenGenerator2
 		import org.oddgen.sqldev.generators.model.Node
 		import org.springframework.jdbc.core.BeanPropertyRowMapper
@@ -145,7 +144,19 @@ class NewXtendGenerator implements OddgenGenerator2 {
 			public static var P3 = "P3"
 
 			override isSupported(Connection conn) {
-				return (new DalTools(conn)).isAtLeastOracle(9,2)
+				var ret = false
+				if (conn !== null) {
+					if (conn.metaData.databaseProductName.startsWith("Oracle")) {
+						if (conn.metaData.databaseMajorVersion == 9) {
+							if (conn.metaData.databaseMinorVersion >= 2) {
+								ret = true
+							}
+						} else if (conn.metaData.databaseMajorVersion > 9) {
+							ret = true
+						}
+					}
+				}
+				return ret
 			}
 		
 			override getName(Connection conn) {

@@ -139,6 +139,13 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				</dependency>
 				<dependency>
 					<groupId>oracle</groupId>
+					<artifactId>xmlparserv2</artifactId>
+					<version>12.2.0</version>
+					<scope>system</scope>
+					<systemPath>${sqldev.basedir}/modules/oracle.xdk/xmlparserv2.jar</systemPath>
+				</dependency>
+				<dependency>
+					<groupId>oracle</groupId>
 					<artifactId>ojdbc8</artifactId>
 					<version>12.2.0</version>
 					<scope>system</scope>
@@ -568,7 +575,6 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 		import java.util.LinkedHashMap
 		import java.util.List
 		import oracle.ide.config.Preferences
-		import org.oddgen.sqldev.dal.DalTools
 		import org.oddgen.sqldev.generators.OddgenGenerator2
 		import org.oddgen.sqldev.generators.model.Node
 		import org.springframework.jdbc.core.BeanPropertyRowMapper
@@ -582,7 +588,19 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 			public static var P3 = "P3"
 
 			override isSupported(Connection conn) {
-				return (new DalTools(conn)).isAtLeastOracle(9,2)
+				var ret = false
+				if (conn !== null) {
+					if (conn.metaData.databaseProductName.startsWith("Oracle")) {
+						if (conn.metaData.databaseMajorVersion == 9) {
+							if (conn.metaData.databaseMinorVersion >= 2) {
+								ret = true
+							}
+						} else if (conn.metaData.databaseMajorVersion > 9) {
+							ret = true
+						}
+					}
+				}
+				return ret
 			}
 		
 			override getName(Connection conn) {
@@ -901,10 +919,12 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				jdbcTemplate = new JdbcTemplate(dataSource)
 				gen = new «node.params.get(CLASS_NAME)»
 			}
-			
+
 			@Test
 			def isSupportedTest() {
-				if (!dataSource.password.empty) {
+				if (dataSource.password.empty) {
+					Assert.assertFalse(gen.isSupported(null))
+				} else {
 					Assert.assertTrue(gen.isSupported(dataSource.connection))
 				}
 			}
@@ -939,7 +959,7 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 					Assert.assertEquals(#["BONUS", "DEPT", "EMP", "SALGRADE"], tableNames)
 				}
 			}
-			
+
 			@Test
 			def getLovTest() {
 				val lovs = gen.getLov(null, null, null)
@@ -947,7 +967,7 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				Assert.assertEquals(#["Yes", "No"], lovs.get("P1?"))
 				Assert.assertEquals(#["Value 1", "Value 2", "Value 3"], lovs.get("P2"))
 			}
-			
+
 			@Test
 			def getParamStatesTest() {
 				val params = gen.getNodes(null, null).get(0).params
@@ -955,7 +975,7 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 				params.put("P1?", "No")
 				Assert.assertEquals(false, gen.getParamStates(null, params, null).get("P2"))
 			}
-			
+
 			@Test
 			def generatePrologTest() {
 				Assert.assertEquals("", gen.generateProlog(null, null))
@@ -970,7 +990,7 @@ class NewXtendSqlDeveloperExtension implements OddgenGenerator2 {
 			def generateEpilogTest() {
 				Assert.assertEquals("", gen.generateEpilog(null, null))
 			}
-			
+
 			@Test
 			def generateTest() {
 				if (dataSource.username.equalsIgnoreCase("SCOTT") &&  !dataSource.password.empty) {

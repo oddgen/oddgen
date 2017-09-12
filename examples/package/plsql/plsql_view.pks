@@ -50,9 +50,9 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
    * under 'All Generators', the second one is the subfolder under the 
    * first one and so on. The generator will be visible in the last folder
    * of the list.
-   * If this function is not implemented, the default will be determined
-   * based on the generator type. For generators stored in the database 
-   * this will be oddgen_types.t_value_type('Database Server Generators').
+   * If this function is not implemented, the default is 
+   * oddgen_types.t_value_type('Database Server Generators'). 
+   * It is possible to override the default in the oddgen preference dialog.
    *
    * @returns the list of folders under 'All Generators'
    *
@@ -170,8 +170,7 @@ CREATE OR REPLACE PACKAGE plsql_view AUTHID CURRENT_USER IS
    /**
    * Generates the result.
    * This function must be implemented.
-   * Called for every selected node.
-   * Children of nodes are not resolved by oddgen.
+   * Called for every selected and relevant node, including its children.
    *
    * @param in_node node to be generated
    * @returns generator output

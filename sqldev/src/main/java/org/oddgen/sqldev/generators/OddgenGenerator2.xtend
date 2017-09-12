@@ -135,8 +135,7 @@ interface OddgenGenerator2 {
 
 	/** 
 	 * Generates the result.
-	 * Called by oddgen for every selected node.
-	 * Children of nodes are not resolved by oddgen.
+	 * Called for every selected and relevant node, including its children.
 	 * @param conn active connection in the Generators window
 	 * @param node node to be generated
 	 * @return the generated code

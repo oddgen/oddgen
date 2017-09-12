@@ -167,7 +167,7 @@ $end
    --
    FUNCTION get_description RETURN VARCHAR2 IS
    BEGIN
-      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The generator is based on plain PL/SQL without a third party template engine.';
+      RETURN 'Generates a 1:1 view based on an existing table. Optionally generates a simple instead of trigger. The tePLSQL template is defined in a conditional PL/SQL block.';
    END get_description;
 
    --

@@ -1271,7 +1271,7 @@ class DatabaseGeneratorDao {
 			      TYPE t_lov_type     IS TABLE OF t_value_type INDEX BY key_type;
 			      TYPE r_node_type    IS RECORD (
 			         id               key_type,
-			         parent_id        key_type
+			         parent_id        key_type,
 			         name             value_type,
 			         description      value_type,
 			         icon_name        key_type,

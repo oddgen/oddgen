@@ -71,6 +71,19 @@ class DatabaseGenerator implements OddgenGenerator2 {
 		return conn.dao.getNodes(metaData, parentNodeId)
 	}
 	
+	def getOrderedParams(Connection conn, Node node) {
+		val params = new LinkedHashMap<String, String>
+		// init parameter in the requested order (if any)
+		for (p : conn.dao.getOrderedParams(metaData, node)) {
+			params.put(p, "")
+		}
+		// update/add parameters from node
+		for (key : node.params.keySet) {
+			params.put(key, node.params.get(key))
+		}
+		return params		
+	}
+	
 	override getLov(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
 		return conn.dao.getLov(metaData, params, nodes)
 	}

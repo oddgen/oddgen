@@ -65,12 +65,16 @@ class DatabaseGeneratorMetaData extends AbstractModel {
 	@Deprecated
 	Boolean hasGetParams2
 
-	/** indicates if the generator package has a get_ordered_params function without parameters */
+	/** indicates if the generator package has a get_ordered_params function without parameters (returning t_string) */
+	@Deprecated
 	Boolean hasGetOrderedParams1
 
 	/** indicates if the generator package has a get_ordered_params function with 2 input parameters */
 	@Deprecated
 	Boolean hasGetOrderedParams2
+	
+	/** indicates if the generator package has a get_ordered_params function without parameters (returning oddgen_types.t_param_type) */
+	Boolean hasGetOrderedParams3
 
 	/** indicates if the generator package has a get_lov function without parameters */
 	@Deprecated

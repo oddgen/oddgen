@@ -47,6 +47,7 @@ import javax.swing.JScrollPane
 import javax.swing.JTextField
 import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
+import org.oddgen.sqldev.generators.DatabaseGenerator
 import org.oddgen.sqldev.generators.OddgenGenerator2
 import org.oddgen.sqldev.model.DirectoryBrowseButton
 import org.oddgen.sqldev.model.GeneratorSelection
@@ -118,8 +119,16 @@ class GenerateDialog extends JDialog implements ActionListener, PropertyChangeLi
 			loadLov
 			loadParamStates
 			if (gens.get(0).node.params !== null) {
-				for (param : gens.get(0).node.params.keySet) {
-					param.addParam
+				val gen = gens.get(0).generator 
+				if (gen instanceof DatabaseGenerator) {
+					// to fix issue #50, ordered parameters are required in the dialog only
+					for (param : gen.getOrderedParams(conn, gens.get(0).node).keySet) {
+						param.addParam
+					}					
+				} else {
+					for (param : gens.get(0).node.params.keySet) {
+						param.addParam
+					}
 				}
 			}
 			val scrollPaneParameters = new JScrollPane(paneParams)

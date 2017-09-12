@@ -76,11 +76,15 @@ class DatabaseGeneratorDao {
 	   END add_text;
 	'''
 
-	private def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
+	def List<String> getOrderedParams(DatabaseGeneratorMetaData metaData, Node node) {
 		// convert PL/SQL associative array to XML
 		val plsql = '''
 			DECLARE
-			   l_ordered_params «metaData.generatorOwner».«metaData.generatorName».t_string;
+			   «IF metaData.hasGetOrderedParams3»
+			      l_ordered_params «metaData.typesOwner».oddgen_types.t_value_type;
+			   «ELSE»
+			      l_ordered_params «metaData.generatorOwner».«metaData.generatorName».t_string;
+			   «ENDIF»
 			   l_clob           CLOB;
 			   «addTextVariables»
 			   --
@@ -88,7 +92,7 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetOrderedParams2»
-			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
+			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params(in_object_type => '«node.toObjectType»', in_object_name => '«node.toObjectName»');
 			   «ELSE»
 			      l_ordered_params := «metaData.generatorOwner».«metaData.generatorName».get_ordered_params();
 			   «ENDIF»
@@ -105,7 +109,7 @@ class DatabaseGeneratorDao {
 		Logger.debug(this, "plsql: %s", plsql)
 		val orderedParams = new ArrayList<String>()
 		var Document doc
-		if (metaData.hasGetOrderedParams2 || metaData.hasGetOrderedParams1) {
+		if (metaData.hasGetOrderedParams1 || metaData.hasGetOrderedParams2 || metaData.hasGetOrderedParams3) {
 			doc = plsql.doc
 		}
 		if (doc !== null) {
@@ -119,10 +123,10 @@ class DatabaseGeneratorDao {
 		return orderedParams
 	}
 
-	private def getParams(DatabaseGeneratorMetaData metaData, String objectType, String objectName) {
+	private def getParams(DatabaseGeneratorMetaData metaData, Node node) {
 		// initialize Parameters in the requested order
 		val params = new LinkedHashMap<String, String>()
-		for (param : getOrderedParams(metaData, objectType, objectName)) {
+		for (param : getOrderedParams(metaData, node)) {
 			params.put(param, "")
 		}
 		// convert PL/SQL associative array to XML
@@ -137,7 +141,7 @@ class DatabaseGeneratorDao {
 			BEGIN
 			   sys.dbms_lob.createtemporary(l_clob, TRUE);
 			   «IF metaData.hasGetParams2»
-			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«objectType»', in_object_name => '«objectName»');
+			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params(in_object_type => '«node.toObjectType»', in_object_name => '«node.toObjectName»');
 			   «ELSE»
 			      l_params := «metaData.generatorOwner».«metaData.generatorName».get_params();
 			   «ENDIF»
@@ -265,7 +269,13 @@ class DatabaseGeneratorDao {
 			                         1
 			                        ELSE
 			                         0
-			                    END) AS has_in_params_arg
+			                    END) AS has_in_params_arg,
+			                   MAX(CASE
+			                        WHEN arg.position = 0 THEN
+			                           arg.type_name
+			                        ELSE
+			                           NULL
+			                    END) AS return_type   
 			              FROM all_arguments arg
 			              JOIN gen
 			                ON arg.owner = gen.owner
@@ -439,7 +449,7 @@ class DatabaseGeneratorDao {
 			                            0
 			                        END) AS has_get_params2,
 			                   SUM(CASE
-			                           WHEN procedure_name = 'GET_ORDERED_PARAMS' AND arg_count = 1 THEN
+			                           WHEN procedure_name = 'GET_ORDERED_PARAMS' AND arg_count = 1 AND return_type != 'ODDGEN_TYPES' THEN
 			                            1
 			                           ELSE
 			                            0
@@ -450,6 +460,12 @@ class DatabaseGeneratorDao {
 			                           ELSE
 			                            0
 			                        END) AS has_get_ordered_params2,
+			                   SUM(CASE
+			                           WHEN procedure_name = 'GET_ORDERED_PARAMS' AND arg_count = 1 AND return_type = 'ODDGEN_TYPES' THEN
+			                            1
+			                           ELSE
+			                            0
+			                        END) AS has_get_ordered_params3,
 			                   SUM(CASE
 			                           WHEN procedure_name = 'GET_LOV' AND arg_count = 1 AND has_in_params_arg = 0 THEN
 			                            1
@@ -529,8 +545,9 @@ class DatabaseGeneratorDao {
 			                   nvl(oth.has_get_object_names, 0) AS has_get_object_names, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_params1, 0) AS has_get_params1, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_params2, 0) AS has_get_params2, -- v0.2.0 deprecated
-			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v0.2.0 undocumented, v0.3.0 current
+			                   nvl(oth.has_get_ordered_params1, 0) AS has_get_ordered_params1, -- v0.2.0 deprecated, undocumented
 			                   nvl(oth.has_get_ordered_params2, 0) AS has_get_ordered_params2, -- v0.2.0 deprecated
+			                   nvl(oth.has_get_ordered_params3, 0) AS has_get_ordered_params3, -- v0.3.0 current
 			                   nvl(oth.has_get_lov1, 0) AS has_get_lov1, -- v0.1.0 deprecated
 			                   nvl(oth.has_get_lov2, 0) AS has_get_lov2, -- v0.2.0 deprecated
 			                   nvl(oth.has_get_lov3, 0) AS has_get_lov3, -- v0.3.0 current
@@ -564,6 +581,7 @@ class DatabaseGeneratorDao {
 			             has_get_params2,
 			             has_get_ordered_params1,
 			             has_get_ordered_params2,
+			             has_get_ordered_params3,
 			             has_get_lov1,
 			             has_get_lov2,
 			             has_get_lov3,
@@ -674,6 +692,7 @@ class DatabaseGeneratorDao {
 			      add_node(in_node => 'hasGetParams2', in_value => r_metadata.has_get_params2);
 			      add_node(in_node => 'hasGetOrderedParams1', in_value => r_metadata.has_get_ordered_params1);
 			      add_node(in_node => 'hasGetOrderedParams2', in_value => r_metadata.has_get_ordered_params2);
+			      add_node(in_node => 'hasGetOrderedParams3', in_value => r_metadata.has_get_ordered_params3);
 			      add_node(in_node => 'hasGetLov1', in_value => r_metadata.has_get_lov1);
 			      add_node(in_node => 'hasGetLov2', in_value => r_metadata.has_get_lov2);
 			      add_node(in_node => 'hasGetLov3', in_value => r_metadata.has_get_lov3);
@@ -720,6 +739,8 @@ class DatabaseGeneratorDao {
 					metaData.hasGetOrderedParams1 = xmlGenerator.getElementsByTagName("hasGetOrderedParams1").item(0).
 						textContent == "1"
 					metaData.hasGetOrderedParams2 = xmlGenerator.getElementsByTagName("hasGetOrderedParams2").item(0).
+						textContent == "1"
+					metaData.hasGetOrderedParams3 = xmlGenerator.getElementsByTagName("hasGetOrderedParams3").item(0).
 						textContent == "1"
 					metaData.hasGetLov1 = xmlGenerator.getElementsByTagName("hasGetLov1").item(0).textContent == "1"
 					metaData.hasGetLov2 = xmlGenerator.getElementsByTagName("hasGetLov2").item(0).textContent == "1"
@@ -1031,7 +1052,7 @@ class DatabaseGeneratorDao {
 			if (!metaData.hasGetNodes) {
 				// extend nodes with parameters
 				for (node : nodes) {
-					node.params = getParams(metaData, node.toObjectType, node.toObjectName)
+					node.params = getParams(metaData, node)
 				}
 			}
 		}

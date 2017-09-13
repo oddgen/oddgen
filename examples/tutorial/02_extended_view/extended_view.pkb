@@ -1,6 +1,6 @@
-CREATE OR REPLACE PACKAGE BODY extended_view AS
+CREATE OR REPLACE PACKAGE BODY extended_view IS
    /*
-   * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+   * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
    *
    * Licensed under the Apache License, Version 2.0 (the "License");
    * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
    */
 
    --
-   -- parameter constants, used as labels in the generate dialog
+   -- parameter names used also as labels in the GUI
    --
-   co_select_star   CONSTANT string_type := 'Select * ?';
-   co_view_suffix   CONSTANT string_type := 'View suffix';
-   co_order_columns CONSTANT string_type := 'Order columns?';
+   co_select_star   CONSTANT oddgen_types.key_type := 'Select * ?';
+   co_view_suffix   CONSTANT oddgen_types.key_type := 'View suffix';
+   co_order_columns CONSTANT oddgen_types.key_type := 'Order columns?';
 
    --
-   -- get_name - override OGDEMO.EXTENDED_VIEW
+   -- get_name
    --
    FUNCTION get_name RETURN VARCHAR2 IS
    BEGIN
@@ -31,107 +31,191 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
    END get_name;
 
    --
-   -- get_description - override OGDEMO.EXTENDED_VIEW
+   -- get_description
    --
    FUNCTION get_description RETURN VARCHAR2 IS
    BEGIN
-      RETURN 'Generates a 1:1 view based on an existing table and various generator parameters.';
+      RETURN 'Generates a 1:1 view based on an existing ' || 
+         'table and various generator parameters.';
    END get_description;
 
    --
-   -- get_object_types - override [Tables, Views]
+   -- get_folders
    --
-   FUNCTION get_object_types RETURN t_string IS
+   FUNCTION get_folders RETURN oddgen_types.t_value_type IS
    BEGIN
-      RETURN NEW t_string('TABLE');
-   END get_object_types;
+      RETURN NEW oddgen_types.t_value_type('Database Server Generators');
+   END get_folders;
 
    --
-   -- get_object_names - override query for 'TABLE' returning object names using initcap()
+   -- get_help
    --
-   FUNCTION get_object_names(in_object_type IN VARCHAR2) RETURN t_string IS
-      l_object_names t_string;
+   FUNCTION get_help RETURN CLOB IS
    BEGIN
-      SELECT initcap(object_name) AS object_name
-        BULK COLLECT
-        INTO l_object_names
-        FROM user_objects
-       WHERE object_type = in_object_type
-             AND generated = 'N'
-       ORDER BY object_name;
-      RETURN l_object_names;
-   END get_object_names;
+      RETURN '<p>Not yet available.</p>';
+   END get_help;
 
    --
-   -- get_params - configure additional parameters beside object_type and object_name
+   -- get_nodes
    --
-   FUNCTION get_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_param IS
-      l_params t_param;
+   FUNCTION get_nodes(
+      in_parent_node_id IN oddgen_types.key_type DEFAULT NULL
+   ) RETURN oddgen_types.t_node_type IS
+      t_nodes  oddgen_types.t_node_type;
+      --
+      PROCEDURE add_node (
+         in_id          IN oddgen_types.key_type,
+         in_parent_id   IN oddgen_types.key_type,
+         in_leaf        IN BOOLEAN
+      ) IS
+         l_node oddgen_types.r_node_type;
+      BEGIN
+         l_node.id                       := in_id;
+         l_node.parent_id                := in_parent_id;
+         l_node.leaf                     := in_leaf;
+         l_node.generatable              := TRUE;
+         l_node.multiselectable          := TRUE;
+         l_node.params(co_select_star)   := 'No';
+         l_node.params(co_view_suffix)   := '_v';
+         l_node.params(co_order_columns) := 'No';
+         t_nodes.extend;
+         t_nodes(t_nodes.count) := l_node;         
+      END add_node;
    BEGIN
-      l_params(co_select_star) := 'No';
-      l_params(co_view_suffix) := '_v';
-      l_params(co_order_columns) := 'No';
-      RETURN l_params;
-   END get_params;
+      t_nodes  := oddgen_types.t_node_type();
+      IF in_parent_node_id IS NULL THEN
+         -- object types
+         add_node(
+            in_id        => 'TABLE',
+            in_parent_id => NULL,
+            in_leaf      => FALSE
+         );
+      ELSE
+         -- object names
+         <<nodes>>
+         FOR r IN (
+            SELECT object_name
+              FROM user_objects
+             WHERE object_type = in_parent_node_id
+               AND generated = 'N'
+         ) LOOP
+            add_node(
+               in_id        => in_parent_node_id || '.' || r.object_name,
+               in_parent_id => in_parent_node_id,
+               in_leaf      => TRUE
+            );
+         END LOOP nodes;
+      END IF;
+      RETURN t_nodes;
+   END get_nodes;
 
    --
-   -- get_ordered_params - override default sort order (by name)
+   -- get_ordered_params
    --
-   FUNCTION get_ordered_params(in_object_type IN VARCHAR2, in_object_name IN VARCHAR2)
-      RETURN t_string IS
+   FUNCTION get_ordered_params RETURN oddgen_types.t_value_type IS
    BEGIN
-      RETURN NEW t_string(co_select_star, co_view_suffix, co_order_columns);
+      RETURN NEW oddgen_types.t_value_type(
+                    co_select_star, 
+                    co_view_suffix, 
+                    co_order_columns
+                 );
    END get_ordered_params;
 
    --
    -- get_lov
    --
-   FUNCTION get_lov(in_object_type IN VARCHAR2,
-                    in_object_name IN VARCHAR2,
-                    in_params      IN t_param) RETURN t_lov IS
-      l_lov t_lov;
+   FUNCTION get_lov(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_lov_type IS
+      l_lov oddgen_types.t_lov_type;
    BEGIN
       IF in_params(co_select_star) = 'Yes' THEN
-         l_lov(co_order_columns) := NEW t_string('No');
+         l_lov(co_order_columns) := NEW oddgen_types.t_value_type('No');
       ELSE
-         l_lov(co_order_columns) := NEW t_string('Yes', 'No');
+         l_lov(co_order_columns) := NEW oddgen_types.t_value_type('Yes', 'No');
       END IF;
       IF in_params(co_order_columns) = 'Yes' THEN
-         l_lov(co_select_star) := NEW t_string('No');
+         l_lov(co_select_star) := NEW oddgen_types.t_value_type('No');
       ELSE
-         l_lov(co_select_star) := NEW t_string('Yes', 'No');
+         l_lov(co_select_star) := NEW oddgen_types.t_value_type('Yes', 'No');
       END IF;
       RETURN l_lov;
    END get_lov;
 
    --
-   -- generate - signature used by oddgen for SQL Developer
+   -- get_param_states
    --
-   FUNCTION generate(in_object_type IN VARCHAR2,
-                     in_object_name IN VARCHAR2,
-                     in_params      IN t_param) RETURN CLOB IS
-      l_templ        CLOB := 'CREATE OR REPLACE VIEW ${view_name} AS
+   FUNCTION get_param_states(
+      in_params IN oddgen_types.t_param_type,
+      in_nodes  IN oddgen_types.t_node_type
+   ) RETURN oddgen_types.t_param_type IS
+      l_param_states oddgen_types.t_param_type;
+   BEGIN
+      RETURN l_param_states;
+   END get_param_states;
+
+   --
+   -- generate_prolog
+   --
+   FUNCTION generate_prolog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB IS
+   BEGIN
+      RETURN NULL;
+   END generate_prolog;
+
+   --
+   -- generate_separator
+   --
+   FUNCTION generate_separator RETURN VARCHAR2 IS
+   BEGIN
+      RETURN '--' || chr(10);
+   END generate_separator;
+
+   --
+   -- generate_epilog
+   --
+   FUNCTION generate_epilog(
+      in_nodes IN oddgen_types.t_node_type
+   ) RETURN CLOB IS
+   BEGIN
+      RETURN NULL;
+   END generate_epilog;
+
+   --
+   -- generate
+   --
+   FUNCTION generate(
+      in_node IN oddgen_types.r_node_type
+   ) RETURN CLOB IS
+      l_templ        CLOB := 
+'CREATE OR REPLACE VIEW ${view_name} AS
    SELECT ${column_names}
      FROM ${table_name};';
       l_clob         CLOB;
-      l_view_name    string_type;
-      l_column_names string_type;
-      l_table_name   string_type;
+      l_view_name    oddgen_types.key_type;
+      l_column_names oddgen_types.key_type;
+      l_table_name   oddgen_types.key_type;
    BEGIN
+      -- prepare placeholder table_name
+      l_table_name := lower(regexp_substr(in_node.id, '[^\.]+', 1, 2));
+      -- prepare place_holder view_name
+      l_view_name := l_table_name || in_node.params(co_view_suffix);
       -- prepare placeholder column_names
-      IF in_params(co_select_star) = 'Yes' THEN
+      IF in_node.params(co_select_star) = 'Yes' THEN
          l_column_names := '*';
       ELSE
-         FOR l_rec IN (SELECT column_name
-                         FROM user_tab_columns
-                        WHERE table_name = upper(in_object_name)
-                        ORDER BY CASE
-                                    WHEN in_params(co_order_columns) = 'Yes' THEN
-                                     column_name
-                                    ELSE
-                                     to_char(column_id, '99999')
-                                 END)
+         FOR l_rec IN (
+            SELECT column_name
+              FROM user_tab_columns
+             WHERE table_name = upper(l_table_name)
+             ORDER BY CASE
+                         WHEN in_node.params(co_order_columns) = 'Yes' THEN
+                            column_name
+                         ELSE
+                            to_char(column_id, '99999')
+                      END)
          LOOP
             IF l_column_names IS NOT NULL THEN
                l_column_names := l_column_names || ', ';
@@ -139,31 +223,11 @@ CREATE OR REPLACE PACKAGE BODY extended_view AS
             l_column_names := l_column_names || lower(l_rec.column_name);
          END LOOP;
       END IF;
-      -- prepare placeholder table_name
-      l_table_name := lower(in_object_name);
-      -- prepare placeholder view_name
-      l_view_name := l_table_name || lower(in_params(co_view_suffix));
       -- produce final clob, replace placeholder in template
       l_clob := REPLACE(l_templ, '${column_names}', l_column_names);
       l_clob := REPLACE(l_clob, '${view_name}', l_view_name);
       l_clob := REPLACE(l_clob, '${table_name}', l_table_name);
       RETURN l_clob;
-   END generate;
-
-   --
-   -- generate - signature accessible from plain SQL (not used by oddgen)
-   --
-   FUNCTION generate(in_object_type   IN VARCHAR2,
-                     in_object_name   IN VARCHAR2,
-                     in_select_star   IN VARCHAR2 DEFAULT 'No',
-                     in_view_suffix   IN VARCHAR2 DEFAULT '_v',
-                     in_order_columns IN VARCHAR2 DEFAULT 'No') RETURN CLOB IS
-      l_params t_param;
-   BEGIN
-      l_params(co_select_star) := in_select_star;
-      l_params(co_view_suffix) := in_view_suffix;
-      l_params(co_order_columns) := in_order_columns;
-      RETURN generate(in_object_type, in_object_name, l_params);
    END generate;
 
 END extended_view;

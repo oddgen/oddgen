@@ -1,1 +1,2 @@
+GRANT EXECUTE ON oddgen_types TO PUBLIC;
 GRANT EXECUTE ON extended_view TO PUBLIC;

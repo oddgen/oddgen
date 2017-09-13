@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
+ * Copyright 2017 Philipp Salvisberg <philipp.salvisberg@trivadis.com>
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.oddgen.plugin.extendedview
+package org.oddgen.plugin
 
 import java.sql.Connection
-import java.util.ArrayList
 import java.util.HashMap
 import java.util.LinkedHashMap
 import java.util.List
-import org.oddgen.sqldev.generators.OddgenGenerator
+import org.oddgen.sqldev.generators.OddgenGenerator2
+import org.oddgen.sqldev.generators.model.Node
+import org.oddgen.sqldev.generators.model.NodeTools
+import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.datasource.SingleConnectionDataSource
 
-class ExtendedView implements OddgenGenerator {
+class ExtendedView implements OddgenGenerator2 {
+
+	private extension NodeTools nodeTools = new NodeTools
 
 	static val SELECT_STAR = 'Select * ?'
 	static val VIEW_SUFFIX = 'View suffix'
@@ -47,6 +51,22 @@ class ExtendedView implements OddgenGenerator {
 		}
 	}
 
+	override isSupported(Connection conn) {
+		var ret = false
+		if (conn !== null) {
+			if (conn.metaData.databaseProductName.startsWith("Oracle")) {
+				if (conn.metaData.databaseMajorVersion == 9) {
+					if (conn.metaData.databaseMinorVersion >= 2) {
+						ret = true
+					}
+				} else if (conn.metaData.databaseMajorVersion > 9) {
+					ret = true
+				}
+			}
+		}
+		return ret
+	}
+
 	override getName(Connection conn) {
 		return "Extended 1:1 View Generator"
 	}
@@ -55,34 +75,49 @@ class ExtendedView implements OddgenGenerator {
 		return "Generates a 1:1 view based on an existing table and various generator parameters."
 	}
 
-	override getObjectTypes(Connection conn) {
-		val objectTypes = new ArrayList<String>()
-		objectTypes.add("TABLE")
-		return objectTypes
+	override getFolders(Connection conn) {
+		return #["Client Generators"]
 	}
 
-	override getObjectNames(Connection conn, String objectType) {
-		val sql = '''
-			SELECT initcap(object_name) AS object_name
-			  FROM user_objects
-			 WHERE object_type = ?
-			   AND generated = 'N'
-			ORDER BY object_name
-		'''
-		val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
-		val objectNames = jdbcTemplate.queryForList(sql, String, objectType)
-		return objectNames
+	override getHelp(Connection conn) {
+		return "<p>not yet available</p>"
 	}
 
-	override getParams(Connection conn, String objectType, String objectName) {
+	override getNodes(Connection conn, String parentNodeId) {
 		val params = new LinkedHashMap<String, String>()
 		params.put(SELECT_STAR, "No")
 		params.put(VIEW_SUFFIX, "_v")
 		params.put(ORDER_COLUMNS, "No")
-		return params
+		if (parentNodeId === null || parentNodeId.empty) {
+			val tableNode = new Node
+			tableNode.id = "TABLE"
+			tableNode.params = params
+			tableNode.leaf = false
+			tableNode.generatable = true
+			tableNode.multiselectable = true
+			return #[tableNode]
+		} else {
+			val sql = '''
+				SELECT object_type || '.' || object_name AS id,
+				       object_type AS parent_id,
+				       1 AS leaf,
+				       1 AS generatable,
+				       1 AS multiselectable
+				  FROM user_objects
+				 WHERE object_type = ?
+				   AND generated = 'N'
+			'''
+			val jdbcTemplate = new JdbcTemplate(new SingleConnectionDataSource(conn, true))
+			val nodes = jdbcTemplate.query(sql, new BeanPropertyRowMapper<Node>(Node), #[parentNodeId])
+			for (node : nodes) {
+				node.params = params
+			}
+			return nodes
+		}
 	}
 
-	override getLov(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	override HashMap<String, List<String>> getLov(Connection conn, LinkedHashMap<String, String> params,
+		List<Node> nodes) {
 		val lov = new HashMap<String, List<String>>()
 		if(params.get(SELECT_STAR) == "Yes") {
 			lov.put(ORDER_COLUMNS, #["No"])
@@ -97,16 +132,27 @@ class ExtendedView implements OddgenGenerator {
 		return lov
 	}
 
-	override getParamStates(Connection conn, String objectType, String objectName,
-		LinkedHashMap<String, String> params) {
+	override getParamStates(Connection conn, LinkedHashMap<String, String> params, List<Node> nodes) {
 		return new HashMap<String, Boolean>()
 	}
 
-	override generate(Connection conn, String objectType, String objectName, LinkedHashMap<String, String> params) {
+	override generateProlog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generateSeparator(Connection conn) {
+		return "\n--"
+	} 
+
+	override generateEpilog(Connection conn, List<Node> nodes) {
+		return ""
+	}
+
+	override generate(Connection conn, Node node) {
 		try {
-			val tableName = objectName.toLowerCase
-			val viewName = '''«tableName»«params.get(VIEW_SUFFIX).toLowerCase»'''
-			val columnNames = getColumnNames(conn, tableName, params)
+			val tableName = node.toObjectName.toLowerCase
+			val viewName = '''«tableName»«node.params.get(VIEW_SUFFIX).toLowerCase»'''
+			val columnNames = getColumnNames(conn, tableName, node.params)
 			val result = '''
 				CREATE OR REPLACE VIEW «viewName» AS
 				   SELECT «FOR col : columnNames SEPARATOR ", "»«col.toLowerCase»«ENDFOR»
@@ -115,6 +161,6 @@ class ExtendedView implements OddgenGenerator {
 			return result
 		} catch(Exception e) {
 			return '''Cannot create view statement, got: «e.message».'''
-		}
+		}		
 	}
 }

@@ -37,10 +37,10 @@ class Node extends AbstractModel {
 	/** existing icon name, e.g. TABLE_ICON, VIEW_ICON */
 	String iconName
 	
-	/** Base64 encoded icon, size 16x16 pixels */
+	/** Base64 encoded icon, size: 16x16 pixels, format: PNG, GIF or JPEG */
 	String iconBase64
 	
-	/** array of parameters, e.g. OBJECT_TYPE=TABLE, OBJECT_NAME=EMP */
+	/** array of parameters, e.g. View suffix=_V, Instead-of-trigger suffix=_TRG */
 	LinkedHashMap<String, String> params
 	
 	/** Is this a leaf node? true|false, default false */

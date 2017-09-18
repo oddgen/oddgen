@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE oddgen_types AUTHID CURRENT_USER IS
       name             value_type,   -- name of the node, e.g. Emp
       description      value_type,   -- description of the node, e.g. Table Emp
       icon_name        key_type,     -- existing icon name, e.g. TABLE_ICON, VIEW_ICON
-      icon_base64      value_type,   -- Base64 encoded icon, size 16x16 pixels
+      icon_base64      value_type,   -- Base64 encoded icon, size: 16x16 pixels, format: PNG, GIF or JPEG
       params           t_param_type, -- array of parameters, e.g. View suffix=_V, Instead-of-trigger suffix=_TRG
       leaf             BOOLEAN,      -- Is this a leaf node? true|false, default false
       generatable      BOOLEAN,      -- Is the node with all its children generatable? true|false, default leaf

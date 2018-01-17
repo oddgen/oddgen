@@ -1,6 +1,6 @@
 # oddgen
 
-<img src="https://github.com/oddgen/oddgen/blob/master/sqldev/src/main/resources/org/oddgen/sqldev/resources/images/oddgen_512x512_text.png?raw=true" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="128px" />
+<img src="https://raw.github.com/oddgen/oddgen/master/sqldev/src/main/resources/org/oddgen/sqldev/resources/images/oddgen_512x512_text.png" style="padding-left:15px; padding-bottom:20px" title="Tooling for dictionary-driven code generation" align="right" width="128px" />
 
 ## Introduction
 

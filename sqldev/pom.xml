@@ -664,7 +664,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/oddgen/oddgen.git</connection>
 		<developerConnection>scm:git:git@github.com:oddgen/oddgen.git</developerConnection>
-		<tag>master</tag>
+		<tag>main</tag>
 		<url>https://github.com/oddgen/oddgen/</url>
 	</scm>
 
